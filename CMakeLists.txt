@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 4.4)
 
-# The project version is the single source of truth: the wheel and sdist
-# version tags derive from it (pyproject reads the project() line), and the
-# consumer channels — the pkg-config Version, the CMake package version
-# file, and the find_package(kith VERSION ...) check — use the same line.
+# The project version is the single source of truth that flows to every
+# consumer channel: the library SONAMEs (kith_apply_abi reads
+# PROJECT_VERSION), the pkg-config .pc file (Version:), the CMake package
+# version file (write_basic_package_version), and the find_package(kith
+# VERSION ...) check a downstream project issues. It tracks the release
+# target the release infrastructure in this cluster produces.
 project(kith VERSION 1.0.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 23)
@@ -14,18 +16,75 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
+# GNUInstallDirs provides CMAKE_INSTALL_LIBDIR / INCLUDEDIR / etc. Used by
+# the per-library install(TARGETS EXPORT kithTargets) calls in
+# cmake/lib_*.cmake and by the find_package / pkg-config consumer block at
+# the bottom of this file; included here so the lib_*.cmake fragments pick
+# up the variables without each re-including it (the local re-includes are
+# idempotent and document each fragment's dependency).
+include(GNUInstallDirs)
+
 # Framework-wide conventions: warnings, hardening, visibility, sanitizers,
 # abi helpers, linker/LTO/reproducible-build settings.
 # framework.cmake is the single source of truth and includes the rest.
 include(cmake/framework.cmake)
 
-# Per-tool build targets (check-clang-format, the ruff pair from
-# format.cmake, and check-all). Each runs its tool over the tracked files
-# and fails the build on a violation; both fragments drive the tools/
-# helpers and git ls-files, and both fail at use when one of their tools is
-# missing. A source distribution carries only the build inputs, so the
-# fragments are included only when tools/ is present.
+# Per-module shared-library targets. Each lib_<module>.cmake fragment
+# defines one layer-2 SHARED library and its install rules; framework.cmake
+# supplies the kith_apply_abi helper they all use.
+include(cmake/lib_util.cmake)
+
+# Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
+# pair from format.cmake, and check-all). Each runs its tool over the
+# tracked files and fails the build on a violation; both fragments drive the
+# tools/ helpers and git ls-files, and both fail at use when one of their
+# tools is missing. A source distribution carries only the build inputs, so
+# the fragments are included only when tools/ is present.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools")
     include(cmake/checks.cmake)
     include(cmake/format.cmake)
 endif()
+
+# --- Downstream consumer story: find_package(kith) + pkg-config -----------
+# Every layer-2 library above is installed with `EXPORT kithTargets`; this
+# block assembles that export set into a CMake package a downstream finds
+# with `find_package(kith 1.0.0 REQUIRED)`, and a pkg-config .pc file a
+# hand-written Makefile or autotools consumer queries with
+# `pkg-config --cflags --libs kith`. The version flowing into both channels
+# is PROJECT_VERSION (set above), so the SONAME, the pkg-config Version, the
+# find_package version check, and the kith_apply_abi SOVERSION all read from
+# one source.
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+install(EXPORT kithTargets
+    FILE kithTargets.cmake
+    NAMESPACE kith::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/kith)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kithConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/kithConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/kith)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/kithConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/kithConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/kithConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/kith)
+
+# pkg-config .pc file. The template is processed with @-only substitution
+# (the .pc format treats ${} as its own variable expansion), then installed
+# to <prefix>/lib/pkgconfig/kith.pc where `pkg-config --modversion kith`
+# finds it.
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kith.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/kith.pc
+    @ONLY)
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/kith.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
