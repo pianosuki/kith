@@ -33,6 +33,7 @@ include(cmake/framework.cmake)
 # defines one layer-2 SHARED library and its install rules; framework.cmake
 # supplies the kith_apply_abi helper they all use.
 include(cmake/lib_util.cmake)
+include(cmake/lib_config.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the

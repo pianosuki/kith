@@ -1,0 +1,13 @@
+KITH_CONFIG_1 {
+    global:
+        kith_config_create;
+        kith_config_destroy;
+        kith_config_has;
+        kith_config_string;
+        kith_config_bool;
+        kith_config_u16;
+        kith_config_u32;
+        kith_config_u64;
+    local:
+        *;
+};
