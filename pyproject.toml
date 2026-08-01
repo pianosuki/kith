@@ -115,6 +115,10 @@ known-first-party = ["kith"]
 force-single-line = false
 lines-after-imports = 2
 
+[tool.ruff.lint.per-file-ignores]
+# Test files may use assertions and long literals freely.
+"tests/**" = ["E501"]
+
 [tool.ruff.format]
 # Mirrors .editorconfig: 4-space indent, UTF-8, LF, trailing newline.
 quote-style = "preserve"
@@ -141,10 +145,11 @@ disallow_untyped_decorators = true
 no_implicit_optional = true
 # Fail loudly on missing stubs rather than silently inferring Any.
 warn_unused_ignores = true
-# tooling scripts and the framework package; type stubs ship with the deps.
-files = ["tools", "python"]
+# tooling scripts, the framework package, and the tests; type stubs ship
+# with the deps.
+files = ["tools", "python", "tests"]
 exclude = ["tools/fixtures", "build/", "\\.venv/", "\\.ruff_cache/"]
-mypy_path = ["python"]
+mypy_path = ["python", "tests/python"]
 namespace_packages = true
 explicit_package_bases = true
 
@@ -161,6 +166,29 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["clang.cindex", "gen_ctypes"]
 ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# pytest: test runner
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "8.4"
+testpaths = ["tests"]
+pythonpath = [".", "python", "tests/python"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--import-mode=importlib",
+]
+filterwarnings = [
+    "error",
+    # Allow deprecation notices from third-party deps (noisy, not actionable).
+    "ignore::DeprecationWarning",
+]
 
 # ---------------------------------------------------------------------------
 # Hatchling: build the Python wheel from python/kith/.
