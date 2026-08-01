@@ -1,0 +1,187 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 4,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "description": "Shared defaults: Ninja generator, Clang as the development compiler. Concrete presets inherit and add their own binaryDir and cacheVariables.",
+      "generator": "Ninja",
+      "environment": {
+        "CC": "clang"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (default development)",
+      "description": "Unoptimized build with full debug info. No LTO. _FORTIFY_SOURCE is disabled for this preset: fortification requires optimization and is inert here. All other hardening flags remain active. The preset used for day-to-day development and the default for ctest.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KITH_ENABLE_FORTIFY": "OFF"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release (optimized + LTO)",
+      "description": "Optimized build with link-time optimization enabled. Used for CI, benchmarks, and release artifacts.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "ON"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "AddressSanitizer",
+      "description": "Debug build with AddressSanitizer. _FORTIFY_SOURCE is disabled for this preset by cmake/sanitizers.cmake; all other hardening flags remain active.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KITH_ENABLE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "asan-ubsan",
+      "displayName": "AddressSanitizer + UndefinedBehaviorSanitizer",
+      "description": "Debug build with AddressSanitizer and UndefinedBehaviorSanitizer. UBSan findings abort instead of printing and continuing (cmake/sanitizers.cmake), so ctest fails on the first report; leak detection runs as part of ASan on Linux. _FORTIFY_SOURCE is disabled for this preset; all other hardening flags remain active. The preset behind the weekly sanitizer workflow.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/asan-ubsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KITH_ENABLE_ASAN": "ON",
+        "KITH_ENABLE_UBSAN": "ON"
+      }
+    },
+    {
+      "name": "tsan",
+      "displayName": "ThreadSanitizer",
+      "description": "Debug build with ThreadSanitizer for data-race detection. _FORTIFY_SOURCE is disabled for this preset by cmake/sanitizers.cmake. The weekly sanitizer lane's tsan job drives the preset over the C test suite: reports collect a full census without halting, and the run exits nonzero through ThreadSanitizer's default exit code.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/tsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KITH_ENABLE_TSAN": "ON"
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Coverage",
+      "description": "Debug build with coverage instrumentation (lcov / llvm-cov). _FORTIFY_SOURCE is disabled for this preset: fortification requires optimization and is inert here. All other hardening flags remain active. Coverage is reported in CI but not gated.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/coverage",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KITH_ENABLE_COVERAGE": "ON",
+        "KITH_ENABLE_FORTIFY": "OFF"
+      }
+    },
+    {
+      "name": "fuzz",
+      "displayName": "libFuzzer (Clang)",
+      "description": "Debug build with libFuzzer instrumentation for protocol-decoder fuzzing. libFuzzer requires Clang, so the _base CC=clang is essential here. Runs AddressSanitizer alongside the fuzzer by default.",
+      "inherits": "_base",
+      "binaryDir": "${sourceDir}/build/fuzz",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "KITH_ENABLE_FUZZ": "ON",
+        "KITH_ENABLE_ASAN": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "asan-ubsan",
+      "configurePreset": "asan-ubsan"
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
+    },
+    {
+      "name": "fuzz",
+      "configurePreset": "fuzz"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan-ubsan",
+      "configurePreset": "asan-ubsan",
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan",
+      "environment": {
+        "TSAN_OPTIONS": "second_deadlock_stack=1"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "fuzz",
+      "configurePreset": "fuzz",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

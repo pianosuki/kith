@@ -1,0 +1,6 @@
+version = 1
+
+[[annotations]]
+path = ["**"]
+SPDX-FileCopyrightText = "2026 Scott Weer <pianosuki@protonmail.com>"
+SPDX-License-Identifier = "Apache-2.0"

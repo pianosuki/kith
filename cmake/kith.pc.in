@@ -1,0 +1,35 @@
+# kith.pc.in — pkg-config template for the installed kith framework.
+#
+# Processed at install time by configure_file(@ONLY) into kith.pc, then
+# installed to <prefix>/lib/pkgconfig/kith.pc. A downstream autotools or
+# hand-written Makefile consumer queries the framework with:
+#
+#     CFLAGS  += $(pkg-config --cflags kith)
+#     LDFLAGS += $(pkg-config --libs kith)
+#
+# `Libs` enumerates every kith shared library in dependency-true order: the
+# composition root first, the foundation utilities last. The root re-exports
+# no layer-2 symbols, and a linker does not resolve a consumer-undefined
+# symbol from a DSO that is only a DT_NEEDED dependency of a named one
+# (GNU ld defaults to --no-copy-dt-needed-entries; lld is equivalent) — so
+# every DSO whose symbols a consumer can reference must be named on the link
+# line, and this file is the one place the pkg-config consumer gets the full
+# set from a single query.
+#
+# The .pc file is relocatable: pkg-config's built-in ${pcfiledir} variable
+# expands to the directory containing this .pc file (<prefix>/lib/pkgconfig),
+# so the prefix/exec_prefix/libdir/includedir lines below resolve to whatever
+# install prefix the package was deployed under without being baked in at
+# configure time.
+
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: kith
+Description: Scalable server framework for real-time, stateful multiplayer worlds, built on a five-plane world stream fabric
+Version: @PROJECT_VERSION@
+URL: https://github.com/pianosuki/kith
+Libs: -L${libdir} -lkith_server -lkith_client -lkith_control -lkith_coord -lkith_gateway -lkith_fabric -lkith_sim -lkith_aoi -lkith_db -lkith_state -lkith_worker -lkith_reactor -lkith_net -lkith_proto -lkith_metrics -lkith_logger -lkith_config -lkith_util
+Cflags: -I${includedir}

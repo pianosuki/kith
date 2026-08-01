@@ -1,0 +1,200 @@
+[build-system]
+# cmake and ninja are pip-installed into the isolated build environment so a
+# from-source build does not need a pre-installed CMake/Ninja on the host.
+# The C compiler stays the host's responsibility on every install path.
+requires = ["hatchling>=1.31.0", "cmake>=4.4.0", "ninja>=1.13.0"]
+build-backend = "hatchling.build"
+
+[project]
+# The distribution name (kith-fw) differs from the import name (kith) and the
+# CMake project name (kith): the registry name kith is held by an existing
+# project, while the Python import surface and the C consumer surface
+# (find_package(kith), pkg-config kith) keep the framework name.
+name = "kith-fw"
+# The wheel and sdist version tag derives from CMake's PROJECT_VERSION (the
+# single source of truth established for the release; CMakeLists.txt's
+# project(kith VERSION ...) line). The C KITH_VERSION_STRING macro in
+# include/kith/version.h is kept at the same value in lockstep, guarded by
+# the version test; this file does not read the header.
+dynamic = ["version"]
+description = "Scalable server framework for real-time, stateful multiplayer worlds."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Scott Weer", email = "pianosuki@protonmail.com" }]
+keywords = ["game-server", "mmo", "networking", "framework", "realtime"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Free Threading :: 3 - Stable",
+    "Topic :: Games/Entertainment",
+    "Topic :: Internet",
+    "Topic :: System :: Networking",
+    "Typing :: Typed",
+]
+
+# The pure-Python package wraps ctypes bindings to the C shared libraries
+# and depends only on the standard library.
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/pianosuki/kith/tree/main/docs"
+Homepage = "https://github.com/pianosuki/kith"
+Repository = "https://github.com/pianosuki/kith"
+"Bug Tracker" = "https://github.com/pianosuki/kith/issues"
+Changelog = "https://github.com/pianosuki/kith/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+# Development toolchain. Versions are floor pins; uv.lock pins exact versions
+# with exclude-newer for reproducible installs across machines and CI.
+dev = [
+    "clang2>=22.1.8",
+    "ruff>=0.16.0",
+    "mypy>=2.3.0",
+    "pytest>=9.1.1",
+    "pytest-xdist>=3.8.0",
+    "pyyaml>=6.0",
+    "vermin>=1.6.0",
+]
+
+[tool.uv]
+# Reproducible installs: refuse any release published after the lockfile was
+# generated. Keeps CI and local installs bit-identical for a given lock.
+# Pinned in UTC so the cutoff is independent of the local machine timezone;
+# bump deliberately when pulling in newer dependency releases.
+exclude-newer = "2026-08-01T17:00:00Z"
+# Require a uv version that understands exclude-newer and PEP 735 groups.
+required-version = ">=0.12.0"
+# Managed venv targets the project's requires-python.
+python-preference = "managed"
+
+# ---------------------------------------------------------------------------
+# Ruff: formatter + linter
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+    target-version = "py314"
+src = ["tools", "python", "tests"]
+extend-exclude = [
+    "tools/fixtures",
+    "build",
+    ".venv",
+]
+
+[tool.ruff.lint]
+# Conservative baseline suitable for tooling scripts and the framework
+# package. Add rules by name here; never widen with noqa-suppressed silences.
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes (unused imports, undefined names, redefinitions)
+    "W",      # pycodestyle warnings
+    "I",      # isort (import sorting)
+    "B",      # bugbear (common gotchas: mutable defaults, bare excepts)
+    "C4",     # comprehensions (unnecessary list/GeneratorExpression)
+    "UP",     # pyupgrade (modern syntax; aligns with requires-python 3.14)
+    "SIM",    # simplify (collapsible if/else, unnecessary casts)
+    "PIE",    # flake8-pie (misc lints)
+    "RUF",    # ruff-specific
+]
+ignore = [
+    # Docstrings are not enforced by ruff; doxygen-style contracts live in
+    # comments, and Python docstrings arrive with the framework package.
+    "D",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kith"]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.ruff.format]
+# Mirrors .editorconfig: 4-space indent, UTF-8, LF, trailing newline.
+quote-style = "preserve"
+indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+
+# ---------------------------------------------------------------------------
+# mypy: static type checking
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.14"
+# Strict by default per the Python code standard.
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unreachable = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+# Fail loudly on missing stubs rather than silently inferring Any.
+warn_unused_ignores = true
+# tooling scripts and the framework package; type stubs ship with the deps.
+files = ["tools", "python"]
+exclude = ["tools/fixtures", "build/", "\\.venv/", "\\.ruff_cache/"]
+mypy_path = ["python"]
+namespace_packages = true
+explicit_package_bases = true
+
+# Optional third-party imports that ship without stubs and may be absent from
+# the type-checking environment: treat as Any silently so the same config
+# passes whether or not the runtime package is installed.
+[[tool.mypy.overrides]]
+module = "yaml"
+ignore_missing_imports = true
+
+# libclang ships as a pure-Python module without type stubs; the cursor/type
+# APIs are dynamic. The generator annotates against Cursor/Type for clarity
+# but type-checking treats the module as Any.
+[[tool.mypy.overrides]]
+module = ["clang.cindex", "gen_ctypes"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Hatchling: build the Python wheel from python/kith/.
+#
+# The release version is sourced from CMake's PROJECT_VERSION, so the wheel
+# and sdist tags read from the same definition as the C consumer channels.
+# ---------------------------------------------------------------------------
+
+[tool.hatch.version]
+# The release version is sourced from CMake's PROJECT_VERSION (the
+# project(kith VERSION ...) line in CMakeLists.txt), so the wheel/sdist tag
+# and the C library SONAMEs read from one definition. KITH_VERSION_STRING in
+# include/kith/version.h is held at the same value in lockstep (guarded by
+# the version test) and is not read here.
+source = "regex"
+path = "CMakeLists.txt"
+pattern = 'project\(kith VERSION (?P<version>\d+\.\d+\.\d+)'
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/kith"]
+
+[tool.hatch.build.targets.sdist]
+# The sdist ships the source tree a from-source build needs: the C headers,
+# CMake build files, and the Python package. Every include pattern is
+# anchored to the repository root: hatchling compiles the list into a
+# gitignore spec, where a bare name matches that name at every depth and
+# would pull partial fragments of other trees without their sources.
+include = [
+    "/python/kith",
+    "/include",
+    "/cmake",
+    "/CMakeLists.txt",
+    "/CMakePresets.json",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]

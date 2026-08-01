@@ -1,0 +1,11 @@
+# Default: normalize text files to LF on commit
+* text=auto eol=lf
+
+# Binary assets (no line-ending normalization)
+*.so     binary
+*.a      binary
+*.dylib  binary
+*.png    binary
+
+# Markdown is text
+*.md     text=auto

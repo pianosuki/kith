@@ -1,0 +1,46 @@
+@PACKAGE_INIT@
+
+# kithConfig.cmake — generated package-config entry point for find_package(kith).
+#
+# A downstream CMake project finds the installed framework with:
+#
+#     find_package(kith 1.0.0 REQUIRED)
+#     target_link_libraries(my_app PRIVATE kith::server)
+#
+# or, for finer-grained consumers that want a single plane library:
+#
+#     target_link_libraries(my_app PRIVATE kith::util kith::reactor)
+#
+# Every layer-2 library plus the layer-3 composition root is part of the
+# kithTargets export set, so kith::server, kith::sim, kith::fabric,
+# kith::gateway, kith::coord, kith::control, kith::client, kith::reactor,
+# kith::worker, kith::net, kith::proto, kith::state, kith::db, kith::aoi,
+# kith::config, kith::logger, kith::metrics, and kith::util are all available
+# after find_package(kith). kith::server is the composition root a game links
+# against; the others are exposed for tools and tests that exercise one plane
+# in isolation.
+#
+# The export generator names imported targets `kith::kith_<name>` (the
+# `kith::` namespace is prefixed to the in-tree target name `kith_<name>`),
+# so this file adds `kith::<name>` ALIAS targets mapping to the canonical
+# imported targets — a downstream writes `kith::server`, not
+# `kith::kith_server`. An ALIAS to an imported target is a pure name mapping
+# with no location of its own; the underlying imported target carries the
+# IMPORTED_LOCATION that target_link_libraries resolves. Each ALIAS is
+# created only when the underlying imported target exists (kith_control is
+# absent when the install was configured with CONTROL_PLANE_ENABLED=OFF).
+
+include("${CMAKE_CURRENT_LIST_DIR}/kithTargets.cmake")
+
+set(_kith_lib_short_names
+    util config logger metrics proto net reactor worker state db client sim
+    fabric aoi gateway coord control server)
+foreach(_short IN LISTS _kith_lib_short_names)
+    if(TARGET kith::kith_${_short} AND NOT TARGET kith::${_short})
+        add_library(kith::${_short} ALIAS kith::kith_${_short})
+    endif()
+endforeach()
+unset(_short)
+unset(_kith_lib_short_names)
+
+check_required_components(kith)

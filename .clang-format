@@ -1,0 +1,94 @@
+---
+# Kith Framework — Clang-Format configuration
+# C23, Clang 22+
+
+BasedOnStyle: LLVM
+Language: Cpp
+
+ColumnLimit: 100
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+PPIndentWidth: -1
+IndentRequiresClause: true
+IndentWrappedFunctionNames: false
+
+BreakBeforeBraces: Allman
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: Never
+  AfterStruct: true
+  AfterUnion: true
+  AfterEnum: true
+  AfterExternBlock: true
+  BeforeElse: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortLambdasOnASingleLine: None
+
+PointerAlignment: Right
+DerivePointerAlignment: false
+
+SpaceAfterCStyleCast: false
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceAroundPointerQualifiers: Default
+BitFieldColonSpacing: Both
+
+AlignOperands: Align
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveMacros: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignEscapedNewlines: Left
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 1
+AlignAfterOpenBracket: Align
+IndentGotoLabels: false
+IndentCaseLabels: true
+IndentCaseBlocks: false
+
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: false
+
+IncludeBlocks: Regroup
+SortIncludes: CaseInsensitive
+IncludeCategories:
+  # C23 standard headers (enumerated — the original c[no]? regex missed most)
+  - Regex: '^<(assert|complex|ctype|errno|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|stdalign|stdarg|stdatomic|stdbit|stdbool|stdckdint|stddef|stdint|stdio|stdlib|string|tgmath|threads|time|uchar|wchar|wctype)\.h>$'
+    Priority: 1
+  - Regex: '^<[^/]+>$'               # System / third-party
+    Priority: 2
+  - Regex: '^".*"$'                   # Project headers
+    Priority: 3
+
+AttributeMacros:
+  - KITH_API
+  - KITH_LOCAL
+  - KITH_DEPRECATED
+
+StatementMacros:
+  - KITH_ABI_VERSION
+
+ReflowComments: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+FixNamespaceComments: false

@@ -1,0 +1,83 @@
+minimum_pre_commit_version: '3.0.0'
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
+
+# Remote hooks only: every checker here is a pinned third-party repo, so the
+# manifest is reproducible from a bare checkout. The hook environments are
+# owned by pre-commit: each repo installs its declared dependencies into an
+# isolated, version-pinned virtualenv, independent of the developer's project
+# venv or system python.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=100]
+      - id: check-case-conflict
+      - id: check-shebang-scripts-are-executable
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v22.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c]
+        exclude: '^third_party/'
+        # Verify-only: dry-run + Werror reports violations without rewriting
+        # the working tree. The fix path is the formatter run directly; a
+        # gate never mutates files.
+        args: [--dry-run, --Werror]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      # Verify-only: neither hook fixes. `ruff check` reports lint
+      # violations and exits non-zero; `ruff format --check` reports
+      # formatting drift without rewriting.
+      - id: ruff
+      - id: ruff-format
+        args: [--check]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pytest>=9.1.1]
+        stages: [pre-push]
+        exclude: '^tools/fixtures/'
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        exclude: '^third_party/'
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          - --strict
+          - --force-scope
+          - --verbose
+          - --scopes=util,config,logger,metrics,net,proto,reactor,worker,state,db,aoi,sim,fabric,gateway,coord,control,client,server,examples,framework,tools
+          - feat
+          - fix
+          - perf
+          - refactor
+          - test
+          - docs
+          - build
+          - ci
+          - chore
+          - revert
+
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: v6.2.0
+    hooks:
+      - id: reuse
+        stages: [manual]

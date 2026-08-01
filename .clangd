@@ -1,0 +1,24 @@
+CompileFlags:
+  Add:
+    - -std=c23
+    - -D_GNU_SOURCE
+    - -Wall
+    - -Wextra
+  Compiler: clang
+  Remove:
+    - -W*
+    - -fcolor-diagnostics
+
+Diagnostics:
+  ClangTidy:
+    FastCheckFilter: None
+    CheckOptions:
+      readability-function-size.LineThreshold: '80'
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+
+Hover:
+  ShowAKA: Yes

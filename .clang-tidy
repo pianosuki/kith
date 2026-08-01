@@ -1,0 +1,99 @@
+---
+# Kith Framework — Clang-Tidy configuration
+# C23, Clang 22+
+#
+# The Checks value is a single folded string of comma/space-separated
+# check globs. Inline `#` comments inside the folded scalar are absorbed
+# as literal text by YAML and corrupt the glob list (each exclusion was
+# glued to its `# justification` and dropped), so exclusions are disabled
+# in the scalar below and justified in this comment block instead.
+
+# Enabled globs:
+#   bugprone-*, cert-*, misc-*, performance-*, portability-*,
+#   readability-*, clang-analyzer-core.*,
+#   clang-analyzer-deadcode.DeadStores,
+#   clang-analyzer-optin.portability.UnixAPI
+#
+# Disabled exclusions and their justifications:
+#   -clang-analyzer-security.insecureAPI.*   _GNU_SOURCE; strncpy etc. intentional
+#   -bugprone-easily-swappable-parameters    too noisy for C; naming conveys intent
+#   -bugprone-branch-clone                   intentional switch-case patterns
+#   -bugprone-multi-level-implicit-pointer-conversion
+#   -readability-magic-numbers               C has constants everywhere
+#   -readability-function-cognitive-complexity  too aggressive for perf-critical code
+#   -readability-identifier-length           short names (i, j, p) are idiomatic
+#   -readability-implicit-bool-conversion    common C idiom
+#   -readability-uppercase-literal-suffix    lowercase suffixes consistently
+#   -readability-math-missing-parentheses    precedence well-understood in C
+#   -misc-include-cleaner                    too many false positives
+#   -misc-no-recursion                       recursive algorithms sometimes correct
+
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  clang-analyzer-core.*,
+  clang-analyzer-deadcode.DeadStores,
+  clang-analyzer-optin.portability.UnixAPI,
+
+  -clang-analyzer-security.insecureAPI.*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-branch-clone,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-uppercase-literal-suffix,
+  -readability-math-missing-parentheses,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+
+CheckOptions:
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+  - key: readability-identifier-naming.TypedefCase
+    value: lower_case
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+
+  - key: readability-function-size.LineThreshold
+    value: '80'
+  - key: readability-function-size.StatementThreshold
+    value: '60'
+  - key: readability-function-size.BranchThreshold
+    value: '12'
+  - key: readability-function-size.ParameterThreshold
+    value: '8'
+
+  - key: readability-braces-around-statements.ShortStatementTypes
+    value: 'All'
+
+  - key: performance-enum-size.EnumIgnoreUnnamed
+    value: 'false'
+
+  - key: portability-restrict-system-includes.Includes
+    value: '-*,assert.h,async.h,complex.h,ctype.h,errno.h,fenv.h,float.h,hiredis.h,inttypes.h,libpq-fe.h,liburing.h,limits.h,locale.h,math.h,netdb.h,poll.h,netinet/in.h,netinet/tcp.h,setjmp.h,signal.h,stdalign.h,stdarg.h,stdatomic.h,stdbit.h,stdbool.h,stdckdint.h,stddef.h,stdint.h,stdio.h,stdlib.h,string.h,sys/epoll.h,sys/event.h,sys/eventfd.h,sys/socket.h,sys/stat.h,sys/time.h,sys/uio.h,sys/wait.h,tgmath.h,threads.h,time.h,uchar.h,wchar.h,wctype.h,pthread.h,fcntl.h,unistd.h'
+
+HeaderFilterRegex: 'include/kith/.*'
+FormatStyle: file
+WarningsAsErrors: ''
+ExtraArgs:
+  - '-std=c23'
+  - '-D_GNU_SOURCE'
