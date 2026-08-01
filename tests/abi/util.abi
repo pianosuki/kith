@@ -1,0 +1,317 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_util.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_python_finalizing' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_python_finalizing_set' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_python_handler_exceptions' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_python_note_handler_exception' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_create' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_create_stream' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_derivation_seed' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_destroy' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_next' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_next_below' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_next_unit' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_state_restore' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_rng_state_save' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_advance' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_create' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_destroy' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_elapsed_ms' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_elapsed_ns' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_reset' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_tick_clock_tick' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_version_abi' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_version_string' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_wall_clock_ns' version='KITH_UTIL_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='clock_gettime' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/util/rng.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='double' size-in-bits='64' hash='e9e9b320886d9aa6' id='type-id-2'/>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-3'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-4' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-4' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-5' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-6' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-7' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-8' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-9' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-10' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_rng' is-struct='yes' visibility='default' size-in-bits='384' filepath='././src/util/rng.c' line='25' column='1' hash='65f2baa7538fb4d8' id='type-id-11'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-12' visibility='default' filepath='././src/util/rng.c' line='27' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='derivation_seed' type-id='type-id-13' visibility='default' filepath='././src/util/rng.c' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='words' type-id='type-id-14' visibility='default' filepath='././src/util/rng.c' line='29' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_rng_params' is-struct='yes' visibility='default' size-in-bits='640' filepath='./include/kith/util/rng.h' line='43' column='1' hash='1dbfd5c266cb41af' id='type-id-15'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-4' visibility='default' filepath='./include/kith/util/rng.h' line='45' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-4' visibility='default' filepath='./include/kith/util/rng.h' line='46' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='seed' type-id='type-id-13' visibility='default' filepath='./include/kith/util/rng.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='reserved' type-id='type-id-10' visibility='default' filepath='./include/kith/util/rng.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_rng_state' is-struct='yes' visibility='default' size-in-bits='320' filepath='./include/kith/util/rng.h' line='69' column='1' hash='bd2e02846320fb89' id='type-id-16'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='derivation_seed' type-id='type-id-13' visibility='default' filepath='./include/kith/util/rng.h' line='72' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='words' type-id='type-id-14' visibility='default' filepath='./include/kith/util/rng.h' line='75' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__uint32_t' type-id='type-id-17' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-18'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-19' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-6'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-20' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-7'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-3' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-21'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-22' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-9'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-23' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-8'/>
+    <typedef-decl name='kith_rng_params_t' type-id='type-id-15' size-in-bits='640' filepath='./include/kith/util/rng.h' line='57' column='1' id='type-id-24'/>
+    <typedef-decl name='kith_rng_state_t' type-id='type-id-16' size-in-bits='320' filepath='./include/kith/util/rng.h' line='78' column='1' id='type-id-25'/>
+    <typedef-decl name='kith_rng_t' type-id='type-id-11' size-in-bits='384' filepath='./include/kith/util/rng.h' line='34' column='1' id='type-id-26'/>
+    <typedef-decl name='size_t' type-id='type-id-27' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-28'/>
+    <typedef-decl name='uint32_t' type-id='type-id-18' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-4'/>
+    <array-type-def dimensions='1' type-id='type-id-13' size-in-bits='256' hash='4782e910fd534fc8' id='type-id-14'>
+      <subrange length='4' lower-bound='0' upper-bound='3' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='cee611f4a73e486c' id='type-id-29'/>
+    </array-type-def>
+    <array-type-def dimensions='1' type-id='type-id-5' hash='8d913e14a8a96b62' id='type-id-10'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-30'/>
+    </array-type-def>
+    <qualified-type-def type-id='type-id-21' const='yes' hash='07c74f5fb4899ef5' id='type-id-31'/>
+    <pointer-type-def type-id='type-id-31' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-12'/>
+    <qualified-type-def type-id='type-id-24' const='yes' hash='5245f53a80fdf700' id='type-id-32'/>
+    <pointer-type-def type-id='type-id-32' size-in-bits='64' hash='358c921d1c308d28' id='type-id-33'/>
+    <qualified-type-def type-id='type-id-25' const='yes' hash='d06a431bec5d8dc8' id='type-id-34'/>
+    <pointer-type-def type-id='type-id-34' size-in-bits='64' hash='52a821cb6180dafd' id='type-id-35'/>
+    <qualified-type-def type-id='type-id-26' const='yes' hash='5ac0204e617c3266' id='type-id-36'/>
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' hash='83a6a23c991df1df' id='type-id-37'/>
+    <pointer-type-def type-id='type-id-25' size-in-bits='64' hash='d4513c8713a6de5b' id='type-id-38'/>
+    <pointer-type-def type-id='type-id-26' size-in-bits='64' hash='78848846ee2ba90d' id='type-id-39'/>
+    <pointer-type-def type-id='type-id-39' size-in-bits='64' hash='3f1382379a4ca456' id='type-id-40'/>
+    <pointer-type-def type-id='type-id-41' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-22'/>
+    <pointer-type-def type-id='type-id-42' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-19'/>
+    <pointer-type-def type-id='type-id-43' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-20'/>
+    <pointer-type-def type-id='type-id-44' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-23'/>
+    <function-decl name='kith_rng_create' mangled-name='kith_rng_create' filepath='././src/util/rng.c' line='78' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_create@@KITH_UTIL_1' hash='5179eaab698aead5'>
+      <parameter type-id='type-id-33' name='params' filepath='././src/util/rng.c' line='78' column='1'/>
+      <parameter type-id='type-id-12' name='alloc' filepath='././src/util/rng.c' line='79' column='1'/>
+      <parameter type-id='type-id-40' name='out_rng' filepath='././src/util/rng.c' line='80' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_rng_destroy' mangled-name='kith_rng_destroy' filepath='././src/util/rng.c' line='113' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_destroy@@KITH_UTIL_1' hash='388c4a394fb68b82'>
+      <parameter type-id='type-id-39' name='rng' filepath='././src/util/rng.c' line='113' column='1'/>
+      <return type-id='type-id-46'/>
+    </function-decl>
+    <function-decl name='kith_rng_create_stream' mangled-name='kith_rng_create_stream' filepath='././src/util/rng.c' line='122' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_create_stream@@KITH_UTIL_1' hash='388bb9ec327c33fd'>
+      <parameter type-id='type-id-37' name='parent' filepath='././src/util/rng.c' line='122' column='1'/>
+      <parameter type-id='type-id-13' name='stream_key' filepath='././src/util/rng.c' line='123' column='1'/>
+      <parameter type-id='type-id-12' name='alloc' filepath='././src/util/rng.c' line='124' column='1'/>
+      <parameter type-id='type-id-40' name='out_rng' filepath='././src/util/rng.c' line='125' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_rng_next' mangled-name='kith_rng_next' filepath='././src/util/rng.c' line='157' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_next@@KITH_UTIL_1' hash='fa7e2954716d1401'>
+      <parameter type-id='type-id-39' name='rng' filepath='././src/util/rng.c' line='157' column='1'/>
+      <return type-id='type-id-13'/>
+    </function-decl>
+    <function-decl name='kith_rng_next_below' mangled-name='kith_rng_next_below' filepath='././src/util/rng.c' line='166' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_next_below@@KITH_UTIL_1' hash='2d973c6b1aa31ecc'>
+      <parameter type-id='type-id-39' name='rng' filepath='././src/util/rng.c' line='166' column='1'/>
+      <parameter type-id='type-id-13' name='bound' filepath='././src/util/rng.c' line='166' column='1'/>
+      <return type-id='type-id-13'/>
+    </function-decl>
+    <function-decl name='kith_rng_next_unit' mangled-name='kith_rng_next_unit' filepath='././src/util/rng.c' line='187' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_next_unit@@KITH_UTIL_1' hash='31b80411beee375e'>
+      <parameter type-id='type-id-39' name='rng' filepath='././src/util/rng.c' line='187' column='1'/>
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <function-decl name='kith_rng_derivation_seed' mangled-name='kith_rng_derivation_seed' filepath='././src/util/rng.c' line='198' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_derivation_seed@@KITH_UTIL_1' hash='f8a2ec0686b0fa8d'>
+      <parameter type-id='type-id-37' name='rng' filepath='././src/util/rng.c' line='198' column='1'/>
+      <return type-id='type-id-13'/>
+    </function-decl>
+    <function-decl name='kith_rng_state_save' mangled-name='kith_rng_state_save' filepath='././src/util/rng.c' line='207' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_state_save@@KITH_UTIL_1' hash='b892012a5fbb42d1'>
+      <parameter type-id='type-id-37' name='rng' filepath='././src/util/rng.c' line='207' column='1'/>
+      <parameter type-id='type-id-38' name='out_state' filepath='././src/util/rng.c' line='207' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_rng_state_restore' mangled-name='kith_rng_state_restore' filepath='././src/util/rng.c' line='221' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_rng_state_restore@@KITH_UTIL_1' hash='706e60928fd4e7fe'>
+      <parameter type-id='type-id-39' name='rng' filepath='././src/util/rng.c' line='221' column='1'/>
+      <parameter type-id='type-id-35' name='state' filepath='././src/util/rng.c' line='221' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <pointer-type-def type-id='type-id-46' id='type-id-5'/>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-41'>
+      <parameter type-id='type-id-5'/>
+      <parameter type-id='type-id-5'/>
+      <return type-id='type-id-46'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-42'>
+      <parameter type-id='type-id-5'/>
+      <parameter type-id='type-id-28'/>
+      <return type-id='type-id-5'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-43'>
+      <parameter type-id='type-id-5'/>
+      <parameter type-id='type-id-28'/>
+      <parameter type-id='type-id-28'/>
+      <return type-id='type-id-5'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-44'>
+      <parameter type-id='type-id-5'/>
+      <parameter type-id='type-id-5'/>
+      <parameter type-id='type-id-28'/>
+      <return type-id='type-id-5'/>
+    </function-type>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/util/tick_clock.c' comp-dir-path='.' language='LANG_C11'>
+    <class-decl name='kith_tick_clock' is-struct='yes' visibility='default' size-in-bits='256' filepath='././src/util/tick_clock.c' line='11' column='1' hash='96d9dd777b2ad32a' id='type-id-47'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-12' visibility='default' filepath='././src/util/tick_clock.c' line='13' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='tick' type-id='type-id-13' visibility='default' filepath='././src/util/tick_clock.c' line='14' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='ns_per_tick' type-id='type-id-13' visibility='default' filepath='././src/util/tick_clock.c' line='15' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='ms_per_tick' type-id='type-id-13' visibility='default' filepath='././src/util/tick_clock.c' line='16' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_tick_clock_params' is-struct='yes' visibility='default' size-in-bits='704' filepath='./include/kith/util/tick_clock.h' line='37' column='1' hash='d42c8a8fb06a6ab3' id='type-id-48'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-4' visibility='default' filepath='./include/kith/util/tick_clock.h' line='39' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-4' visibility='default' filepath='./include/kith/util/tick_clock.h' line='40' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='initial_tick' type-id='type-id-13' visibility='default' filepath='./include/kith/util/tick_clock.h' line='45' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='tick_hz' type-id='type-id-4' visibility='default' filepath='./include/kith/util/tick_clock.h' line='51' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='reserved' type-id='type-id-10' visibility='default' filepath='./include/kith/util/tick_clock.h' line='53' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='kith_tick_clock_params_t' type-id='type-id-48' size-in-bits='704' filepath='./include/kith/util/tick_clock.h' line='56' column='1' id='type-id-49'/>
+    <typedef-decl name='kith_tick_clock_t' type-id='type-id-47' size-in-bits='256' filepath='./include/kith/util/tick_clock.h' line='28' column='1' id='type-id-50'/>
+    <qualified-type-def type-id='type-id-49' const='yes' hash='d589950a7dddb4a9' id='type-id-51'/>
+    <pointer-type-def type-id='type-id-51' size-in-bits='64' hash='58a7847c722f7be1' id='type-id-52'/>
+    <qualified-type-def type-id='type-id-50' const='yes' hash='dc5bbcdcfb356eb6' id='type-id-53'/>
+    <pointer-type-def type-id='type-id-53' size-in-bits='64' hash='d2d7ce6893afc22c' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-50' size-in-bits='64' hash='bd566d12c9d6cf86' id='type-id-55'/>
+    <pointer-type-def type-id='type-id-55' size-in-bits='64' hash='e28d85928a37fd00' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-13' size-in-bits='64' hash='a7b536d51360d693' id='type-id-57'/>
+    <function-decl name='kith_tick_clock_create' mangled-name='kith_tick_clock_create' filepath='././src/util/tick_clock.c' line='43' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_create@@KITH_UTIL_1' hash='2ebf68d5b249735c'>
+      <parameter type-id='type-id-52' name='params' filepath='././src/util/tick_clock.c' line='43' column='1'/>
+      <parameter type-id='type-id-12' name='alloc' filepath='././src/util/tick_clock.c' line='44' column='1'/>
+      <parameter type-id='type-id-56' name='out_clock' filepath='././src/util/tick_clock.c' line='45' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_tick_clock_destroy' mangled-name='kith_tick_clock_destroy' filepath='././src/util/tick_clock.c' line='81' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_destroy@@KITH_UTIL_1' hash='0edf5e117c02ef31'>
+      <parameter type-id='type-id-55' name='clock' filepath='././src/util/tick_clock.c' line='81' column='1'/>
+      <return type-id='type-id-46'/>
+    </function-decl>
+    <function-decl name='kith_tick_clock_advance' mangled-name='kith_tick_clock_advance' filepath='././src/util/tick_clock.c' line='90' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_advance@@KITH_UTIL_1' hash='fc3dc4fe27c319b4'>
+      <parameter type-id='type-id-55' name='clock' filepath='././src/util/tick_clock.c' line='90' column='1'/>
+      <parameter type-id='type-id-13' name='ticks' filepath='././src/util/tick_clock.c' line='90' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_tick_clock_reset' mangled-name='kith_tick_clock_reset' filepath='././src/util/tick_clock.c' line='105' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_reset@@KITH_UTIL_1' hash='fc3dc4fe27c319b4'>
+      <parameter type-id='type-id-55' name='clock' filepath='././src/util/tick_clock.c' line='90' column='1'/>
+      <parameter type-id='type-id-13' name='ticks' filepath='././src/util/tick_clock.c' line='90' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_tick_clock_tick' mangled-name='kith_tick_clock_tick' filepath='././src/util/tick_clock.c' line='115' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_tick@@KITH_UTIL_1' hash='f60e0699cce3d760'>
+      <parameter type-id='type-id-54' name='clock' filepath='././src/util/tick_clock.c' line='115' column='1'/>
+      <return type-id='type-id-13'/>
+    </function-decl>
+    <function-decl name='kith_tick_clock_elapsed_ms' mangled-name='kith_tick_clock_elapsed_ms' filepath='././src/util/tick_clock.c' line='139' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_elapsed_ms@@KITH_UTIL_1' hash='226886fd33129353'>
+      <parameter type-id='type-id-54' name='clock' filepath='././src/util/tick_clock.c' line='139' column='1'/>
+      <parameter type-id='type-id-57' name='out_ms' filepath='././src/util/tick_clock.c' line='140' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_tick_clock_elapsed_ns' mangled-name='kith_tick_clock_elapsed_ns' filepath='././src/util/tick_clock.c' line='149' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_tick_clock_elapsed_ns@@KITH_UTIL_1' hash='226886fd33129353'>
+      <parameter type-id='type-id-54' name='clock' filepath='././src/util/tick_clock.c' line='139' column='1'/>
+      <parameter type-id='type-id-57' name='out_ms' filepath='././src/util/tick_clock.c' line='140' column='1'/>
+      <return type-id='type-id-45'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/util/util.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-58'/>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-45'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-27' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-59'/>
+    <typedef-decl name='uint64_t' type-id='type-id-59' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-13'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-17'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-27'/>
+    <qualified-type-def type-id='type-id-58' const='yes' hash='3e50fd33f9bb78d9' id='type-id-60'/>
+    <pointer-type-def type-id='type-id-60' size-in-bits='64' hash='c44743f354f6a443' id='type-id-61'/>
+    <function-decl name='kith_version_string' mangled-name='kith_version_string' filepath='././src/util/util.c' line='15' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_version_string@@KITH_UTIL_1' hash='53885bde0aa65efe'>
+      <return type-id='type-id-61'/>
+    </function-decl>
+    <function-decl name='kith_version_abi' mangled-name='kith_version_abi' filepath='././src/util/util.c' line='20' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_version_abi@@KITH_UTIL_1' hash='2bb88322482ae81c'>
+      <return type-id='type-id-17'/>
+    </function-decl>
+    <function-decl name='kith_python_finalizing_set' mangled-name='kith_python_finalizing_set' filepath='././src/util/util.c' line='25' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_python_finalizing_set@@KITH_UTIL_1' hash='388da3fa973fde78'>
+      <parameter type-id='type-id-45' name='finalizing' filepath='././src/util/util.c' line='25' column='1'/>
+      <return type-id='type-id-46'/>
+    </function-decl>
+    <function-decl name='kith_python_finalizing' mangled-name='kith_python_finalizing' filepath='././src/util/util.c' line='30' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_python_finalizing@@KITH_UTIL_1' hash='388da3fa973fde78'>
+      <return type-id='type-id-45'/>
+    </function-decl>
+    <function-decl name='kith_python_note_handler_exception' mangled-name='kith_python_note_handler_exception' filepath='././src/util/util.c' line='40' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_python_note_handler_exception@@KITH_UTIL_1' hash='7f32ffea222edbe7'>
+      <return type-id='type-id-46'/>
+    </function-decl>
+    <function-decl name='kith_python_handler_exceptions' mangled-name='kith_python_handler_exceptions' filepath='././src/util/util.c' line='45' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_python_handler_exceptions@@KITH_UTIL_1' hash='e0055d99adb0e173'>
+      <return type-id='type-id-13'/>
+    </function-decl>
+    <type-decl name='void' id='type-id-46'/>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/util/wall_clock.c' comp-dir-path='.' language='LANG_C11'>
+    <function-decl name='kith_wall_clock_ns' mangled-name='kith_wall_clock_ns' filepath='././src/util/wall_clock.c' line='9' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_wall_clock_ns@@KITH_UTIL_1' hash='e0055d99adb0e173'>
+      <return type-id='type-id-13'/>
+    </function-decl>
+  </abi-instr>
+</abi-corpus>

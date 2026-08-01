@@ -229,8 +229,8 @@ path = "hatch_build.py"
 
 [tool.hatch.build.targets.sdist]
 # The sdist ships the source tree a from-source build needs: the C source,
-# headers, CMake build files, version scripts, the Hatch build hook, and the
-# Python package. Every include pattern is anchored to the
+# headers, CMake build files, version scripts, the Hatch build hook, the ABI
+# snapshots, and the Python package. Every include pattern is anchored to the
 # repository root: hatchling compiles the list into a gitignore spec, where a
 # bare name matches that name at every depth and would pull partial fragments
 # of the test, example, and tooling trees without their sources. A
@@ -244,6 +244,7 @@ include = [
     "/include",
     "/src",
     "/cmake",
+    "/tests/abi",
     "/hatch_build.py",
     "/CMakeLists.txt",
     "/CMakePresets.json",

@@ -11,7 +11,7 @@ review enforces the rest.
 2. C code standards (§2)
 3. Python code standards (§3)
 4. Testing — tiers, naming, and the scaling gates (§4)
-5. Git workflow — push law, commit messages (§5)
+5. Git workflow — push law, the verification gate, commit messages (§5)
 6. Dependencies (§6)
 7. Documentation — API reference, records, guides (§7)
 8. Review checklist (§8)
@@ -576,6 +576,19 @@ This rule exists because pushes are irreversible and externally visible. A
 machine cannot judge whether the commit author is ready for the change to
 leave the local repo. The human owns the decision to publish.
 
+### 5.0a The verification gate (single source of truth)
+
+`scripts/verify.sh` is the single gate: it runs lint (pre-commit, license
+compliance, mypy) and build (configure, compile, ctest, pytest, check-all,
+the ABI diff, checksec) in one invocation, so a change cannot pass one
+check and fail another. The gate is verify-only: it never rewrites files.
+Run `scripts/verify.sh` (or `scripts/verify.sh <stage>`) and get all-green
+before **every** commit. When a gate reports a formatting violation, fix
+it with `cmake --build --target format` (or `scripts/format.sh`), then
+re-run the gate. `pre-commit` alone is insufficient (it omits clang-tidy,
+mypy-on-push, license compliance, the build, and the ABI/hardening
+checks).
+
 ### 5.1 Branch Strategy
 - `main` is always releasable. The maintainer commits directly to
   `main`, gated by §5.0a per commit; no merge commits on `main`.
@@ -618,7 +631,8 @@ The header is mandatory. The body is mandatory for all types except
 | `revert` | Reverting a prior commit (§5.2.7) | varies |
 
 `style` is deliberately excluded: formatting is applied via
-the formatters before committing and never forms a separate commit.
+`cmake --build --target format` (or `scripts/format.sh`) before
+committing and never forms a separate commit.
 
 #### 5.2.3 Scope (mandatory; `--force-scope` enforced by the hook)
 
@@ -835,6 +849,9 @@ who knew what to build and why, in order.
 
 ## 8. Review Checklist
 Before requesting review, verify:
+- [ ] `scripts/verify.sh` is all-green (the single gate: lint + build +
+      ABI diff + checksec; see §5.0a). This subsumes the items
+      below, which are listed for traceability.
 - [ ] Formatters and linters pass: clang-format, clang-tidy, ruff check
       and format, mypy --strict.
 - [ ] Structural checkers pass: module layers, runtime planes, ctypes

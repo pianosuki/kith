@@ -27,9 +27,18 @@ repos:
         types_or: [c]
         exclude: '^third_party/'
         # Verify-only: dry-run + Werror reports violations without rewriting
-        # the working tree. The fix path is the formatter run directly; a
-        # gate never mutates files.
+        # the working tree. The fix path is `cmake --build --target format`
+        # or `scripts/format.sh`; a gate never mutates files.
         args: [--dry-run, --Werror]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      # Shell scripts join the gate at warning severity; notes stay
+      # informational. The platform wheels bundle the shellcheck binary,
+      # so the hook's environment needs no runtime download.
+      - id: shellcheck
+        args: [--severity=warning]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0

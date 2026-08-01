@@ -45,6 +45,16 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools")
     include(cmake/format.cmake)
 endif()
 
+# C unit tests. enable_testing() must appear at the top level so ctest
+# discovers tests registered by the tests/c subdirectory. The optional
+# subtrees below exist only in a full checkout; a source distribution ships
+# the build inputs alone, so each is composed only when its CMakeLists is
+# present.
+enable_testing()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/c/CMakeLists.txt")
+    add_subdirectory(tests/c)
+endif()
+
 # --- Downstream consumer story: find_package(kith) + pkg-config -----------
 # Every layer-2 library above is installed with `EXPORT kithTargets`; this
 # block assembles that export set into a CMake package a downstream finds
