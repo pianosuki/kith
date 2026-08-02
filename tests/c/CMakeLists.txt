@@ -21,3 +21,12 @@ add_test(NAME test_util_clock COMMAND test_util_clock)
 add_executable(test_error_return test_error_return.c)
 target_link_libraries(test_error_return PRIVATE kith_util)
 add_test(NAME test_error_return COMMAND test_error_return)
+
+add_executable(test_config_source test_config_source.c)
+target_link_libraries(test_config_source PRIVATE kith_config)
+# _XOPEN_SOURCE=700 implies POSIX.1-2008 and additionally exposes putenv,
+# which glibc guards behind the X/Open feature set.
+target_compile_definitions(
+    test_config_source PRIVATE _POSIX_C_SOURCE=200809L _XOPEN_SOURCE=700
+)
+add_test(NAME test_config_source COMMAND test_config_source)
