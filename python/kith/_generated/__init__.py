@@ -5,7 +5,7 @@ from __future__ import annotations
 import ctypes
 from typing import Protocol
 
-from . import config, util
+from . import config, logger, util
 
 
 class _LibProvider(Protocol):
@@ -16,3 +16,4 @@ def configure(bridge: _LibProvider) -> None:
     """Attach argtypes/restype to every loaded module's KITH_API surface."""
     util.configure(bridge.lib("util"))
     config.configure(bridge.lib("config"))
+    logger.configure(bridge.lib("logger"))
