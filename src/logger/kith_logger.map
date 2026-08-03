@@ -1,0 +1,11 @@
+KITH_LOGGER_1 {
+    global:
+        kith_logger_create;
+        kith_logger_destroy;
+        kith_logger_enabled;
+        kith_logger_log;
+        kith_logger_set_level;
+        kith_logger_level;
+    local:
+        *;
+};

@@ -34,6 +34,7 @@ include(cmake/framework.cmake)
 # supplies the kith_apply_abi helper they all use.
 include(cmake/lib_util.cmake)
 include(cmake/lib_config.cmake)
+include(cmake/lib_logger.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the

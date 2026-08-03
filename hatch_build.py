@@ -63,7 +63,7 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 # The SONAME-form shared libraries the bridge expects to discover under
 # kith/_libs/. The bundle ships every library the framework builds, so the
 # tuple grows as each module's shared library lands.
-_REQUIRED_LIBS: tuple[str, ...] = ("util", "config")
+_REQUIRED_LIBS: tuple[str, ...] = ("util", "config", "logger")
 
 # Where the bundled libraries land inside the wheel archive (and thus under
 # the installed package). The ctypes bridge searches this name among its
