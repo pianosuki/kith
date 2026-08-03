@@ -1,0 +1,12 @@
+KITH_METRICS_1 {
+    global:
+        kith_metrics_create;
+        kith_metrics_destroy;
+        kith_metrics_counter_add;
+        kith_metrics_gauge_set;
+        kith_metrics_histogram_observe;
+        kith_metrics_render_prometheus;
+        kith_metrics_export_otlp;
+    local:
+        *;
+};
