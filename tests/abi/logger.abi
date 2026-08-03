@@ -1,0 +1,281 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_logger.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_logger_create' version='KITH_LOGGER_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_logger_destroy' version='KITH_LOGGER_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_logger_enabled' version='KITH_LOGGER_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_logger_level' version='KITH_LOGGER_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_logger_log' version='KITH_LOGGER_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_logger_set_level' version='KITH_LOGGER_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__errno_location' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='clock_gettime' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='close' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='gmtime_r' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcmp' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='open' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_destroy' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_init' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_lock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_unlock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='snprintf' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strlen' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='write' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/logger/logger.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-3'/>
+    <array-type-def dimensions='1' type-id='type-id-3' size-in-bits='320' hash='e7f9696e246a3049' id='type-id-4'>
+      <subrange length='40' lower-bound='0' upper-bound='39' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6281bd35fbce8744' id='type-id-5'/>
+    </array-type-def>
+    <enum-decl name='kith_logger_level' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/logger/logger.h' line='31' column='1' hash='3b8ebb0315e575a2' id='type-id-6'>
+      <underlying-type type-id='type-id-7'/>
+      <enumerator name='KITH_LOG_LEVEL_TRACE' value='0'/>
+      <enumerator name='KITH_LOG_LEVEL_DEBUG' value='1'/>
+      <enumerator name='KITH_LOG_LEVEL_INFO' value='2'/>
+      <enumerator name='KITH_LOG_LEVEL_WARN' value='3'/>
+      <enumerator name='KITH_LOG_LEVEL_ERROR' value='4'/>
+    </enum-decl>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-8'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-9'/>
+    <type-decl name='short int' size-in-bits='16' hash='6c2352eccdcd3eea#3' id='type-id-10'/>
+    <class-decl name='__pthread_internal_list' is-struct='yes' visibility='default' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1' hash='5bcfb7f1ab39fa47' id='type-id-11'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__prev' type-id='type-id-12' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__next' type-id='type-id-12' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='__pthread_mutex_s' is-struct='yes' visibility='default' size-in-bits='320' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' hash='fc920e313849911d' id='type-id-13'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__lock' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='__count' type-id='type-id-14' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__owner' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='__nusers' type-id='type-id-14' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='__kind' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='__spins' type-id='type-id-10' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='__glibc_reserved' type-id='type-id-10' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='__list' type-id='type-id-15' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-16'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-17' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-17' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-18' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-19' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-20' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-21' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-22' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-23' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_logger' is-struct='yes' visibility='default' size-in-bits='576' filepath='././src/logger/logger.c' line='26' column='1' hash='8f86347be25563b7' id='type-id-24'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-25' visibility='default' filepath='././src/logger/logger.c' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='name' type-id='type-id-26' visibility='default' filepath='././src/logger/logger.c' line='29' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='file_fd' type-id='type-id-8' visibility='default' filepath='././src/logger/logger.c' line='30' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='jsonl_fd' type-id='type-id-8' visibility='default' filepath='././src/logger/logger.c' line='31' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='stdout_enabled' type-id='type-id-2' visibility='default' filepath='././src/logger/logger.c' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='lock' type-id='type-id-27' visibility='default' filepath='././src/logger/logger.c' line='34' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_logger_field' is-struct='yes' visibility='default' size-in-bits='128' filepath='./include/kith/logger/logger.h' line='56' column='1' hash='0a269344f3b4243a' id='type-id-28'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-29' visibility='default' filepath='./include/kith/logger/logger.h' line='58' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='value' type-id='type-id-29' visibility='default' filepath='./include/kith/logger/logger.h' line='59' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_logger_params' is-struct='yes' visibility='default' size-in-bits='832' filepath='./include/kith/logger/logger.h' line='80' column='1' hash='7c6e4c13594e8836' id='type-id-30'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-17' visibility='default' filepath='./include/kith/logger/logger.h' line='82' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-17' visibility='default' filepath='./include/kith/logger/logger.h' line='83' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='name' type-id='type-id-29' visibility='default' filepath='./include/kith/logger/logger.h' line='91' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='file_path' type-id='type-id-29' visibility='default' filepath='./include/kith/logger/logger.h' line='98' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='jsonl_path' type-id='type-id-29' visibility='default' filepath='./include/kith/logger/logger.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='stdout_enabled' type-id='type-id-2' visibility='default' filepath='./include/kith/logger/logger.h' line='110' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <var-decl name='min_level' type-id='type-id-31' visibility='default' filepath='./include/kith/logger/logger.h' line='115' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='reserved' type-id='type-id-23' visibility='default' filepath='./include/kith/logger/logger.h' line='117' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__pthread_list_t' type-id='type-id-11' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='55' column='1' id='type-id-15'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-14' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-32'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-33' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-19'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-34' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-20'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-16' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-35'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-36' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-22'/>
+    <typedef-decl name='kith_logger_field_t' type-id='type-id-28' size-in-bits='128' filepath='./include/kith/logger/logger.h' line='62' column='1' id='type-id-37'/>
+    <typedef-decl name='kith_logger_level_t' type-id='type-id-6' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/logger/logger.h' line='40' column='1' hash='3b8ebb0315e575a2' id='type-id-31'/>
+    <typedef-decl name='kith_logger_params_t' type-id='type-id-30' size-in-bits='832' filepath='./include/kith/logger/logger.h' line='120' column='1' id='type-id-38'/>
+    <typedef-decl name='kith_logger_t' type-id='type-id-24' size-in-bits='576' filepath='./include/kith/logger/logger.h' line='71' column='1' id='type-id-39'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-40' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-21'/>
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-41' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-27'/>
+    <typedef-decl name='size_t' type-id='type-id-42' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-43'/>
+    <typedef-decl name='uint32_t' type-id='type-id-32' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-17'/>
+    <union-decl name='pthread_mutex_t' naming-typedef-id='type-id-27' visibility='default' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' hash='8e3e5ddbcaed875f' id='type-id-41'>
+      <data-member access='public'>
+        <var-decl name='__data' type-id='type-id-13' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__size' type-id='type-id-4' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__align' type-id='type-id-9' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-7'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-14'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-42'/>
+    <array-type-def dimensions='1' type-id='type-id-18' hash='8d913e14a8a96b62' id='type-id-23'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-44'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-11' size-in-bits='64' hash='b83eb2deac70d470' id='type-id-12'/>
+    <pointer-type-def type-id='type-id-3' size-in-bits='64' hash='e533f42d1dd4942c' id='type-id-26'/>
+    <qualified-type-def type-id='type-id-3' const='yes' hash='3e50fd33f9bb78d9' id='type-id-45'/>
+    <pointer-type-def type-id='type-id-45' size-in-bits='64' hash='c44743f354f6a443' id='type-id-29'/>
+    <qualified-type-def type-id='type-id-35' const='yes' hash='07c74f5fb4899ef5' id='type-id-46'/>
+    <pointer-type-def type-id='type-id-46' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-25'/>
+    <qualified-type-def type-id='type-id-37' const='yes' hash='cc1c562cce0ebaa0' id='type-id-47'/>
+    <pointer-type-def type-id='type-id-47' size-in-bits='64' hash='f9f9f10b278cc876' id='type-id-48'/>
+    <qualified-type-def type-id='type-id-38' const='yes' hash='4fc9a3c5f1297c7f' id='type-id-49'/>
+    <pointer-type-def type-id='type-id-49' size-in-bits='64' hash='76acef6e3e217dd2' id='type-id-50'/>
+    <qualified-type-def type-id='type-id-39' const='yes' hash='e038e2aeb67e6a9c' id='type-id-51'/>
+    <pointer-type-def type-id='type-id-51' size-in-bits='64' hash='cb18b899692553ba' id='type-id-52'/>
+    <pointer-type-def type-id='type-id-39' size-in-bits='64' hash='78eaab063efa6932' id='type-id-53'/>
+    <pointer-type-def type-id='type-id-53' size-in-bits='64' hash='40c241cbe7973936' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-55' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-36'/>
+    <pointer-type-def type-id='type-id-56' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-33'/>
+    <pointer-type-def type-id='type-id-57' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-34'/>
+    <pointer-type-def type-id='type-id-58' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-40'/>
+    <function-decl name='kith_logger_create' mangled-name='kith_logger_create' filepath='././src/logger/logger.c' line='224' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_logger_create@@KITH_LOGGER_1' hash='e639a8c3735c5c02'>
+      <parameter type-id='type-id-50' name='params' filepath='././src/logger/logger.c' line='224' column='1'/>
+      <parameter type-id='type-id-25' name='alloc' filepath='././src/logger/logger.c' line='225' column='1'/>
+      <parameter type-id='type-id-54' name='out_logger' filepath='././src/logger/logger.c' line='226' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_logger_destroy' mangled-name='kith_logger_destroy' filepath='././src/logger/logger.c' line='286' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_logger_destroy@@KITH_LOGGER_1' hash='dd894b6f37c3ca02'>
+      <parameter type-id='type-id-53' name='logger' filepath='././src/logger/logger.c' line='286' column='1'/>
+      <return type-id='type-id-59'/>
+    </function-decl>
+    <function-decl name='kith_logger_enabled' mangled-name='kith_logger_enabled' filepath='././src/logger/logger.c' line='306' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_logger_enabled@@KITH_LOGGER_1' hash='e03ca55841576e05'>
+      <parameter type-id='type-id-52' name='logger' filepath='././src/logger/logger.c' line='306' column='1'/>
+      <parameter type-id='type-id-31' name='level' filepath='././src/logger/logger.c' line='306' column='1'/>
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <function-decl name='kith_logger_log' mangled-name='kith_logger_log' filepath='././src/logger/logger.c' line='316' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_logger_log@@KITH_LOGGER_1' hash='a9f288d97851c35b'>
+      <parameter type-id='type-id-53' name='logger' filepath='././src/logger/logger.c' line='316' column='1'/>
+      <parameter type-id='type-id-31' name='level' filepath='././src/logger/logger.c' line='317' column='1'/>
+      <parameter type-id='type-id-29' name='file' filepath='././src/logger/logger.c' line='318' column='1'/>
+      <parameter type-id='type-id-14' name='line' filepath='././src/logger/logger.c' line='319' column='1'/>
+      <parameter type-id='type-id-48' name='fields' filepath='././src/logger/logger.c' line='320' column='1'/>
+      <parameter type-id='type-id-43' name='field_count' filepath='././src/logger/logger.c' line='321' column='1'/>
+      <parameter type-id='type-id-29' name='message' filepath='././src/logger/logger.c' line='322' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_logger_set_level' mangled-name='kith_logger_set_level' filepath='././src/logger/logger.c' line='390' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_logger_set_level@@KITH_LOGGER_1' hash='ec28de242b7250da'>
+      <parameter type-id='type-id-53' name='logger' filepath='././src/logger/logger.c' line='390' column='1'/>
+      <parameter type-id='type-id-31' name='level' filepath='././src/logger/logger.c' line='390' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_logger_level' mangled-name='kith_logger_level' filepath='././src/logger/logger.c' line='400' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_logger_level@@KITH_LOGGER_1' hash='ef4f860655f32b4d'>
+      <parameter type-id='type-id-52' name='logger' filepath='././src/logger/logger.c' line='400' column='1'/>
+      <return type-id='type-id-31'/>
+    </function-decl>
+    <type-decl name='void' id='type-id-59'/>
+    <pointer-type-def type-id='type-id-59' id='type-id-18'/>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-55'>
+      <parameter type-id='type-id-18'/>
+      <parameter type-id='type-id-18'/>
+      <return type-id='type-id-59'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-56'>
+      <parameter type-id='type-id-18'/>
+      <parameter type-id='type-id-43'/>
+      <return type-id='type-id-18'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-57'>
+      <parameter type-id='type-id-18'/>
+      <parameter type-id='type-id-43'/>
+      <parameter type-id='type-id-43'/>
+      <return type-id='type-id-18'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-58'>
+      <parameter type-id='type-id-18'/>
+      <parameter type-id='type-id-18'/>
+      <parameter type-id='type-id-43'/>
+      <return type-id='type-id-18'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>

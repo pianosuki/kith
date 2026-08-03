@@ -30,3 +30,11 @@ target_compile_definitions(
     test_config_source PRIVATE _POSIX_C_SOURCE=200809L _XOPEN_SOURCE=700
 )
 add_test(NAME test_config_source COMMAND test_config_source)
+
+add_executable(test_logger_create test_logger_create.c)
+target_link_libraries(test_logger_create PRIVATE kith_logger)
+add_test(NAME test_logger_create COMMAND test_logger_create)
+
+add_executable(test_logger_sink test_logger_sink.c)
+target_link_libraries(test_logger_sink PRIVATE kith_logger)
+add_test(NAME test_logger_sink COMMAND test_logger_sink)
