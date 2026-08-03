@@ -1,0 +1,321 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_metrics.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_metrics_counter_add' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_metrics_create' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_metrics_destroy' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_metrics_export_otlp' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_metrics_gauge_set' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_metrics_histogram_observe' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_metrics_render_prometheus' version='KITH_METRICS_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='clock_gettime' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_destroy' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_init' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_lock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_unlock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='qsort' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='snprintf' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strcmp' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strlen' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/metrics/metrics.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-2'/>
+    <array-type-def dimensions='1' type-id='type-id-2' size-in-bits='320' hash='e7f9696e246a3049' id='type-id-3'>
+      <subrange length='40' lower-bound='0' upper-bound='39' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6281bd35fbce8744' id='type-id-4'/>
+    </array-type-def>
+    <enum-decl name='kith_metrics_kind' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/metrics/metrics.h' line='39' column='1' hash='d412f901f83876fe' id='type-id-5'>
+      <underlying-type type-id='type-id-6'/>
+      <enumerator name='KITH_METRICS_KIND_COUNTER' value='0'/>
+      <enumerator name='KITH_METRICS_KIND_GAUGE' value='1'/>
+      <enumerator name='KITH_METRICS_KIND_HISTOGRAM' value='2'/>
+    </enum-decl>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-7'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-8'/>
+    <type-decl name='short int' size-in-bits='16' hash='6c2352eccdcd3eea#3' id='type-id-9'/>
+    <class-decl name='__pthread_internal_list' is-struct='yes' visibility='default' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1' hash='5bcfb7f1ab39fa47' id='type-id-10'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__prev' type-id='type-id-11' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__next' type-id='type-id-11' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='__pthread_mutex_s' is-struct='yes' visibility='default' size-in-bits='320' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' hash='fc920e313849911d' id='type-id-12'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__lock' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='__count' type-id='type-id-13' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__owner' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='__nusers' type-id='type-id-13' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='__kind' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='__spins' type-id='type-id-9' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='__glibc_reserved' type-id='type-id-9' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='__list' type-id='type-id-14' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-15'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-16' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-16' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-17' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-18' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-19' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-20' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-21' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-22' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_metrics' is-struct='yes' visibility='default' size-in-bits='640' filepath='./src/metrics/registry.h' line='49' column='1' hash='ac61ad6ce9c309ab' id='type-id-23'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-24' visibility='default' filepath='./src/metrics/registry.h' line='51' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='prefix' type-id='type-id-25' visibility='default' filepath='./src/metrics/registry.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='series' type-id='type-id-26' visibility='default' filepath='./src/metrics/registry.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='series_count' type-id='type-id-27' visibility='default' filepath='./src/metrics/registry.h' line='54' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='series_cap' type-id='type-id-27' visibility='default' filepath='./src/metrics/registry.h' line='55' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='lock' type-id='type-id-28' visibility='default' filepath='./src/metrics/registry.h' line='56' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_metrics_label' is-struct='yes' visibility='default' size-in-bits='128' filepath='./include/kith/metrics/metrics.h' line='62' column='1' hash='0dd4d88fe88c4146' id='type-id-29'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-30' visibility='default' filepath='./include/kith/metrics/metrics.h' line='64' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='value' type-id='type-id-30' visibility='default' filepath='./include/kith/metrics/metrics.h' line='65' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_metrics_params' is-struct='yes' visibility='default' size-in-bits='640' filepath='./include/kith/metrics/metrics.h' line='87' column='1' hash='4dc2c1d0c232b374' id='type-id-31'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-16' visibility='default' filepath='./include/kith/metrics/metrics.h' line='89' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-16' visibility='default' filepath='./include/kith/metrics/metrics.h' line='90' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='prefix' type-id='type-id-30' visibility='default' filepath='./include/kith/metrics/metrics.h' line='97' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='reserved' type-id='type-id-22' visibility='default' filepath='./include/kith/metrics/metrics.h' line='99' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='label_slot' is-struct='yes' visibility='default' size-in-bits='128' filepath='./src/metrics/registry.h' line='28' column='1' hash='f14f63c89d132703' id='type-id-32'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-25' visibility='default' filepath='./src/metrics/registry.h' line='30' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='value' type-id='type-id-25' visibility='default' filepath='./src/metrics/registry.h' line='31' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='series' is-struct='yes' visibility='default' size-in-bits='1344' filepath='./src/metrics/registry.h' line='37' column='1' hash='4bd123b5c059c2a7' id='type-id-33'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='name' type-id='type-id-25' visibility='default' filepath='./src/metrics/registry.h' line='39' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='kind' type-id='type-id-34' visibility='default' filepath='./src/metrics/registry.h' line='40' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='labels' type-id='type-id-35' visibility='default' filepath='./src/metrics/registry.h' line='41' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='label_count' type-id='type-id-27' visibility='default' filepath='./src/metrics/registry.h' line='42' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='counter' type-id='type-id-36' visibility='default' filepath='./src/metrics/registry.h' line='43' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='gauge' type-id='type-id-37' visibility='default' filepath='./src/metrics/registry.h' line='44' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='hist_buckets' type-id='type-id-38' visibility='default' filepath='./src/metrics/registry.h' line='45' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1216'>
+        <var-decl name='hist_sum' type-id='type-id-36' visibility='default' filepath='./src/metrics/registry.h' line='46' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1280'>
+        <var-decl name='hist_count' type-id='type-id-36' visibility='default' filepath='./src/metrics/registry.h' line='47' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__int64_t' type-id='type-id-8' size-in-bits='64' filepath='/usr/include/bits/types.h' line='44' column='1' hash='b119fe0931d2ee10' id='type-id-39'/>
+    <typedef-decl name='__pthread_list_t' type-id='type-id-10' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='55' column='1' id='type-id-14'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-13' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-40'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-41' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-42'/>
+    <typedef-decl name='int64_t' type-id='type-id-39' size-in-bits='64' filepath='/usr/include/bits/stdint-intn.h' line='27' column='1' hash='b119fe0931d2ee10' id='type-id-37'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-43' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-18'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-44' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-19'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-15' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-45'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-46' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-21'/>
+    <typedef-decl name='kith_metrics_kind_t' type-id='type-id-5' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/metrics/metrics.h' line='46' column='1' hash='d412f901f83876fe' id='type-id-34'/>
+    <typedef-decl name='kith_metrics_label_t' type-id='type-id-29' size-in-bits='128' filepath='./include/kith/metrics/metrics.h' line='68' column='1' id='type-id-47'/>
+    <typedef-decl name='kith_metrics_params_t' type-id='type-id-31' size-in-bits='640' filepath='./include/kith/metrics/metrics.h' line='102' column='1' id='type-id-48'/>
+    <typedef-decl name='kith_metrics_t' type-id='type-id-23' size-in-bits='640' filepath='./include/kith/metrics/metrics.h' line='78' column='1' id='type-id-49'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-50' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-20'/>
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-51' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-28'/>
+    <typedef-decl name='size_t' type-id='type-id-41' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-27'/>
+    <typedef-decl name='uint32_t' type-id='type-id-40' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-16'/>
+    <typedef-decl name='uint64_t' type-id='type-id-42' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-36'/>
+    <array-type-def dimensions='1' type-id='type-id-36' size-in-bits='832' hash='f7b57ded6498803b' id='type-id-38'>
+      <subrange length='13' lower-bound='0' upper-bound='12' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='45abccd665b94913' id='type-id-52'/>
+    </array-type-def>
+    <union-decl name='pthread_mutex_t' naming-typedef-id='type-id-28' visibility='default' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' hash='8e3e5ddbcaed875f' id='type-id-51'>
+      <data-member access='public'>
+        <var-decl name='__data' type-id='type-id-12' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__size' type-id='type-id-3' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__align' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-6'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-13'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-41'/>
+    <array-type-def dimensions='1' type-id='type-id-17' hash='8d913e14a8a96b62' id='type-id-22'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-53'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-10' size-in-bits='64' hash='b83eb2deac70d470' id='type-id-11'/>
+    <pointer-type-def type-id='type-id-2' size-in-bits='64' hash='e533f42d1dd4942c' id='type-id-25'/>
+    <qualified-type-def type-id='type-id-2' const='yes' hash='3e50fd33f9bb78d9' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-54' size-in-bits='64' hash='c44743f354f6a443' id='type-id-30'/>
+    <qualified-type-def type-id='type-id-45' const='yes' hash='07c74f5fb4899ef5' id='type-id-55'/>
+    <pointer-type-def type-id='type-id-55' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-24'/>
+    <qualified-type-def type-id='type-id-47' const='yes' hash='db21eee38bf2bbd9' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-56' size-in-bits='64' hash='961412b6f275b14f' id='type-id-57'/>
+    <qualified-type-def type-id='type-id-48' const='yes' hash='c8ab999efeda0f9e' id='type-id-58'/>
+    <pointer-type-def type-id='type-id-58' size-in-bits='64' hash='dfaa8fb539f17e5f' id='type-id-59'/>
+    <qualified-type-def type-id='type-id-49' const='yes' hash='c975428554bcdfe7' id='type-id-60'/>
+    <pointer-type-def type-id='type-id-60' size-in-bits='64' hash='d7521478f44da909' id='type-id-61'/>
+    <pointer-type-def type-id='type-id-49' size-in-bits='64' hash='15cd3ab01e012e8e' id='type-id-62'/>
+    <pointer-type-def type-id='type-id-62' size-in-bits='64' hash='c0379e92a39a52cc' id='type-id-63'/>
+    <pointer-type-def type-id='type-id-32' size-in-bits='64' hash='410a377b503d2254' id='type-id-35'/>
+    <pointer-type-def type-id='type-id-33' size-in-bits='64' hash='fd565654b5f46a4b' id='type-id-26'/>
+    <pointer-type-def type-id='type-id-64' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-46'/>
+    <pointer-type-def type-id='type-id-65' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-43'/>
+    <pointer-type-def type-id='type-id-66' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-44'/>
+    <pointer-type-def type-id='type-id-67' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-50'/>
+    <type-decl name='void' id='type-id-68'/>
+    <pointer-type-def type-id='type-id-68' id='type-id-17'/>
+    <function-decl name='kith_metrics_create' mangled-name='kith_metrics_create' filepath='././src/metrics/metrics.c' line='243' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_create@@KITH_METRICS_1' hash='24b113aed8e45e52'>
+      <parameter type-id='type-id-59' name='params' filepath='././src/metrics/metrics.c' line='243' column='1'/>
+      <parameter type-id='type-id-24' name='alloc' filepath='././src/metrics/metrics.c' line='244' column='1'/>
+      <parameter type-id='type-id-63' name='out_metrics' filepath='././src/metrics/metrics.c' line='245' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_metrics_destroy' mangled-name='kith_metrics_destroy' filepath='././src/metrics/metrics.c' line='302' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_destroy@@KITH_METRICS_1' hash='1f1cd05cd8efa6d0'>
+      <parameter type-id='type-id-62' name='metrics' filepath='././src/metrics/metrics.c' line='302' column='1'/>
+      <return type-id='type-id-68'/>
+    </function-decl>
+    <function-decl name='kith_metrics_counter_add' mangled-name='kith_metrics_counter_add' filepath='././src/metrics/metrics.c' line='350' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_counter_add@@KITH_METRICS_1' hash='4002e1af166714e4'>
+      <parameter type-id='type-id-62' name='metrics' filepath='././src/metrics/metrics.c' line='350' column='1'/>
+      <parameter type-id='type-id-30' name='name' filepath='././src/metrics/metrics.c' line='351' column='1'/>
+      <parameter type-id='type-id-57' name='labels' filepath='././src/metrics/metrics.c' line='352' column='1'/>
+      <parameter type-id='type-id-27' name='label_count' filepath='././src/metrics/metrics.c' line='353' column='1'/>
+      <parameter type-id='type-id-36' name='delta' filepath='././src/metrics/metrics.c' line='354' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_metrics_gauge_set' mangled-name='kith_metrics_gauge_set' filepath='././src/metrics/metrics.c' line='376' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_gauge_set@@KITH_METRICS_1' hash='6913d1f0747aa487'>
+      <parameter type-id='type-id-62' name='metrics' filepath='././src/metrics/metrics.c' line='376' column='1'/>
+      <parameter type-id='type-id-30' name='name' filepath='././src/metrics/metrics.c' line='377' column='1'/>
+      <parameter type-id='type-id-57' name='labels' filepath='././src/metrics/metrics.c' line='378' column='1'/>
+      <parameter type-id='type-id-27' name='label_count' filepath='././src/metrics/metrics.c' line='379' column='1'/>
+      <parameter type-id='type-id-37' name='value' filepath='././src/metrics/metrics.c' line='380' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_metrics_histogram_observe' mangled-name='kith_metrics_histogram_observe' filepath='././src/metrics/metrics.c' line='402' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_histogram_observe@@KITH_METRICS_1' hash='4002e1af166714e4'>
+      <parameter type-id='type-id-62' name='metrics' filepath='././src/metrics/metrics.c' line='350' column='1'/>
+      <parameter type-id='type-id-30' name='name' filepath='././src/metrics/metrics.c' line='351' column='1'/>
+      <parameter type-id='type-id-57' name='labels' filepath='././src/metrics/metrics.c' line='352' column='1'/>
+      <parameter type-id='type-id-27' name='label_count' filepath='././src/metrics/metrics.c' line='353' column='1'/>
+      <parameter type-id='type-id-36' name='delta' filepath='././src/metrics/metrics.c' line='354' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_metrics_render_prometheus' mangled-name='kith_metrics_render_prometheus' filepath='././src/metrics/metrics.c' line='428' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_render_prometheus@@KITH_METRICS_1' hash='35c5dd081db83030'>
+      <parameter type-id='type-id-61' name='metrics' filepath='././src/metrics/metrics.c' line='428' column='1'/>
+      <parameter type-id='type-id-25' name='buf' filepath='././src/metrics/metrics.c' line='428' column='1'/>
+      <parameter type-id='type-id-27' name='cap' filepath='././src/metrics/metrics.c' line='428' column='1'/>
+      <return type-id='type-id-27'/>
+    </function-decl>
+    <function-decl name='kith_metrics_export_otlp' mangled-name='kith_metrics_export_otlp' filepath='././src/metrics/metrics.c' line='444' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_metrics_export_otlp@@KITH_METRICS_1' hash='35c5dd081db83030'>
+      <parameter type-id='type-id-61' name='metrics' filepath='././src/metrics/metrics.c' line='428' column='1'/>
+      <parameter type-id='type-id-25' name='buf' filepath='././src/metrics/metrics.c' line='428' column='1'/>
+      <parameter type-id='type-id-27' name='cap' filepath='././src/metrics/metrics.c' line='428' column='1'/>
+      <return type-id='type-id-27'/>
+    </function-decl>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-64'>
+      <parameter type-id='type-id-17'/>
+      <parameter type-id='type-id-17'/>
+      <return type-id='type-id-68'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-65'>
+      <parameter type-id='type-id-17'/>
+      <parameter type-id='type-id-27'/>
+      <return type-id='type-id-17'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-66'>
+      <parameter type-id='type-id-17'/>
+      <parameter type-id='type-id-27'/>
+      <parameter type-id='type-id-27'/>
+      <return type-id='type-id-17'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-67'>
+      <parameter type-id='type-id-17'/>
+      <parameter type-id='type-id-17'/>
+      <parameter type-id='type-id-27'/>
+      <return type-id='type-id-17'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>

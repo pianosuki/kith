@@ -38,3 +38,13 @@ add_test(NAME test_logger_create COMMAND test_logger_create)
 add_executable(test_logger_sink test_logger_sink.c)
 target_link_libraries(test_logger_sink PRIVATE kith_logger)
 add_test(NAME test_logger_sink COMMAND test_logger_sink)
+
+add_executable(test_metrics_registry test_metrics_registry.c)
+target_link_libraries(test_metrics_registry PRIVATE kith_metrics)
+target_compile_definitions(test_metrics_registry PRIVATE _POSIX_C_SOURCE=200809L)
+add_test(NAME test_metrics_registry COMMAND test_metrics_registry)
+
+add_executable(test_metrics_export test_metrics_export.c)
+target_link_libraries(test_metrics_export PRIVATE kith_metrics)
+target_compile_definitions(test_metrics_export PRIVATE _POSIX_C_SOURCE=200809L)
+add_test(NAME test_metrics_export COMMAND test_metrics_export)
