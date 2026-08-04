@@ -1,8 +1,11 @@
-"""Unit tests for the Config wrapper.
+"""Unit tests for the per-plane Python submodules and the Config wrapper.
 
 The tests point ``KITH_LIB`` at the debug build directory so the ctypes bridge
 loads the freshly built shared libraries, then reset the bridge singleton
-around each test so cached state from a prior test cannot leak in.
+around each test so cached state from a prior test cannot leak in. Each plane
+module wraps its generated binding's C surface into Python types; the tests
+exercise the lifecycle, the wrapped operations, and the error translation at
+the boundary (the exception hierarchy in :mod:`kith.exceptions`).
 """
 
 from __future__ import annotations
@@ -23,6 +26,7 @@ from kith import (
 )
 from kith._bridge import reset
 from kith._generated import types as gen_types
+from kith.proto import MsgFlag, Proto
 
 
 @pytest.fixture(autouse=True)
@@ -45,6 +49,21 @@ class TestExceptions:
         assert issubclass(KithProtocolError, KithError)
         assert issubclass(KithStateError, KithError)
         assert issubclass(KithNotFoundError, KithError)
+
+    def test_not_found_raised_for_enoent(self) -> None:
+        with Proto() as proto:
+            with pytest.raises(KithNotFoundError) as exc_info:
+                proto.lookup_type("absent")
+            assert exc_info.value.code == gen_types.kith_error.KITH_ENOENT
+            assert isinstance(exc_info.value, KithError)
+
+    def test_protocol_error_for_unknown_type_decode(self) -> None:
+        with Proto() as proto, pytest.raises(KithProtocolError):
+            # Encoding an unregistered type id succeeds (the codec does not
+            # consult the registry on encode), but decode rejects frames
+            # whose type_id is not registered.
+            frame = proto.encode(9999, b"x")
+            proto.decode(frame)
 
 
 # ---------------------------------------------------------------------------
@@ -99,3 +118,46 @@ class TestConfig:
         monkeypatch.setenv("KITHTEST_key", "from_env")
         with Config(file_path=env_file, env_prefix="KITHTEST_") as cfg:
             assert cfg.get_string("key") == "from_env"
+
+
+# ---------------------------------------------------------------------------
+# proto
+# ---------------------------------------------------------------------------
+
+
+@needs_build
+class TestProto:
+    def test_register_lookup_roundtrip(self) -> None:
+        with Proto() as proto:
+            proto.register_type("move", 1100)
+            assert proto.lookup_type("move") == 1100
+            assert proto.type_name(1100) == "move"
+            assert proto.type_name(9999) is None
+
+    def test_encode_decode_roundtrip(self) -> None:
+        with Proto() as proto:
+            proto.register_type("move", 1100)
+            frame = proto.encode(1100, b"hello")
+            decoded = proto.decode(frame)
+            assert decoded.type_id == 1100
+            assert decoded.payload == b"hello"
+            assert decoded.has_correlation is False
+
+    def test_encode_decode_with_correlation(self) -> None:
+        with Proto() as proto:
+            proto.register_type("move", 1100)
+            frame = proto.encode(
+                1100, b"payload", flags=MsgFlag.CORRELATION, correlation_id=0xDEADBEEF
+            )
+            decoded = proto.decode(frame)
+            assert decoded.has_correlation is True
+            assert decoded.correlation_id == 0xDEADBEEF
+
+    def test_correlation_hex_format(self) -> None:
+        with Proto() as proto:
+            assert proto.correlation_hex(0xDEADBEEF) == "00000000deadbeef"
+            assert proto.correlation_hex(0) == "0000000000000000"
+
+    def test_incomplete_frame_raises_protocol_error(self) -> None:
+        with Proto() as proto, pytest.raises(KithProtocolError):
+            proto.decode(b"\x00")  # far too short for a header
