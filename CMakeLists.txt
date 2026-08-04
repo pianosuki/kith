@@ -36,6 +36,7 @@ include(cmake/lib_util.cmake)
 include(cmake/lib_config.cmake)
 include(cmake/lib_logger.cmake)
 include(cmake/lib_metrics.cmake)
+include(cmake/lib_proto.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the

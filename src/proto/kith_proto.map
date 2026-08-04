@@ -1,0 +1,15 @@
+KITH_PROTO_1 {
+    global:
+        kith_proto_create;
+        kith_proto_destroy;
+        kith_proto_register_type_id;
+        kith_proto_lookup_type;
+        kith_proto_type_name;
+        kith_proto_encode;
+        kith_proto_decode;
+        kith_proto_declared_total;
+        kith_proto_rejections;
+        kith_proto_correlation_hex;
+    local:
+        *;
+};
