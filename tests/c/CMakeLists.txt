@@ -58,3 +58,25 @@ add_executable(test_proto_registry test_proto_registry.c)
 target_link_libraries(test_proto_registry PRIVATE kith_proto)
 target_compile_definitions(test_proto_registry PRIVATE _POSIX_C_SOURCE=200809L)
 add_test(NAME test_proto_registry COMMAND test_proto_registry)
+
+add_executable(test_net_transport test_net_transport.c)
+target_link_libraries(test_net_transport PRIVATE kith_net kith_proto)
+target_compile_definitions(test_net_transport PRIVATE _GNU_SOURCE)
+add_test(NAME test_net_transport COMMAND test_net_transport)
+
+add_executable(test_net_frame test_net_frame.c)
+target_link_libraries(test_net_frame PRIVATE kith_net kith_proto)
+target_compile_definitions(test_net_frame PRIVATE _GNU_SOURCE)
+add_test(NAME test_net_frame COMMAND test_net_frame)
+
+add_executable(test_net_drain_cap test_net_drain_cap.c)
+target_link_libraries(test_net_drain_cap PRIVATE kith_net kith_proto)
+target_compile_definitions(test_net_drain_cap PRIVATE _GNU_SOURCE)
+add_test(NAME test_net_drain_cap COMMAND test_net_drain_cap)
+
+# The ring buffer is connection-internal with hidden symbols, so its unit
+# test compiles the source directly instead of linking the shared library.
+add_executable(test_net_ringbuf test_net_ringbuf.c ${CMAKE_SOURCE_DIR}/src/net/ringbuf.c)
+target_include_directories(test_net_ringbuf PRIVATE ${CMAKE_SOURCE_DIR}/src/net ${CMAKE_SOURCE_DIR}/include)
+target_compile_definitions(test_net_ringbuf PRIVATE _GNU_SOURCE)
+add_test(NAME test_net_ringbuf COMMAND test_net_ringbuf)
