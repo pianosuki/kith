@@ -1,0 +1,26 @@
+KITH_NET_1 {
+    global:
+        kith_net_create;
+        kith_net_destroy;
+        kith_net_listen;
+        kith_net_listener_fd;
+        kith_net_accept;
+        kith_net_conn_fd;
+        kith_net_conn_acquire;
+        kith_net_conn_release;
+        kith_net_conn_close;
+        kith_net_conn_read;
+        kith_net_frame_create;
+        kith_net_frame_data;
+        kith_net_frame_len;
+        kith_net_frame_set_len;
+        kith_net_frame_acquire;
+        kith_net_frame_release;
+        kith_net_conn_enqueue;
+        kith_net_conn_write;
+        kith_net_write_deferrals;
+        kith_net_rejections;
+        kith_net_conn_events;
+    local:
+        *;
+};
