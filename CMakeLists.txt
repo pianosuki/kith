@@ -59,6 +59,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/c/CMakeLists.txt")
     add_subdirectory(tests/c)
 endif()
 
+# libFuzzer targets. Built only when KITH_ENABLE_FUZZ is set (the fuzz
+# preset); the subdirectory hard-fails on non-Clang compilers because
+# libFuzzer ships with Clang alone.
+if(KITH_ENABLE_FUZZ)
+    add_subdirectory(tests/fuzz)
+endif()
+
 # --- Downstream consumer story: find_package(kith) + pkg-config -----------
 # Every layer-2 library above is installed with `EXPORT kithTargets`; this
 # block assembles that export set into a CMake package a downstream finds

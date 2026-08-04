@@ -48,3 +48,13 @@ add_executable(test_metrics_export test_metrics_export.c)
 target_link_libraries(test_metrics_export PRIVATE kith_metrics)
 target_compile_definitions(test_metrics_export PRIVATE _POSIX_C_SOURCE=200809L)
 add_test(NAME test_metrics_export COMMAND test_metrics_export)
+
+add_executable(test_proto_codec test_proto_codec.c)
+target_link_libraries(test_proto_codec PRIVATE kith_proto)
+target_compile_definitions(test_proto_codec PRIVATE _POSIX_C_SOURCE=200809L)
+add_test(NAME test_proto_codec COMMAND test_proto_codec)
+
+add_executable(test_proto_registry test_proto_registry.c)
+target_link_libraries(test_proto_registry PRIVATE kith_proto)
+target_compile_definitions(test_proto_registry PRIVATE _POSIX_C_SOURCE=200809L)
+add_test(NAME test_proto_registry COMMAND test_proto_registry)

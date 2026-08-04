@@ -1,0 +1,314 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_proto.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_proto_correlation_hex' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_create' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_declared_total' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_decode' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_destroy' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_encode' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_lookup_type' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_register_type_id' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_rejections' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_proto_type_name' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_destroy' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_init' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_lock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_unlock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strcmp' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strlen' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/proto/proto.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-3'/>
+    <array-type-def dimensions='1' type-id='type-id-3' size-in-bits='320' hash='e7f9696e246a3049' id='type-id-4'>
+      <subrange length='40' lower-bound='0' upper-bound='39' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6281bd35fbce8744' id='type-id-5'/>
+    </array-type-def>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-6'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-7'/>
+    <type-decl name='short int' size-in-bits='16' hash='6c2352eccdcd3eea#3' id='type-id-8'/>
+    <class-decl name='__pthread_internal_list' is-struct='yes' visibility='default' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1' hash='5bcfb7f1ab39fa47' id='type-id-9'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__prev' type-id='type-id-10' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__next' type-id='type-id-10' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='__pthread_mutex_s' is-struct='yes' visibility='default' size-in-bits='320' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' hash='fc920e313849911d' id='type-id-11'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__lock' type-id='type-id-6' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='__count' type-id='type-id-12' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__owner' type-id='type-id-6' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='__nusers' type-id='type-id-12' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='__kind' type-id='type-id-6' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='__spins' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='__glibc_reserved' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='__list' type-id='type-id-13' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-14'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-15' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-15' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-16' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-17' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-18' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-19' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-20' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-21' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_proto' is-struct='yes' visibility='default' size-in-bits='704' filepath='././src/proto/proto.c' line='24' column='1' hash='613d7e2c7299f937' id='type-id-22'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-23' visibility='default' filepath='././src/proto/proto.c' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='types' type-id='type-id-24' visibility='default' filepath='././src/proto/proto.c' line='27' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='count' type-id='type-id-25' visibility='default' filepath='././src/proto/proto.c' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='cap' type-id='type-id-25' visibility='default' filepath='././src/proto/proto.c' line='29' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='max_payload' type-id='type-id-15' visibility='default' filepath='././src/proto/proto.c' line='30' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='lock' type-id='type-id-26' visibility='default' filepath='././src/proto/proto.c' line='31' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_proto_frame' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/proto/proto.h' line='145' column='1' hash='bb337662c9578eca' id='type-id-27'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='type_id' type-id='type-id-28' visibility='default' filepath='./include/kith/proto/proto.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='16'>
+        <var-decl name='flags' type-id='type-id-29' visibility='default' filepath='./include/kith/proto/proto.h' line='150' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='24'>
+        <var-decl name='has_correlation' type-id='type-id-2' visibility='default' filepath='./include/kith/proto/proto.h' line='152' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='correlation_id' type-id='type-id-30' visibility='default' filepath='./include/kith/proto/proto.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='payload' type-id='type-id-16' visibility='default' filepath='./include/kith/proto/proto.h' line='156' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload_len' type-id='type-id-15' visibility='default' filepath='./include/kith/proto/proto.h' line='158' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_proto_params' is-struct='yes' visibility='default' size-in-bits='640' filepath='./include/kith/proto/proto.h' line='120' column='1' hash='4cbaf8096393ba7b' id='type-id-31'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-15' visibility='default' filepath='./include/kith/proto/proto.h' line='122' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-15' visibility='default' filepath='./include/kith/proto/proto.h' line='123' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='max_payload' type-id='type-id-15' visibility='default' filepath='./include/kith/proto/proto.h' line='131' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='reserved' type-id='type-id-21' visibility='default' filepath='./include/kith/proto/proto.h' line='133' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='type_entry' is-struct='yes' visibility='default' size-in-bits='128' filepath='././src/proto/proto.c' line='18' column='1' hash='92a424e99fbaf407' id='type-id-32'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='name' type-id='type-id-33' visibility='default' filepath='././src/proto/proto.c' line='20' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='id' type-id='type-id-28' visibility='default' filepath='././src/proto/proto.c' line='21' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__pthread_list_t' type-id='type-id-9' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='55' column='1' id='type-id-13'/>
+    <typedef-decl name='__uint16_t' type-id='type-id-34' size-in-bits='16' filepath='/usr/include/bits/types.h' line='40' column='1' hash='d7723bb93a30b11d' id='type-id-35'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-12' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-36'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-37' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-38'/>
+    <typedef-decl name='__uint8_t' type-id='type-id-39' size-in-bits='8' filepath='/usr/include/bits/types.h' line='38' column='1' hash='6ebac62b3366db68' id='type-id-40'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-41' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-17'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-42' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-18'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-14' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-43'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-44' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-20'/>
+    <typedef-decl name='kith_proto_frame_t' type-id='type-id-27' size-in-bits='256' filepath='./include/kith/proto/proto.h' line='161' column='1' id='type-id-45'/>
+    <typedef-decl name='kith_proto_params_t' type-id='type-id-31' size-in-bits='640' filepath='./include/kith/proto/proto.h' line='136' column='1' id='type-id-46'/>
+    <typedef-decl name='kith_proto_t' type-id='type-id-22' size-in-bits='704' filepath='./include/kith/proto/proto.h' line='111' column='1' id='type-id-47'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-48' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-19'/>
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-49' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-26'/>
+    <typedef-decl name='size_t' type-id='type-id-37' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-25'/>
+    <typedef-decl name='uint16_t' type-id='type-id-35' size-in-bits='16' filepath='/usr/include/bits/stdint-uintn.h' line='25' column='1' hash='d7723bb93a30b11d' id='type-id-28'/>
+    <typedef-decl name='uint32_t' type-id='type-id-36' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-15'/>
+    <typedef-decl name='uint64_t' type-id='type-id-38' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-30'/>
+    <typedef-decl name='uint8_t' type-id='type-id-40' size-in-bits='8' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' hash='6ebac62b3366db68' id='type-id-29'/>
+    <union-decl name='pthread_mutex_t' naming-typedef-id='type-id-26' visibility='default' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' hash='8e3e5ddbcaed875f' id='type-id-49'>
+      <data-member access='public'>
+        <var-decl name='__data' type-id='type-id-11' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__size' type-id='type-id-4' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__align' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <type-decl name='unsigned char' size-in-bits='8' hash='6ebac62b3366db68' id='type-id-39'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-12'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-37'/>
+    <type-decl name='unsigned short int' size-in-bits='16' hash='d7723bb93a30b11d#3' id='type-id-34'/>
+    <array-type-def dimensions='1' type-id='type-id-16' hash='8d913e14a8a96b62' id='type-id-21'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-50'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-9' size-in-bits='64' hash='b83eb2deac70d470' id='type-id-10'/>
+    <pointer-type-def type-id='type-id-3' size-in-bits='64' hash='e533f42d1dd4942c' id='type-id-33'/>
+    <qualified-type-def type-id='type-id-3' const='yes' hash='3e50fd33f9bb78d9' id='type-id-51'/>
+    <pointer-type-def type-id='type-id-51' size-in-bits='64' hash='c44743f354f6a443' id='type-id-52'/>
+    <qualified-type-def type-id='type-id-43' const='yes' hash='07c74f5fb4899ef5' id='type-id-53'/>
+    <pointer-type-def type-id='type-id-53' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-23'/>
+    <qualified-type-def type-id='type-id-46' const='yes' hash='865779d1927e0f13' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-54' size-in-bits='64' hash='08e1b4b0a4af7e53' id='type-id-55'/>
+    <qualified-type-def type-id='type-id-47' const='yes' hash='e306b8fbc44c367b' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-56' size-in-bits='64' hash='fde97fc781b0884f' id='type-id-57'/>
+    <pointer-type-def type-id='type-id-45' size-in-bits='64' hash='eb2a67868b586aa3' id='type-id-58'/>
+    <pointer-type-def type-id='type-id-47' size-in-bits='64' hash='9fd5e1bb0b933855' id='type-id-59'/>
+    <pointer-type-def type-id='type-id-59' size-in-bits='64' hash='5eb1f6475fffa035' id='type-id-60'/>
+    <pointer-type-def type-id='type-id-25' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-61'/>
+    <pointer-type-def type-id='type-id-32' size-in-bits='64' hash='cb9a7e6d0a85883d' id='type-id-24'/>
+    <pointer-type-def type-id='type-id-28' size-in-bits='64' hash='bd1d889facccead8' id='type-id-62'/>
+    <pointer-type-def type-id='type-id-30' size-in-bits='64' hash='a7b536d51360d693' id='type-id-63'/>
+    <pointer-type-def type-id='type-id-64' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-44'/>
+    <pointer-type-def type-id='type-id-65' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-41'/>
+    <pointer-type-def type-id='type-id-66' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-42'/>
+    <pointer-type-def type-id='type-id-67' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-48'/>
+    <function-decl name='kith_proto_create' mangled-name='kith_proto_create' filepath='././src/proto/proto.c' line='122' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_create@@KITH_PROTO_1' hash='9af4bcb83de1c29b'>
+      <parameter type-id='type-id-55' name='params' filepath='././src/proto/proto.c' line='122' column='1'/>
+      <parameter type-id='type-id-23' name='alloc' filepath='././src/proto/proto.c' line='123' column='1'/>
+      <parameter type-id='type-id-60' name='out_proto' filepath='././src/proto/proto.c' line='124' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_proto_destroy' mangled-name='kith_proto_destroy' filepath='././src/proto/proto.c' line='175' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_destroy@@KITH_PROTO_1' hash='cf824aa300836e02'>
+      <parameter type-id='type-id-59' name='proto' filepath='././src/proto/proto.c' line='175' column='1'/>
+      <return type-id='type-id-68'/>
+    </function-decl>
+    <function-decl name='kith_proto_register_type_id' mangled-name='kith_proto_register_type_id' filepath='././src/proto/proto.c' line='194' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_register_type_id@@KITH_PROTO_1' hash='70122b19d0a82ac6'>
+      <parameter type-id='type-id-59' name='proto' filepath='././src/proto/proto.c' line='194' column='1'/>
+      <parameter type-id='type-id-52' name='name' filepath='././src/proto/proto.c' line='194' column='1'/>
+      <parameter type-id='type-id-28' name='type_id' filepath='././src/proto/proto.c' line='194' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_proto_lookup_type' mangled-name='kith_proto_lookup_type' filepath='././src/proto/proto.c' line='240' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_lookup_type@@KITH_PROTO_1' hash='76c7c903287d097a'>
+      <parameter type-id='type-id-57' name='proto' filepath='././src/proto/proto.c' line='240' column='1'/>
+      <parameter type-id='type-id-52' name='name' filepath='././src/proto/proto.c' line='240' column='1'/>
+      <parameter type-id='type-id-62' name='out_type_id' filepath='././src/proto/proto.c' line='240' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_proto_type_name' mangled-name='kith_proto_type_name' filepath='././src/proto/proto.c' line='261' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_type_name@@KITH_PROTO_1' hash='ed77b6df058a8e5e'>
+      <parameter type-id='type-id-57' name='proto' filepath='././src/proto/proto.c' line='261' column='1'/>
+      <parameter type-id='type-id-28' name='type_id' filepath='././src/proto/proto.c' line='261' column='1'/>
+      <return type-id='type-id-52'/>
+    </function-decl>
+    <function-decl name='kith_proto_encode' mangled-name='kith_proto_encode' filepath='././src/proto/proto.c' line='282' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_encode@@KITH_PROTO_1' hash='a40d35be17b80240'>
+      <parameter type-id='type-id-57' name='proto' filepath='././src/proto/proto.c' line='282' column='1'/>
+      <parameter type-id='type-id-28' name='type_id' filepath='././src/proto/proto.c' line='283' column='1'/>
+      <parameter type-id='type-id-29' name='flags' filepath='././src/proto/proto.c' line='284' column='1'/>
+      <parameter type-id='type-id-30' name='correlation_id' filepath='././src/proto/proto.c' line='285' column='1'/>
+      <parameter type-id='type-id-16' name='payload' filepath='././src/proto/proto.c' line='286' column='1'/>
+      <parameter type-id='type-id-15' name='payload_len' filepath='././src/proto/proto.c' line='287' column='1'/>
+      <parameter type-id='type-id-16' name='buf' filepath='././src/proto/proto.c' line='288' column='1'/>
+      <parameter type-id='type-id-25' name='cap' filepath='././src/proto/proto.c' line='289' column='1'/>
+      <return type-id='type-id-25'/>
+    </function-decl>
+    <function-decl name='kith_proto_decode' mangled-name='kith_proto_decode' filepath='././src/proto/proto.c' line='393' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_decode@@KITH_PROTO_1' hash='491874e307966163'>
+      <parameter type-id='type-id-57' name='proto' filepath='././src/proto/proto.c' line='393' column='1'/>
+      <parameter type-id='type-id-16' name='buf' filepath='././src/proto/proto.c' line='394' column='1'/>
+      <parameter type-id='type-id-25' name='len' filepath='././src/proto/proto.c' line='395' column='1'/>
+      <parameter type-id='type-id-58' name='out_frame' filepath='././src/proto/proto.c' line='396' column='1'/>
+      <parameter type-id='type-id-61' name='out_consumed' filepath='././src/proto/proto.c' line='397' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_proto_declared_total' mangled-name='kith_proto_declared_total' filepath='././src/proto/proto.c' line='476' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_declared_total@@KITH_PROTO_1' hash='b3b61834beb80b69'>
+      <parameter type-id='type-id-16' name='buf' filepath='././src/proto/proto.c' line='476' column='1'/>
+      <parameter type-id='type-id-25' name='len' filepath='././src/proto/proto.c' line='476' column='1'/>
+      <parameter type-id='type-id-61' name='out_total' filepath='././src/proto/proto.c' line='476' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_proto_rejections' mangled-name='kith_proto_rejections' filepath='././src/proto/proto.c' line='505' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_rejections@@KITH_PROTO_1' hash='aeec0dc09ad72bfb'>
+      <parameter type-id='type-id-57' name='proto' filepath='././src/proto/proto.c' line='505' column='1'/>
+      <parameter type-id='type-id-63' name='out_rejections' filepath='././src/proto/proto.c' line='505' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_proto_correlation_hex' mangled-name='kith_proto_correlation_hex' filepath='././src/proto/proto.c' line='519' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_proto_correlation_hex@@KITH_PROTO_1' hash='5b8a0c37839829ec'>
+      <parameter type-id='type-id-30' name='correlation_id' filepath='././src/proto/proto.c' line='519' column='1'/>
+      <parameter type-id='type-id-33' name='buf' filepath='././src/proto/proto.c' line='519' column='1'/>
+      <return type-id='type-id-25'/>
+    </function-decl>
+    <type-decl name='void' id='type-id-68'/>
+    <pointer-type-def type-id='type-id-68' id='type-id-16'/>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-64'>
+      <parameter type-id='type-id-16'/>
+      <parameter type-id='type-id-16'/>
+      <return type-id='type-id-68'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-65'>
+      <parameter type-id='type-id-16'/>
+      <parameter type-id='type-id-25'/>
+      <return type-id='type-id-16'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-66'>
+      <parameter type-id='type-id-16'/>
+      <parameter type-id='type-id-25'/>
+      <parameter type-id='type-id-25'/>
+      <return type-id='type-id-16'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-67'>
+      <parameter type-id='type-id-16'/>
+      <parameter type-id='type-id-16'/>
+      <parameter type-id='type-id-25'/>
+      <return type-id='type-id-16'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>
