@@ -22,7 +22,7 @@ registered serializers; Prometheus text and OTLP/JSON ship
 with the library. Neither
 the logger nor the registry is a singleton: each handle is owned by the
 composition root and passed in by pointer, with no global accessor. Tracing is
-correlation-first: a call site that has a correlation ID in scope
+correlation-first (ADR-0007): a call site that has a correlation ID in scope
 passes it explicitly — as the correlation-ID caller field on a log entry
 (the convention `docs/event_schema.md` defines), as a caller-supplied label
 on a metric observation, or in the correlation
@@ -34,7 +34,7 @@ contract, so a single perimeter captures the whole runtime.
 ## Consequences
 
 Positive — uniform observability and a single, navigable picture of any path
-through the fabric; correlation IDs tie the log entries, metric
+through the fabric; correlation IDs (ADR-0007) tie the log entries, metric
 series, and event records that carry them to one observation. Negative —
 framework overhead (handles passed by pointer,
 the JSONL and OTLP serializers), accepted for the operational visibility it

@@ -97,6 +97,14 @@ class TestFunctionCoverage:
             f"_FUNCTIONS has {len(gen_names)} entries"
         )
 
+    def test_decayed_array_parameter_maps_to_buffer_pointer(self) -> None:
+        from kith._generated import proto as gen_proto
+
+        # ``char buf[17]`` decays to ``char *`` at the ABI: the generated
+        # argtype is the buffer pointer, never the single-byte element type.
+        entry = next(e for e in gen_proto._FUNCTIONS if e[0] == "kith_proto_correlation_hex")
+        assert entry[2] == [ctypes.c_uint64, ctypes.c_char_p]
+
     def test_no_single_byte_argtypes_in_any_module(self) -> None:
         # The public surface has no scalar char parameters — char appears
         # only as pointers and decayed arrays, both mapping to c_char_p —
