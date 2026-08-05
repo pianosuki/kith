@@ -4,8 +4,8 @@ kith._generated mirrors the public C headers under include/kith; the bridge
 module loads the shared libraries and the generated signatures attach to
 them. The exception families below are the package's public error surface:
 every C error code crosses the boundary as one of these. The typed
-configuration source wrapper and the protocol wrapper are re-exported
-alongside them.
+configuration source wrapper, the protocol wrapper, and the worker
+pool wrapper are re-exported alongside them.
 """
 
 from kith.config import Config
@@ -22,6 +22,7 @@ from kith.exceptions import (
     KithStateError,
 )
 from kith.proto import Proto
+from kith.worker import Worker
 
 
 __all__ = [
@@ -37,4 +38,5 @@ __all__ = [
     "KithResponseOverflowError",
     "KithStateError",
     "Proto",
+    "Worker",
 ]
