@@ -1,0 +1,16 @@
+KITH_WORKER_1 {
+    global:
+        kith_worker_create;
+        kith_worker_destroy;
+        kith_worker_submit;
+        kith_worker_count;
+        kith_worker_tasks_submitted;
+        kith_worker_tasks_completed;
+        kith_worker_bridge_create_ready;
+        kith_worker_bridge_create_task;
+        kith_worker_bridge_destroy;
+        kith_worker_bridge_ready_cb;
+        kith_worker_bridge_task_cb;
+    local:
+        *;
+};

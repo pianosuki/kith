@@ -39,6 +39,7 @@ include(cmake/lib_metrics.cmake)
 include(cmake/lib_proto.cmake)
 include(cmake/lib_net.cmake)
 include(cmake/lib_reactor.cmake)
+include(cmake/lib_worker.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the
