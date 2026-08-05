@@ -1,7 +1,11 @@
 [build-system]
 # cmake and ninja are pip-installed into the isolated build environment so a
-# from-source build does not need a pre-installed CMake/Ninja on the host.
-# The C compiler stays the host's responsibility on every install path.
+# from-source sdist build does not need a pre-installed CMake/Ninja on the
+# host. The C compiler and dev libraries (liburing, libpq, libhiredis) stay
+# the host's responsibility on every install path: releases are GitHub
+# release assets only, where the binary wheel bundles the libkith_* shared
+# libraries and leaves the system libraries above dynamically linked, while
+# the sdist carries the source tree to build them.
 requires = ["hatchling>=1.31.0", "cmake>=4.4.0", "ninja>=1.13.0"]
 build-backend = "hatchling.build"
 
@@ -236,9 +240,9 @@ path = "hatch_build.py"
 # of the test, example, and tooling trees without their sources. A
 # from-source build (pip install kith-fw --no-binary kith-fw) reconstructs
 # the C libraries via the same CMake invocation the build hook uses; the
-# installing user supplies the C compiler, while cmake and ninja arrive
-# through the isolated build environment. The root CMakeLists composes
-# whichever subtrees are present.
+# installing user supplies the C compiler and the dev libraries (liburing,
+# libpq, libhiredis), while cmake and ninja arrive through the isolated build
+# environment. The root CMakeLists composes whichever subtrees are present.
 include = [
     "/python/kith",
     "/include",
