@@ -80,3 +80,25 @@ add_executable(test_net_ringbuf test_net_ringbuf.c ${CMAKE_SOURCE_DIR}/src/net/r
 target_include_directories(test_net_ringbuf PRIVATE ${CMAKE_SOURCE_DIR}/src/net ${CMAKE_SOURCE_DIR}/include)
 target_compile_definitions(test_net_ringbuf PRIVATE _GNU_SOURCE)
 add_test(NAME test_net_ringbuf COMMAND test_net_ringbuf)
+
+add_executable(test_reactor_basic test_reactor_basic.c)
+target_link_libraries(test_reactor_basic PRIVATE kith_reactor kith_util Threads::Threads)
+target_compile_definitions(test_reactor_basic PRIVATE _GNU_SOURCE)
+add_test(NAME test_reactor_basic COMMAND test_reactor_basic)
+
+add_executable(test_reactor_ring_clamp test_reactor_ring_clamp.c)
+target_link_libraries(test_reactor_ring_clamp PRIVATE kith_reactor kith_util)
+target_compile_definitions(test_reactor_ring_clamp PRIVATE _GNU_SOURCE)
+add_test(NAME test_reactor_ring_clamp COMMAND test_reactor_ring_clamp)
+set_tests_properties(test_reactor_ring_clamp PROPERTIES SKIP_RETURN_CODE 77)
+
+add_executable(test_reactor_drain_cap test_reactor_drain_cap.c)
+target_link_libraries(test_reactor_drain_cap PRIVATE kith_reactor kith_util)
+target_compile_definitions(test_reactor_drain_cap PRIVATE _GNU_SOURCE)
+add_test(NAME test_reactor_drain_cap COMMAND test_reactor_drain_cap)
+
+# Reads the fd map through the internal handle to pin tombstone accounting.
+add_executable(test_reactor_fd_churn test_reactor_fd_churn.c)
+target_link_libraries(test_reactor_fd_churn PRIVATE kith_reactor kith_util)
+target_compile_definitions(test_reactor_fd_churn PRIVATE _GNU_SOURCE)
+target_include_directories(test_reactor_fd_churn PRIVATE ${CMAKE_SOURCE_DIR}/src)
