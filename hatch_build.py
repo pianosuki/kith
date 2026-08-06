@@ -73,6 +73,7 @@ _REQUIRED_LIBS: tuple[str, ...] = (
     "reactor",
     "worker",
     "state",
+    "db",
 )
 
 # Where the bundled libraries land inside the wheel archive (and thus under

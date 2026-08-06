@@ -1,0 +1,21 @@
+KITH_DB_1 {
+    global:
+        kith_db_create;
+        kith_db_destroy;
+        kith_db_register_query;
+        kith_db_lookup_query;
+        kith_db_exec;
+        kith_db_exec_sql;
+        kith_db_session_open;
+        kith_db_session_exec;
+        kith_db_session_close;
+        kith_db_reply_value;
+        kith_db_reply_is_null;
+        kith_db_reply_status;
+        kith_db_reply_err_str;
+        kith_db_reply_n_rows;
+        kith_db_reply_n_cols;
+        kith_db_reply_user_data;
+    local:
+        *;
+};
