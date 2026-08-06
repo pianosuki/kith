@@ -5,7 +5,7 @@ from __future__ import annotations
 import ctypes
 from typing import Protocol
 
-from . import config, logger, metrics, net, proto, reactor, util, worker
+from . import config, logger, metrics, net, proto, reactor, state, util, worker
 
 
 class _LibProvider(Protocol):
@@ -22,3 +22,4 @@ def configure(bridge: _LibProvider) -> None:
     net.configure(bridge.lib("net"))
     reactor.configure(bridge.lib("reactor"))
     worker.configure(bridge.lib("worker"))
+    state.configure(bridge.lib("state"))
