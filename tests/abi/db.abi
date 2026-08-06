@@ -1,0 +1,500 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_db.so.1'>
+  <elf-needed>
+    <dependency name='libkith_reactor.so.1'/>
+    <dependency name='libpq.so.5'/>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_db_create' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_destroy' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_exec' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_exec_sql' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_lookup_query' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_register_query' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_err_str' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_is_null' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_n_cols' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_n_rows' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_status' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_user_data' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_reply_value' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_session_close' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_session_exec' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_db_session_open' version='KITH_DB_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='PQclear' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQconnectPoll' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQconnectStartParams' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQconsumeInput' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQerrorMessage' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQfinish' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQflush' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQgetResult' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQgetisnull' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQgetlength' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQgetvalue' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQisBusy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQnfields' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQntuples' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQresultErrorMessage' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQresultStatus' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQsendQueryParams' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQsocket' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='PQstatus' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__cxa_finalize' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_reactor_add' version='KITH_REACTOR_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_reactor_del' version='KITH_REACTOR_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_reactor_mod' version='KITH_REACTOR_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_reactor_now_ms' version='KITH_REACTOR_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_reactor_schedule' version='KITH_REACTOR_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_reactor_submit' version='KITH_REACTOR_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='snprintf' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strcmp' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strlen' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/db/db.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-3'/>
+    <enum-decl name='kith_db_conn_state' size-in-bits='32' alignment-in-bits='32' filepath='./src/db/db_internal.h' line='33' column='1' hash='df8b3ea500da7ddd' id='type-id-4'>
+      <underlying-type type-id='type-id-5'/>
+      <enumerator name='KITH_DB_CONN_DISCONNECTED' value='0'/>
+      <enumerator name='KITH_DB_CONN_CONNECTING' value='1'/>
+      <enumerator name='KITH_DB_CONN_READY' value='2'/>
+      <enumerator name='KITH_DB_CONN_BUSY' value='3'/>
+    </enum-decl>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-6'/>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='105' column='1' hash='9ba503ed4df460cc' id='type-id-7'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-9' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-10' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-11' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-12' visibility='default' filepath='./include/kith/types.h' line='123' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-13' visibility='default' filepath='./include/kith/types.h' line='126' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-14' visibility='default' filepath='./include/kith/types.h' line='129' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db' is-struct='yes' visibility='default' size-in-bits='832' filepath='./src/db/db_internal.h' line='133' column='1' hash='35a8f770af87106a' id='type-id-15'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-16' visibility='default' filepath='./src/db/db_internal.h' line='135' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='reactor' type-id='type-id-17' visibility='default' filepath='./src/db/db_internal.h' line='137' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='conns' type-id='type-id-18' visibility='default' filepath='./src/db/db_internal.h' line='138' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='max_connections' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='139' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='min_connections' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='140' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='next_conn' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='host' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='144' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='port' type-id='type-id-20' visibility='default' filepath='./src/db/db_internal.h' line='145' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='db_name' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='146' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='user' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='147' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='password' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='connect_timeout_ms' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='queries' type-id='type-id-21' visibility='default' filepath='./src/db/db_internal.h' line='151' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='sessions' type-id='type-id-22' visibility='default' filepath='./src/db/db_internal.h' line='153' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db_cmd' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/db/db_internal.h' line='55' column='1' hash='1a0dfcb8c67144eb' id='type-id-23'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='callback' type-id='type-id-24' visibility='default' filepath='./src/db/db_internal.h' line='57' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-9' visibility='default' filepath='./src/db/db_internal.h' line='58' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='db' type-id='type-id-25' visibility='default' filepath='./src/db/db_internal.h' line='59' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='session' type-id='type-id-22' visibility='default' filepath='./src/db/db_internal.h' line='61' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='sql' type-id='type-id-26' visibility='default' filepath='./src/db/db_internal.h' line='63' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='sql_owned' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='65' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='n_params' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='param_copies' type-id='type-id-27' visibility='default' filepath='./src/db/db_internal.h' line='71' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db_conn' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/db/db_internal.h' line='111' column='1' hash='9dd5975e9a3870fa' id='type-id-28'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='pg' type-id='type-id-29' visibility='default' filepath='./src/db/db_internal.h' line='113' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='state' type-id='type-id-4' visibility='default' filepath='./src/db/db_internal.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='event_mask' type-id='type-id-30' visibility='default' filepath='./src/db/db_internal.h' line='115' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='last_fd' type-id='type-id-6' visibility='default' filepath='./src/db/db_internal.h' line='116' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='cmd' type-id='type-id-31' visibility='default' filepath='./src/db/db_internal.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='reactor' type-id='type-id-17' visibility='default' filepath='./src/db/db_internal.h' line='118' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='generation' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='119' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='session' type-id='type-id-22' visibility='default' filepath='./src/db/db_internal.h' line='122' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='timers' type-id='type-id-32' visibility='default' filepath='./src/db/db_internal.h' line='124' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db_params' is-struct='yes' visibility='default' size-in-bits='1024' filepath='./include/kith/db/db.h' line='83' column='1' hash='b253074c6e05800d' id='type-id-33'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/db/db.h' line='86' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/db/db.h' line='88' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='host' type-id='type-id-26' visibility='default' filepath='./include/kith/db/db.h' line='98' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='port' type-id='type-id-20' visibility='default' filepath='./include/kith/db/db.h' line='103' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='db_name' type-id='type-id-26' visibility='default' filepath='./include/kith/db/db.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='user' type-id='type-id-26' visibility='default' filepath='./include/kith/db/db.h' line='119' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='password' type-id='type-id-26' visibility='default' filepath='./include/kith/db/db.h' line='127' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='min_connections' type-id='type-id-8' visibility='default' filepath='./include/kith/db/db.h' line='134' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='416'>
+        <var-decl name='max_connections' type-id='type-id-8' visibility='default' filepath='./include/kith/db/db.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='connect_timeout_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/db/db.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='reserved' type-id='type-id-14' visibility='default' filepath='./include/kith/db/db.h' line='151' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db_query' is-struct='yes' visibility='default' size-in-bits='256' filepath='./src/db/db_internal.h' line='44' column='1' hash='455916a3ec6202fa' id='type-id-34'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='name' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='46' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='sql' type-id='type-id-19' visibility='default' filepath='./src/db/db_internal.h' line='47' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='n_params' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='48' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='next' type-id='type-id-21' visibility='default' filepath='./src/db/db_internal.h' line='49' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db_reply' is-struct='yes' visibility='default' size-in-bits='320' filepath='./src/db/db_internal.h' line='14' column='1' hash='e188b008ce83ca5f' id='type-id-35'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='status' type-id='type-id-6' visibility='default' filepath='./src/db/db_internal.h' line='17' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='err_str' type-id='type-id-26' visibility='default' filepath='./src/db/db_internal.h' line='19' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='n_rows' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='21' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='n_cols' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='23' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='result' type-id='type-id-36' visibility='default' filepath='./src/db/db_internal.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='user_data' type-id='type-id-9' visibility='default' filepath='./src/db/db_internal.h' line='27' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_db_session' is-struct='yes' visibility='default' size-in-bits='384' filepath='./src/db/db_internal.h' line='77' column='1' hash='38a2c0a1b1f4d1bc' id='type-id-37'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='db' type-id='type-id-25' visibility='default' filepath='./src/db/db_internal.h' line='79' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='conn' type-id='type-id-18' visibility='default' filepath='./src/db/db_internal.h' line='80' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='generation' type-id='type-id-8' visibility='default' filepath='./src/db/db_internal.h' line='81' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='open_pending' type-id='type-id-2' visibility='default' filepath='./src/db/db_internal.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='open_cb' type-id='type-id-38' visibility='default' filepath='./src/db/db_internal.h' line='85' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='open_user_data' type-id='type-id-9' visibility='default' filepath='./src/db/db_internal.h' line='86' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='next' type-id='type-id-22' visibility='default' filepath='./src/db/db_internal.h' line='87' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__uint16_t' type-id='type-id-39' size-in-bits='16' filepath='/usr/include/bits/types.h' line='40' column='1' hash='d7723bb93a30b11d' id='type-id-40'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-30' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-41'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-42' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-10'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-43' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-11'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-7' size-in-bits='896' filepath='./include/kith/types.h' line='133' column='1' id='type-id-44'/>
+    <typedef-decl name='kith_db_params_t' type-id='type-id-33' size-in-bits='1024' filepath='./include/kith/db/db.h' line='155' column='1' id='type-id-45'/>
+    <typedef-decl name='kith_db_reply_fn' type-id='type-id-46' size-in-bits='64' filepath='./include/kith/db/db.h' line='186' column='1' hash='fd7a63c0c6c822c4' id='type-id-24'/>
+    <typedef-decl name='kith_db_reply_t' type-id='type-id-35' size-in-bits='320' filepath='./include/kith/db/db.h' line='174' column='1' id='type-id-47'/>
+    <typedef-decl name='kith_db_session_close_fn' type-id='type-id-48' size-in-bits='64' filepath='./include/kith/db/db.h' line='231' column='1' hash='fd7a63c0c6c822c4' id='type-id-49'/>
+    <typedef-decl name='kith_db_session_open_fn' type-id='type-id-50' size-in-bits='64' filepath='./include/kith/db/db.h' line='219' column='1' hash='fd7a63c0c6c822c4' id='type-id-38'/>
+    <typedef-decl name='kith_db_session_t' type-id='type-id-37' size-in-bits='384' filepath='./include/kith/db/db.h' line='207' column='1' id='type-id-51'/>
+    <typedef-decl name='kith_db_t' type-id='type-id-15' size-in-bits='832' filepath='./include/kith/db/db.h' line='56' column='1' id='type-id-52'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-53' size-in-bits='64' filepath='./include/kith/types.h' line='80' column='1' hash='fd7a63c0c6c822c4' id='type-id-13'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-54' size-in-bits='64' filepath='./include/kith/types.h' line='77' column='1' hash='fd7a63c0c6c822c4' id='type-id-12'/>
+    <typedef-decl name='size_t' type-id='type-id-55' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-56'/>
+    <typedef-decl name='uint16_t' type-id='type-id-40' size-in-bits='16' filepath='/usr/include/bits/stdint-uintn.h' line='25' column='1' hash='d7723bb93a30b11d' id='type-id-20'/>
+    <typedef-decl name='uint32_t' type-id='type-id-41' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-8'/>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-5'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-30'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-55'/>
+    <type-decl name='unsigned short int' size-in-bits='16' hash='d7723bb93a30b11d#3' id='type-id-39'/>
+    <array-type-def dimensions='1' type-id='type-id-9' hash='8d913e14a8a96b62' id='type-id-14'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-57'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-3' size-in-bits='64' hash='e533f42d1dd4942c' id='type-id-19'/>
+    <pointer-type-def type-id='type-id-19' size-in-bits='64' hash='a93039fe023ed77b' id='type-id-27'/>
+    <qualified-type-def type-id='type-id-3' const='yes' hash='3e50fd33f9bb78d9' id='type-id-58'/>
+    <pointer-type-def type-id='type-id-58' size-in-bits='64' hash='c44743f354f6a443' id='type-id-26'/>
+    <qualified-type-def type-id='type-id-26' const='yes' hash='ec42cf78a9d93a8c' id='type-id-59'/>
+    <pointer-type-def type-id='type-id-59' size-in-bits='64' hash='b529075cb120abc3' id='type-id-60'/>
+    <qualified-type-def type-id='type-id-44' const='yes' hash='07c74f5fb4899ef5' id='type-id-61'/>
+    <pointer-type-def type-id='type-id-61' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-16'/>
+    <qualified-type-def type-id='type-id-45' const='yes' hash='bd3254e7c349f2b5' id='type-id-62'/>
+    <pointer-type-def type-id='type-id-62' size-in-bits='64' hash='df8611ba886b8e76' id='type-id-63'/>
+    <qualified-type-def type-id='type-id-47' const='yes' hash='c0b7b74150220894' id='type-id-64'/>
+    <pointer-type-def type-id='type-id-64' size-in-bits='64' hash='30a5805e91786460' id='type-id-65'/>
+    <qualified-type-def type-id='type-id-52' const='yes' hash='695e4cd417bfb7fb' id='type-id-66'/>
+    <pointer-type-def type-id='type-id-66' size-in-bits='64' hash='fc4dd5f91076909d' id='type-id-67'/>
+    <pointer-type-def type-id='type-id-15' size-in-bits='64' hash='e9ce1f463886c959' id='type-id-25'/>
+    <pointer-type-def type-id='type-id-23' size-in-bits='64' hash='e089d113e3ba028b' id='type-id-31'/>
+    <pointer-type-def type-id='type-id-28' size-in-bits='64' hash='ff72807f5db03e3a' id='type-id-18'/>
+    <pointer-type-def type-id='type-id-34' size-in-bits='64' hash='fc46a4a739152577' id='type-id-21'/>
+    <pointer-type-def type-id='type-id-47' size-in-bits='64' hash='8919c0ee22dddbc4' id='type-id-68'/>
+    <pointer-type-def type-id='type-id-37' size-in-bits='64' hash='658cf6f5c644ee50' id='type-id-22'/>
+    <pointer-type-def type-id='type-id-51' size-in-bits='64' hash='9838e534f581b177' id='type-id-69'/>
+    <pointer-type-def type-id='type-id-52' size-in-bits='64' hash='784a35ee6f7c7fce' id='type-id-70'/>
+    <pointer-type-def type-id='type-id-70' size-in-bits='64' hash='0134500fe664fba2' id='type-id-71'/>
+    <pointer-type-def type-id='type-id-56' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-72'/>
+    <pointer-type-def type-id='type-id-8' size-in-bits='64' hash='a285db8f38e4ea02' id='type-id-73'/>
+    <pointer-type-def type-id='type-id-74' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-48'/>
+    <pointer-type-def type-id='type-id-75' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-46'/>
+    <pointer-type-def type-id='type-id-76' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-50'/>
+    <pointer-type-def type-id='type-id-77' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-53'/>
+    <pointer-type-def type-id='type-id-78' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-42'/>
+    <pointer-type-def type-id='type-id-79' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-43'/>
+    <pointer-type-def type-id='type-id-80' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-81' size-in-bits='64' id='type-id-29'/>
+    <pointer-type-def type-id='type-id-82' size-in-bits='64' id='type-id-36'/>
+    <pointer-type-def type-id='type-id-83' size-in-bits='64' id='type-id-32'/>
+    <pointer-type-def type-id='type-id-84' size-in-bits='64' id='type-id-17'/>
+    <class-decl name='connect_timer_rec' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-83'/>
+    <class-decl name='kith_reactor' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-85'/>
+    <class-decl name='pg_conn' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-86'/>
+    <class-decl name='pg_result' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-87'/>
+    <function-decl name='kith_db_create' mangled-name='kith_db_create' filepath='././src/db/db.c' line='342' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_create@@KITH_DB_1' hash='f7efe9b110285def'>
+      <parameter type-id='type-id-63' name='params' filepath='././src/db/db.c' line='342' column='1'/>
+      <parameter type-id='type-id-17' name='reactor' filepath='././src/db/db.c' line='343' column='1'/>
+      <parameter type-id='type-id-16' name='alloc' filepath='././src/db/db.c' line='344' column='1'/>
+      <parameter type-id='type-id-71' name='out_db' filepath='././src/db/db.c' line='345' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_destroy' mangled-name='kith_db_destroy' filepath='././src/db/db.c' line='417' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_destroy@@KITH_DB_1' hash='c3be4854316dcbdc'>
+      <parameter type-id='type-id-70' name='db' filepath='././src/db/db.c' line='417' column='1'/>
+      <return type-id='type-id-88'/>
+    </function-decl>
+    <function-decl name='kith_db_register_query' mangled-name='kith_db_register_query' filepath='././src/db/db.c' line='463' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_register_query@@KITH_DB_1' hash='98d058ddd968e3a5'>
+      <parameter type-id='type-id-70' name='db' filepath='././src/db/db.c' line='463' column='1'/>
+      <parameter type-id='type-id-26' name='name' filepath='././src/db/db.c' line='463' column='1'/>
+      <parameter type-id='type-id-26' name='sql' filepath='././src/db/db.c' line='463' column='1'/>
+      <parameter type-id='type-id-8' name='n_params' filepath='././src/db/db.c' line='463' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_lookup_query' mangled-name='kith_db_lookup_query' filepath='././src/db/db.c' line='473' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_lookup_query@@KITH_DB_1' hash='e60f036ae99512d4'>
+      <parameter type-id='type-id-67' name='db' filepath='././src/db/db.c' line='473' column='1'/>
+      <parameter type-id='type-id-26' name='name' filepath='././src/db/db.c' line='473' column='1'/>
+      <parameter type-id='type-id-73' name='out_n_params' filepath='././src/db/db.c' line='473' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_exec' mangled-name='kith_db_exec' filepath='././src/db/db.c' line='491' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_exec@@KITH_DB_1' hash='8ce44116d8010099'>
+      <parameter type-id='type-id-70' name='db' filepath='././src/db/db.c' line='491' column='1'/>
+      <parameter type-id='type-id-26' name='query_name' filepath='././src/db/db.c' line='492' column='1'/>
+      <parameter type-id='type-id-60' name='params' filepath='././src/db/db.c' line='493' column='1'/>
+      <parameter type-id='type-id-8' name='n_params' filepath='././src/db/db.c' line='494' column='1'/>
+      <parameter type-id='type-id-24' name='callback' filepath='././src/db/db.c' line='495' column='1'/>
+      <parameter type-id='type-id-9' name='user_data' filepath='././src/db/db.c' line='496' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_exec_sql' mangled-name='kith_db_exec_sql' filepath='././src/db/db.c' line='529' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_exec_sql@@KITH_DB_1' hash='8ce44116d8010099'>
+      <parameter type-id='type-id-70' name='db' filepath='././src/db/db.c' line='491' column='1'/>
+      <parameter type-id='type-id-26' name='query_name' filepath='././src/db/db.c' line='492' column='1'/>
+      <parameter type-id='type-id-60' name='params' filepath='././src/db/db.c' line='493' column='1'/>
+      <parameter type-id='type-id-8' name='n_params' filepath='././src/db/db.c' line='494' column='1'/>
+      <parameter type-id='type-id-24' name='callback' filepath='././src/db/db.c' line='495' column='1'/>
+      <parameter type-id='type-id-9' name='user_data' filepath='././src/db/db.c' line='496' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_session_open' mangled-name='kith_db_session_open' filepath='././src/db/db.c' line='786' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_session_open@@KITH_DB_1' hash='bd15728d67a67d8d'>
+      <parameter type-id='type-id-70' name='db' filepath='././src/db/db.c' line='786' column='1'/>
+      <parameter type-id='type-id-38' name='callback' filepath='././src/db/db.c' line='786' column='1'/>
+      <parameter type-id='type-id-9' name='user_data' filepath='././src/db/db.c' line='786' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_session_exec' mangled-name='kith_db_session_exec' filepath='././src/db/db.c' line='808' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_session_exec@@KITH_DB_1' hash='16048feb86056a38'>
+      <parameter type-id='type-id-69' name='session' filepath='././src/db/db.c' line='808' column='1'/>
+      <parameter type-id='type-id-26' name='sql' filepath='././src/db/db.c' line='809' column='1'/>
+      <parameter type-id='type-id-60' name='params' filepath='././src/db/db.c' line='810' column='1'/>
+      <parameter type-id='type-id-8' name='n_params' filepath='././src/db/db.c' line='811' column='1'/>
+      <parameter type-id='type-id-24' name='callback' filepath='././src/db/db.c' line='812' column='1'/>
+      <parameter type-id='type-id-9' name='user_data' filepath='././src/db/db.c' line='813' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_session_close' mangled-name='kith_db_session_close' filepath='././src/db/db.c' line='845' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_session_close@@KITH_DB_1' hash='f4713b69b396330d'>
+      <parameter type-id='type-id-69' name='session' filepath='././src/db/db.c' line='845' column='1'/>
+      <parameter type-id='type-id-49' name='callback' filepath='././src/db/db.c' line='846' column='1'/>
+      <parameter type-id='type-id-9' name='user_data' filepath='././src/db/db.c' line='847' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_value' mangled-name='kith_db_reply_value' filepath='././src/db/db.c' line='874' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_value@@KITH_DB_1' hash='8583d87217168d79'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='874' column='1'/>
+      <parameter type-id='type-id-8' name='row' filepath='././src/db/db.c' line='874' column='1'/>
+      <parameter type-id='type-id-8' name='col' filepath='././src/db/db.c' line='874' column='1'/>
+      <parameter type-id='type-id-72' name='out_len' filepath='././src/db/db.c' line='874' column='1'/>
+      <return type-id='type-id-26'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_is_null' mangled-name='kith_db_reply_is_null' filepath='././src/db/db.c' line='900' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_is_null@@KITH_DB_1' hash='4a8266c51646cc9f'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='900' column='1'/>
+      <parameter type-id='type-id-8' name='row' filepath='././src/db/db.c' line='900' column='1'/>
+      <parameter type-id='type-id-8' name='col' filepath='././src/db/db.c' line='900' column='1'/>
+      <return type-id='type-id-2'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_status' mangled-name='kith_db_reply_status' filepath='././src/db/db.c' line='909' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_status@@KITH_DB_1' hash='1926ccd99218dfa6'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='909' column='1'/>
+      <return type-id='type-id-6'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_err_str' mangled-name='kith_db_reply_err_str' filepath='././src/db/db.c' line='914' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_err_str@@KITH_DB_1' hash='f4bd6cf62aae1fd6'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='914' column='1'/>
+      <return type-id='type-id-26'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_n_rows' mangled-name='kith_db_reply_n_rows' filepath='././src/db/db.c' line='919' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_n_rows@@KITH_DB_1' hash='351ae2eb26dce51d'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='919' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_n_cols' mangled-name='kith_db_reply_n_cols' filepath='././src/db/db.c' line='924' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_n_cols@@KITH_DB_1' hash='351ae2eb26dce51d'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='919' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_db_reply_user_data' mangled-name='kith_db_reply_user_data' filepath='././src/db/db.c' line='929' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_db_reply_user_data@@KITH_DB_1' hash='a5dd25c34293531c'>
+      <parameter type-id='type-id-65' name='reply' filepath='././src/db/db.c' line='929' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <typedef-decl name='kith_reactor_t' type-id='type-id-85' filepath='./include/kith/reactor/reactor.h' line='90' column='1' id='type-id-84'/>
+    <typedef-decl name='PGconn' type-id='type-id-86' filepath='/usr/include/libpq-fe.h' line='202' column='1' id='type-id-81'/>
+    <typedef-decl name='PGresult' type-id='type-id-87' filepath='/usr/include/libpq-fe.h' line='214' column='1' id='type-id-82'/>
+    <type-decl name='void' id='type-id-88'/>
+    <pointer-type-def type-id='type-id-88' id='type-id-9'/>
+    <function-type size-in-bits='64' hash='388da3fa973fde78' id='type-id-74'>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-9'/>
+      <return type-id='type-id-88'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='ddf9a5772d7865f6' id='type-id-75'>
+      <parameter type-id='type-id-68'/>
+      <return type-id='type-id-88'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='c1223f92d5dcff45' id='type-id-76'>
+      <parameter type-id='type-id-69'/>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-9'/>
+      <return type-id='type-id-88'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-77'>
+      <parameter type-id='type-id-9'/>
+      <parameter type-id='type-id-9'/>
+      <return type-id='type-id-88'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-78'>
+      <parameter type-id='type-id-9'/>
+      <parameter type-id='type-id-56'/>
+      <return type-id='type-id-9'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-79'>
+      <parameter type-id='type-id-9'/>
+      <parameter type-id='type-id-56'/>
+      <parameter type-id='type-id-56'/>
+      <return type-id='type-id-9'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-80'>
+      <parameter type-id='type-id-9'/>
+      <parameter type-id='type-id-9'/>
+      <parameter type-id='type-id-56'/>
+      <return type-id='type-id-9'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>

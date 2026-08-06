@@ -133,3 +133,18 @@ add_executable(test_state_ops test_state_ops.c)
 target_link_libraries(test_state_ops PRIVATE kith_state kith_reactor Threads::Threads)
 target_compile_definitions(test_state_ops PRIVATE _GNU_SOURCE)
 add_test(NAME test_state_ops COMMAND test_state_ops)
+
+add_executable(test_db_create test_db_create.c)
+target_link_libraries(test_db_create PRIVATE kith_db kith_reactor)
+target_compile_definitions(test_db_create PRIVATE _GNU_SOURCE)
+add_test(NAME test_db_create COMMAND test_db_create)
+
+add_executable(test_db_ops test_db_ops.c)
+target_link_libraries(test_db_ops PRIVATE kith_db kith_reactor Threads::Threads)
+target_compile_definitions(test_db_ops PRIVATE _GNU_SOURCE)
+add_test(NAME test_db_ops COMMAND test_db_ops)
+
+add_executable(test_db_session test_db_session.c)
+target_link_libraries(test_db_session PRIVATE kith_db kith_reactor Threads::Threads)
+target_compile_definitions(test_db_session PRIVATE _GNU_SOURCE)
+add_test(NAME test_db_session COMMAND test_db_session)
