@@ -1,0 +1,11 @@
+KITH_STATE_1 {
+    global:
+        kith_state_create;
+        kith_state_destroy;
+        kith_state_set;
+        kith_state_get;
+        kith_state_del;
+        kith_state_exists;
+    local:
+        *;
+};
