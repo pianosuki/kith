@@ -118,3 +118,18 @@ add_executable(test_worker_signal_mask test_worker_signal_mask.c)
 target_link_libraries(test_worker_signal_mask PRIVATE kith_worker kith_util)
 target_compile_definitions(test_worker_signal_mask PRIVATE _GNU_SOURCE)
 add_test(NAME test_worker_signal_mask COMMAND test_worker_signal_mask)
+
+add_executable(test_state_create test_state_create.c)
+target_link_libraries(test_state_create PRIVATE kith_state kith_reactor)
+target_compile_definitions(test_state_create PRIVATE _GNU_SOURCE)
+add_test(NAME test_state_create COMMAND test_state_create)
+
+add_executable(test_state_overflow test_state_overflow.c)
+target_link_libraries(test_state_overflow PRIVATE kith_state kith_reactor)
+target_compile_definitions(test_state_overflow PRIVATE _GNU_SOURCE)
+add_test(NAME test_state_overflow COMMAND test_state_overflow)
+
+add_executable(test_state_ops test_state_ops.c)
+target_link_libraries(test_state_ops PRIVATE kith_state kith_reactor Threads::Threads)
+target_compile_definitions(test_state_ops PRIVATE _GNU_SOURCE)
+add_test(NAME test_state_ops COMMAND test_state_ops)
