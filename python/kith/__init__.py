@@ -5,8 +5,9 @@ module loads the shared libraries and the generated signatures attach to
 them. The exception families below are the package's public error surface:
 every C error code crosses the boundary as one of these. The typed
 configuration source wrapper, the protocol wrapper, the reactor
-wrapper, the worker pool wrapper, the persistence wrapper, and the
-area-of-interest wrapper are re-exported alongside them.
+wrapper, the worker pool wrapper, the persistence wrapper, the
+area-of-interest wrapper, and the simulation wrapper are re-exported
+alongside them.
 """
 
 from kith.aoi import Aoi
@@ -26,12 +27,22 @@ from kith.exceptions import (
 )
 from kith.proto import Proto
 from kith.reactor import Reactor
+from kith.sim import (
+    Actor,
+    ArtifactKey,
+    Sim,
+    SimInput,
+    SimModel,
+    SimModelConfig,
+)
 from kith.worker import Worker
 
 
 __all__ = [
     "ABIVersionError",
+    "Actor",
     "Aoi",
+    "ArtifactKey",
     "BridgeError",
     "BridgeLoadError",
     "Config",
@@ -46,6 +57,10 @@ __all__ = [
     "Proto",
     "Reactor",
     "Reply",
+    "Sim",
+    "SimInput",
+    "SimModel",
+    "SimModelConfig",
     "Transaction",
     "Worker",
 ]
