@@ -200,8 +200,8 @@ filterwarnings = [
 
 [tool.codespell]
 # `lod` is the subcell level-of-detail refinement index in the canonical
-# cell key; it is not a typo for "load". Add framework vocabulary here as
-# it grows.
+# cell key; it recurs across headers, docs, and bindings and is not a typo
+# for "load". Add framework vocabulary here as it grows.
 ignore-words-list = "lod"
 
 # ---------------------------------------------------------------------------

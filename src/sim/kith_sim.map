@@ -1,0 +1,20 @@
+KITH_SIM_1 {
+    global:
+        kith_sim_create;
+        kith_sim_destroy;
+        kith_sim_register_model;
+        kith_sim_create_model;
+        kith_sim_model_destroy;
+        kith_sim_model_step;
+        kith_sim_model_apply_input;
+        kith_sim_model_load_behavior;
+        kith_sim_publish_artifact;
+        kith_sim_remove_artifact;
+        kith_sim_remove_zone;
+        kith_sim_snapshot_cell;
+        kith_sim_snapshot_zone_cells;
+        kith_sim_cell_product;
+        kith_sim_artifact_count;
+    local:
+        *;
+};
