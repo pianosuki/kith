@@ -10,13 +10,14 @@ the boundary (the exception hierarchy in :mod:`kith.exceptions`).
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
 from _build_gate import _BUILD_DEBUG, needs_build
 
 from kith import (
+    Aoi,
     Config,
     KithConfigError,
     KithError,
@@ -26,6 +27,7 @@ from kith import (
 )
 from kith._bridge import reset
 from kith._generated import types as gen_types
+from kith.aoi import Box, Object, Sphere
 from kith.proto import MsgFlag, Proto
 
 
@@ -161,3 +163,54 @@ class TestProto:
     def test_incomplete_frame_raises_protocol_error(self) -> None:
         with Proto() as proto, pytest.raises(KithProtocolError):
             proto.decode(b"\x00")  # far too short for a header
+
+
+# ---------------------------------------------------------------------------
+# AOI
+# ---------------------------------------------------------------------------
+
+
+@needs_build
+class TestAoi:
+    def test_insert_lookup_remove(self) -> None:
+        with Aoi() as aoi:
+            aoi.insert(Object(id=1, pos_x=10, pos_y=10, pos_z=0))
+            aoi.insert(Object(id=2, pos_x=20, pos_y=20, pos_z=0))
+            assert aoi.size() == 2
+            found = aoi.lookup(1)
+            assert found is not None and found.pos_x == 10
+            assert aoi.lookup(99) is None
+            aoi.remove(1)
+            assert aoi.size() == 1
+            assert aoi.lookup(1) is None
+
+    def test_sphere_query_visits_intersecting(self) -> None:
+        with Aoi() as aoi:
+            aoi.insert(Object(id=1, pos_x=10, pos_y=10, pos_z=0))
+            aoi.insert(Object(id=2, pos_x=100, pos_y=100, pos_z=0))
+            visited: list[int] = []
+            aoi.query_sphere(Sphere(cx=10, cy=10, cz=0, radius=5), _collect(visited))
+            assert visited == [1]
+
+    def test_box_query_visits_intersecting(self) -> None:
+        with Aoi() as aoi:
+            aoi.insert(Object(id=1, pos_x=10, pos_y=10, pos_z=0))
+            aoi.insert(Object(id=2, pos_x=100, pos_y=100, pos_z=0))
+            visited: list[int] = []
+            aoi.query_box(Box(0, 0, 0, 1000, 1000, 0), _collect(visited))
+            assert sorted(visited) == [1, 2]
+
+    def test_update_moves_position(self) -> None:
+        with Aoi() as aoi:
+            aoi.insert(Object(id=1, pos_x=0, pos_y=0, pos_z=0))
+            aoi.update(Object(id=1, pos_x=500, pos_y=500, pos_z=0))
+            moved = aoi.lookup(1)
+            assert moved is not None and moved.pos_x == 500
+
+
+def _collect(into: list[int]) -> Callable[[Object], bool]:
+    def _visit(obj: Object) -> bool:
+        into.append(obj.id)
+        return True
+
+    return _visit
