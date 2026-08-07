@@ -1,0 +1,14 @@
+KITH_AOI_1 {
+    global:
+        kith_aoi_create;
+        kith_aoi_destroy;
+        kith_aoi_insert;
+        kith_aoi_update;
+        kith_aoi_remove;
+        kith_aoi_lookup;
+        kith_aoi_query_sphere;
+        kith_aoi_query_box;
+        kith_aoi_size;
+    local:
+        *;
+};

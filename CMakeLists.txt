@@ -42,6 +42,7 @@ include(cmake/lib_reactor.cmake)
 include(cmake/lib_worker.cmake)
 include(cmake/lib_state.cmake)
 include(cmake/lib_db.cmake)
+include(cmake/lib_aoi.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the
