@@ -1,0 +1,335 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_aoi.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_aoi_create' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_destroy' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_insert' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_lookup' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_query_box' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_query_sphere' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_remove' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_size' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_aoi_update' version='KITH_AOI_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/aoi/aoi.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-3'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-4'/>
+    <class-decl name='aoi_cell_node' is-struct='yes' visibility='default' size-in-bits='320' filepath='./src/aoi/aoi_internal.h' line='91' column='1' hash='12cc5e83cfd64ab8' id='type-id-5'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='members' type-id='type-id-6' visibility='default' filepath='./src/aoi/aoi_internal.h' line='94' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='member_count' type-id='type-id-7' visibility='default' filepath='./src/aoi/aoi_internal.h' line='95' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='member_cap' type-id='type-id-7' visibility='default' filepath='./src/aoi/aoi_internal.h' line='96' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='cell_x' type-id='type-id-8' visibility='default' filepath='./src/aoi/aoi_internal.h' line='97' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='cell_y' type-id='type-id-8' visibility='default' filepath='./src/aoi/aoi_internal.h' line='98' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='cell_z' type-id='type-id-8' visibility='default' filepath='./src/aoi/aoi_internal.h' line='99' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/aoi/aoi_internal.h' line='101' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='aoi_obj_node' is-struct='yes' visibility='default' size-in-bits='640' filepath='./src/aoi/aoi_internal.h' line='74' column='1' hash='e2726331b58d3fe0' id='type-id-9'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='obj' type-id='type-id-10' visibility='default' filepath='./src/aoi/aoi_internal.h' line='77' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='cell_x' type-id='type-id-8' visibility='default' filepath='./src/aoi/aoi_internal.h' line='79' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='416'>
+        <var-decl name='cell_y' type-id='type-id-8' visibility='default' filepath='./src/aoi/aoi_internal.h' line='80' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='cell_z' type-id='type-id-8' visibility='default' filepath='./src/aoi/aoi_internal.h' line='81' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='cell_pos' type-id='type-id-7' visibility='default' filepath='./src/aoi/aoi_internal.h' line='83' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/aoi/aoi_internal.h' line='85' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='584'>
+        <var-decl name='deleted' type-id='type-id-2' visibility='default' filepath='./src/aoi/aoi_internal.h' line='87' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-11'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-12' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-12' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-13' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-14' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-15' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-16' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-17' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-18' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_aoi' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/aoi/aoi_internal.h' line='108' column='1' hash='a09887953abd385a' id='type-id-19'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-20' visibility='default' filepath='./src/aoi/aoi_internal.h' line='112' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='objs' type-id='type-id-21' visibility='default' filepath='./src/aoi/aoi_internal.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='obj_buckets' type-id='type-id-7' visibility='default' filepath='./src/aoi/aoi_internal.h' line='115' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='obj_count' type-id='type-id-7' visibility='default' filepath='./src/aoi/aoi_internal.h' line='116' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='cells' type-id='type-id-22' visibility='default' filepath='./src/aoi/aoi_internal.h' line='118' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='cell_buckets' type-id='type-id-7' visibility='default' filepath='./src/aoi/aoi_internal.h' line='119' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='cell_size' type-id='type-id-23' visibility='default' filepath='./src/aoi/aoi_internal.h' line='121' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='max_radius' type-id='type-id-23' visibility='default' filepath='./src/aoi/aoi_internal.h' line='125' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_aoi_box' is-struct='yes' visibility='default' size-in-bits='384' filepath='./include/kith/aoi/aoi.h' line='181' column='1' hash='d5b30ef38129824a' id='type-id-24'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='min_x' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='184' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='min_y' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='186' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='min_z' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='188' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='max_x' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='190' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='max_y' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='max_z' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='194' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_aoi_object' is-struct='yes' visibility='default' size-in-bits='384' filepath='./include/kith/aoi/aoi.h' line='138' column='1' hash='0dc3a2c7515210bf' id='type-id-25'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='id' type-id='type-id-26' visibility='default' filepath='./include/kith/aoi/aoi.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='pos_x' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='143' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pos_y' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='145' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='pos_z' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='147' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='radius' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='user_ptr' type-id='type-id-13' visibility='default' filepath='./include/kith/aoi/aoi.h' line='151' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_aoi_params' is-struct='yes' visibility='default' size-in-bits='704' filepath='./include/kith/aoi/aoi.h' line='108' column='1' hash='bcae39700de7287e' id='type-id-27'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-12' visibility='default' filepath='./include/kith/aoi/aoi.h' line='110' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-12' visibility='default' filepath='./include/kith/aoi/aoi.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_size' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='118' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='bucket_count' type-id='type-id-12' visibility='default' filepath='./include/kith/aoi/aoi.h' line='123' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='pad' type-id='type-id-12' visibility='default' filepath='./include/kith/aoi/aoi.h' line='125' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='reserved' type-id='type-id-18' visibility='default' filepath='./include/kith/aoi/aoi.h' line='127' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_aoi_sphere' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/aoi/aoi.h' line='161' column='1' hash='c6a15f5838801aad' id='type-id-28'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='cx' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='164' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cy' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='166' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='cz' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='168' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='radius' type-id='type-id-23' visibility='default' filepath='./include/kith/aoi/aoi.h' line='170' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__int32_t' type-id='type-id-3' size-in-bits='32' filepath='/usr/include/bits/types.h' line='41' column='1' hash='09d17c08f594edc7' id='type-id-29'/>
+    <typedef-decl name='__int64_t' type-id='type-id-4' size-in-bits='64' filepath='/usr/include/bits/types.h' line='44' column='1' hash='b119fe0931d2ee10' id='type-id-30'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-31' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-32'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-33' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-34'/>
+    <typedef-decl name='int32_t' type-id='type-id-29' size-in-bits='32' filepath='/usr/include/bits/stdint-intn.h' line='26' column='1' hash='09d17c08f594edc7' id='type-id-8'/>
+    <typedef-decl name='int64_t' type-id='type-id-30' size-in-bits='64' filepath='/usr/include/bits/stdint-intn.h' line='27' column='1' hash='b119fe0931d2ee10' id='type-id-23'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-35' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-14'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-36' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-15'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-11' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-37'/>
+    <typedef-decl name='kith_aoi_box_t' type-id='type-id-24' size-in-bits='384' filepath='./include/kith/aoi/aoi.h' line='197' column='1' id='type-id-38'/>
+    <typedef-decl name='kith_aoi_object_t' type-id='type-id-25' size-in-bits='384' filepath='./include/kith/aoi/aoi.h' line='154' column='1' id='type-id-10'/>
+    <typedef-decl name='kith_aoi_params_t' type-id='type-id-27' size-in-bits='704' filepath='./include/kith/aoi/aoi.h' line='130' column='1' id='type-id-39'/>
+    <typedef-decl name='kith_aoi_sphere_t' type-id='type-id-28' size-in-bits='256' filepath='./include/kith/aoi/aoi.h' line='173' column='1' id='type-id-40'/>
+    <typedef-decl name='kith_aoi_t' type-id='type-id-19' size-in-bits='512' filepath='./include/kith/aoi/aoi.h' line='92' column='1' id='type-id-41'/>
+    <typedef-decl name='kith_aoi_visit_fn' type-id='type-id-42' size-in-bits='64' filepath='./include/kith/aoi/aoi.h' line='211' column='1' hash='fd7a63c0c6c822c4' id='type-id-43'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-44' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-17'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-45' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-16'/>
+    <typedef-decl name='size_t' type-id='type-id-33' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-7'/>
+    <typedef-decl name='uint32_t' type-id='type-id-32' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-12'/>
+    <typedef-decl name='uint64_t' type-id='type-id-34' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-26'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-31'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-33'/>
+    <array-type-def dimensions='1' type-id='type-id-13' hash='8d913e14a8a96b62' id='type-id-18'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-46'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-5' size-in-bits='64' hash='55669b99c77696df' id='type-id-22'/>
+    <pointer-type-def type-id='type-id-9' size-in-bits='64' hash='28b20ee3c314c861' id='type-id-21'/>
+    <pointer-type-def type-id='type-id-47' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-42'/>
+    <qualified-type-def type-id='type-id-37' const='yes' hash='07c74f5fb4899ef5' id='type-id-48'/>
+    <pointer-type-def type-id='type-id-48' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-20'/>
+    <qualified-type-def type-id='type-id-38' const='yes' hash='298345dc027539d4' id='type-id-49'/>
+    <pointer-type-def type-id='type-id-49' size-in-bits='64' hash='6abc4f4284960142' id='type-id-50'/>
+    <qualified-type-def type-id='type-id-10' const='yes' hash='441707ad8a048c04' id='type-id-51'/>
+    <pointer-type-def type-id='type-id-51' size-in-bits='64' hash='0a4be953b680f2f2' id='type-id-52'/>
+    <qualified-type-def type-id='type-id-39' const='yes' hash='ea7ae05a9c3b875f' id='type-id-53'/>
+    <pointer-type-def type-id='type-id-53' size-in-bits='64' hash='97bb020f446dd549' id='type-id-54'/>
+    <qualified-type-def type-id='type-id-40' const='yes' hash='3a448dc27f8adef0' id='type-id-55'/>
+    <pointer-type-def type-id='type-id-55' size-in-bits='64' hash='6e008292123804e2' id='type-id-56'/>
+    <qualified-type-def type-id='type-id-41' const='yes' hash='45d0f346f29c0507' id='type-id-57'/>
+    <pointer-type-def type-id='type-id-57' size-in-bits='64' hash='bb47a519f01ce676' id='type-id-58'/>
+    <pointer-type-def type-id='type-id-10' size-in-bits='64' hash='6730f16b3d3eb49a' id='type-id-59'/>
+    <pointer-type-def type-id='type-id-41' size-in-bits='64' hash='1a7bd9cc70e75643' id='type-id-60'/>
+    <pointer-type-def type-id='type-id-60' size-in-bits='64' hash='bb80916606d543ca' id='type-id-61'/>
+    <pointer-type-def type-id='type-id-7' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-6'/>
+    <pointer-type-def type-id='type-id-62' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-44'/>
+    <pointer-type-def type-id='type-id-63' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-35'/>
+    <pointer-type-def type-id='type-id-64' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-36'/>
+    <pointer-type-def type-id='type-id-65' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-45'/>
+    <function-decl name='kith_aoi_create' mangled-name='kith_aoi_create' filepath='././src/aoi/aoi.c' line='426' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_create@@KITH_AOI_1' hash='18b1c27d1705c61f'>
+      <parameter type-id='type-id-54' name='params' filepath='././src/aoi/aoi.c' line='426' column='1'/>
+      <parameter type-id='type-id-20' name='alloc' filepath='././src/aoi/aoi.c' line='427' column='1'/>
+      <parameter type-id='type-id-61' name='out_aoi' filepath='././src/aoi/aoi.c' line='428' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_destroy' mangled-name='kith_aoi_destroy' filepath='././src/aoi/aoi.c' line='493' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_destroy@@KITH_AOI_1' hash='b0d70110085dfd69'>
+      <parameter type-id='type-id-60' name='a' filepath='././src/aoi/aoi.c' line='493' column='1'/>
+      <return type-id='type-id-66'/>
+    </function-decl>
+    <function-decl name='kith_aoi_insert' mangled-name='kith_aoi_insert' filepath='././src/aoi/aoi.c' line='512' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_insert@@KITH_AOI_1' hash='4b3a2605d94ada04'>
+      <parameter type-id='type-id-60' name='a' filepath='././src/aoi/aoi.c' line='512' column='1'/>
+      <parameter type-id='type-id-52' name='obj' filepath='././src/aoi/aoi.c' line='512' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_update' mangled-name='kith_aoi_update' filepath='././src/aoi/aoi.c' line='561' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_update@@KITH_AOI_1' hash='4b3a2605d94ada04'>
+      <parameter type-id='type-id-60' name='a' filepath='././src/aoi/aoi.c' line='512' column='1'/>
+      <parameter type-id='type-id-52' name='obj' filepath='././src/aoi/aoi.c' line='512' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_remove' mangled-name='kith_aoi_remove' filepath='././src/aoi/aoi.c' line='602' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_remove@@KITH_AOI_1' hash='513b21b414c169ab'>
+      <parameter type-id='type-id-60' name='a' filepath='././src/aoi/aoi.c' line='602' column='1'/>
+      <parameter type-id='type-id-26' name='id' filepath='././src/aoi/aoi.c' line='602' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_lookup' mangled-name='kith_aoi_lookup' filepath='././src/aoi/aoi.c' line='628' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_lookup@@KITH_AOI_1' hash='599139477484405a'>
+      <parameter type-id='type-id-58' name='a' filepath='././src/aoi/aoi.c' line='628' column='1'/>
+      <parameter type-id='type-id-26' name='id' filepath='././src/aoi/aoi.c' line='628' column='1'/>
+      <parameter type-id='type-id-59' name='out_obj' filepath='././src/aoi/aoi.c' line='628' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_query_sphere' mangled-name='kith_aoi_query_sphere' filepath='././src/aoi/aoi.c' line='647' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_query_sphere@@KITH_AOI_1' hash='77309d75a0a05ab9'>
+      <parameter type-id='type-id-58' name='a' filepath='././src/aoi/aoi.c' line='647' column='1'/>
+      <parameter type-id='type-id-56' name='sphere' filepath='././src/aoi/aoi.c' line='648' column='1'/>
+      <parameter type-id='type-id-43' name='visit' filepath='././src/aoi/aoi.c' line='649' column='1'/>
+      <parameter type-id='type-id-13' name='user' filepath='././src/aoi/aoi.c' line='650' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_query_box' mangled-name='kith_aoi_query_box' filepath='././src/aoi/aoi.c' line='662' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_query_box@@KITH_AOI_1' hash='9668f96e1201bf84'>
+      <parameter type-id='type-id-58' name='a' filepath='././src/aoi/aoi.c' line='662' column='1'/>
+      <parameter type-id='type-id-50' name='box' filepath='././src/aoi/aoi.c' line='663' column='1'/>
+      <parameter type-id='type-id-43' name='visit' filepath='././src/aoi/aoi.c' line='664' column='1'/>
+      <parameter type-id='type-id-13' name='user' filepath='././src/aoi/aoi.c' line='665' column='1'/>
+      <return type-id='type-id-3'/>
+    </function-decl>
+    <function-decl name='kith_aoi_size' mangled-name='kith_aoi_size' filepath='././src/aoi/aoi.c' line='681' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_aoi_size@@KITH_AOI_1' hash='4ba8b28a495161b8'>
+      <parameter type-id='type-id-58' name='a' filepath='././src/aoi/aoi.c' line='681' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <type-decl name='void' id='type-id-66'/>
+    <pointer-type-def type-id='type-id-66' id='type-id-13'/>
+    <function-type size-in-bits='64' hash='1c85a3acf5292a3c' id='type-id-47'>
+      <parameter type-id='type-id-52'/>
+      <parameter type-id='type-id-13'/>
+      <return type-id='type-id-2'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-62'>
+      <parameter type-id='type-id-13'/>
+      <parameter type-id='type-id-13'/>
+      <return type-id='type-id-66'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-63'>
+      <parameter type-id='type-id-13'/>
+      <parameter type-id='type-id-7'/>
+      <return type-id='type-id-13'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-64'>
+      <parameter type-id='type-id-13'/>
+      <parameter type-id='type-id-7'/>
+      <parameter type-id='type-id-7'/>
+      <return type-id='type-id-13'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-65'>
+      <parameter type-id='type-id-13'/>
+      <parameter type-id='type-id-13'/>
+      <parameter type-id='type-id-7'/>
+      <return type-id='type-id-13'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>

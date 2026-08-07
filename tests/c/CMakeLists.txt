@@ -148,3 +148,25 @@ add_executable(test_db_session test_db_session.c)
 target_link_libraries(test_db_session PRIVATE kith_db kith_reactor Threads::Threads)
 target_compile_definitions(test_db_session PRIVATE _GNU_SOURCE)
 add_test(NAME test_db_session COMMAND test_db_session)
+
+add_executable(test_aoi_create test_aoi_create.c)
+target_link_libraries(test_aoi_create PRIVATE kith_aoi)
+add_test(NAME test_aoi_create COMMAND test_aoi_create)
+
+add_executable(test_aoi_index test_aoi_index.c)
+target_link_libraries(test_aoi_index PRIVATE kith_aoi)
+add_test(NAME test_aoi_index COMMAND test_aoi_index)
+
+add_executable(test_aoi_query test_aoi_query.c)
+target_link_libraries(test_aoi_query PRIVATE kith_aoi)
+add_test(NAME test_aoi_query COMMAND test_aoi_query)
+
+add_executable(test_aoi_overflow test_aoi_overflow.c)
+target_link_libraries(test_aoi_overflow PRIVATE kith_aoi)
+add_test(NAME test_aoi_overflow COMMAND test_aoi_overflow)
+
+add_executable(test_aoi_buckets test_aoi_buckets.c ${CMAKE_SOURCE_DIR}/src/aoi/aoi.c)
+target_link_libraries(test_aoi_buckets PRIVATE kith_util)
+target_include_directories(test_aoi_buckets PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_compile_definitions(test_aoi_buckets PRIVATE _GNU_SOURCE)
+add_test(NAME test_aoi_buckets COMMAND test_aoi_buckets)
