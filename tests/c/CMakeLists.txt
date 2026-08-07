@@ -149,6 +149,28 @@ target_link_libraries(test_db_session PRIVATE kith_db kith_reactor Threads::Thre
 target_compile_definitions(test_db_session PRIVATE _GNU_SOURCE)
 add_test(NAME test_db_session COMMAND test_db_session)
 
+add_executable(test_sim_registry test_sim_registry.c)
+target_link_libraries(test_sim_registry PRIVATE kith_sim)
+target_include_directories(test_sim_registry PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_sim_registry COMMAND test_sim_registry)
+
+add_executable(test_sim_tile2d test_sim_tile2d.c)
+target_link_libraries(test_sim_tile2d PRIVATE kith_sim)
+target_compile_definitions(test_sim_tile2d PRIVATE _GNU_SOURCE)
+add_test(NAME test_sim_tile2d COMMAND test_sim_tile2d)
+
+add_executable(test_sim_free2d test_sim_free2d.c)
+target_link_libraries(test_sim_free2d PRIVATE kith_sim)
+add_test(NAME test_sim_free2d COMMAND test_sim_free2d)
+
+add_executable(test_sim_artifact test_sim_artifact.c)
+target_link_libraries(test_sim_artifact PRIVATE kith_sim)
+add_test(NAME test_sim_artifact COMMAND test_sim_artifact)
+
+add_executable(test_sim_pending_concurrent test_sim_pending_concurrent.c)
+target_link_libraries(test_sim_pending_concurrent PRIVATE kith_sim Threads::Threads)
+add_test(NAME test_sim_pending_concurrent COMMAND test_sim_pending_concurrent)
+
 add_executable(test_aoi_create test_aoi_create.c)
 target_link_libraries(test_aoi_create PRIVATE kith_aoi)
 add_test(NAME test_aoi_create COMMAND test_aoi_create)

@@ -1,0 +1,715 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_sim.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_sim_artifact_count' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_cell_product' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_create' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_create_model' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_destroy' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_model_apply_input' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_model_destroy' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_model_load_behavior' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_model_step' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_publish_artifact' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_register_model' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_remove_artifact' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_remove_zone' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_snapshot_cell' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_sim_snapshot_zone_cells' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='fclose' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='fgetc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='fopen' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_destroy' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_init' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_lock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_unlock' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strcmp' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strlen' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/sim/sim.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-3'/>
+    <array-type-def dimensions='1' type-id='type-id-3' size-in-bits='320' hash='e7f9696e246a3049' id='type-id-4'>
+      <subrange length='40' lower-bound='0' upper-bound='39' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6281bd35fbce8744' id='type-id-5'/>
+    </array-type-def>
+    <type-decl name='float' size-in-bits='32' hash='d7ec3bf03d3c5690' id='type-id-6'/>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-7'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-8'/>
+    <type-decl name='short int' size-in-bits='16' hash='6c2352eccdcd3eea#3' id='type-id-9'/>
+    <array-type-def dimensions='1' type-id='type-id-10' size-in-bits='14336' hash='6f0f9b14d703d55d' id='type-id-11'>
+      <subrange length='16' lower-bound='0' upper-bound='15' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6c35b1e999eba398' id='type-id-12'/>
+    </array-type-def>
+    <class-decl name='__pthread_internal_list' is-struct='yes' visibility='default' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1' hash='5bcfb7f1ab39fa47' id='type-id-13'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__prev' type-id='type-id-14' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__next' type-id='type-id-14' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='__pthread_mutex_s' is-struct='yes' visibility='default' size-in-bits='320' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' hash='fc920e313849911d' id='type-id-15'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__lock' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='__count' type-id='type-id-16' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__owner' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='__nusers' type-id='type-id-16' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='__kind' type-id='type-id-7' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='__spins' type-id='type-id-9' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='__glibc_reserved' type-id='type-id-9' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='__list' type-id='type-id-17' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-18'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-19' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-19' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-20' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-21' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-22' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-23' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-24' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-25' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim' is-struct='yes' visibility='default' size-in-bits='384' filepath='./src/sim/sim_internal.h' line='92' column='1' hash='ba583fbcb325afbd' id='type-id-26'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-27' visibility='default' filepath='./src/sim/sim_internal.h' line='96' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='registry' type-id='type-id-28' visibility='default' filepath='./src/sim/sim_internal.h' line='97' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='store' type-id='type-id-29' visibility='default' filepath='./src/sim/sim_internal.h' line='98' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='tick_hz' type-id='type-id-19' visibility='default' filepath='./src/sim/sim_internal.h' line='99' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_actor' is-struct='yes' visibility='default' size-in-bits='576' filepath='./include/kith/sim/sim.h' line='164' column='1' hash='bf45f88b808b9e15' id='type-id-30'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='id' type-id='type-id-31' visibility='default' filepath='./include/kith/sim/sim.h' line='167' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='pos_x' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='169' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pos_y' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='171' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='pos_z' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='173' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='vel_x' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='175' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='vel_y' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='177' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='vel_z' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='179' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='input_tick' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='181' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='480'>
+        <var-decl name='flags' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='183' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='update_seq' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='189' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_artifact' is-struct='yes' visibility='default' size-in-bits='768' filepath='./include/kith/sim/sim.h' line='247' column='1' hash='76739fc8e0f1d76a' id='type-id-33'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-34' visibility='default' filepath='./include/kith/sim/sim.h' line='250' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='actor_id' type-id='type-id-31' visibility='default' filepath='./include/kith/sim/sim.h' line='252' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='pos_x' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='254' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='pos_y' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='256' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='pos_z' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='258' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='vel_x' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='260' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='vel_y' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='262' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='vel_z' type-id='type-id-32' visibility='default' filepath='./include/kith/sim/sim.h' line='264' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='input_tick' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='266' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='736'>
+        <var-decl name='update_seq' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='268' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_artifact_key' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/sim/sim.h' line='221' column='1' hash='a413a8ef25ee2e93' id='type-id-35'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='224' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-36' visibility='default' filepath='./include/kith/sim/sim.h' line='226' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-36' visibility='default' filepath='./include/kith/sim/sim.h' line='228' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-36' visibility='default' filepath='./include/kith/sim/sim.h' line='230' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-37' visibility='default' filepath='./include/kith/sim/sim.h' line='232' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='pad' type-id='type-id-38' visibility='default' filepath='./include/kith/sim/sim.h' line='234' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='236' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='publish_seq' type-id='type-id-31' visibility='default' filepath='./include/kith/sim/sim.h' line='238' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_artifact_store' is-struct='yes' visibility='default' size-in-bits='14784' filepath='./src/sim/sim_internal.h' line='204' column='1' hash='c951bf31dcf1c07d' id='type-id-39'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-27' visibility='default' filepath='./src/sim/sim_internal.h' line='208' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='shards' type-id='type-id-11' visibility='default' filepath='./src/sim/sim_internal.h' line='209' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='14400'>
+        <var-decl name='total_count' type-id='type-id-31' visibility='default' filepath='./src/sim/sim_internal.h' line='210' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='14464'>
+        <var-decl name='lock' type-id='type-id-40' visibility='default' filepath='./src/sim/sim_internal.h' line='217' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_cell_product' is-struct='yes' visibility='default' size-in-bits='320' filepath='./include/kith/sim/sim.h' line='277' column='1' hash='27f37338c063783c' id='type-id-41'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='280' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-36' visibility='default' filepath='./include/kith/sim/sim.h' line='282' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-36' visibility='default' filepath='./include/kith/sim/sim.h' line='284' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-36' visibility='default' filepath='./include/kith/sim/sim.h' line='286' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-37' visibility='default' filepath='./include/kith/sim/sim.h' line='288' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='pad' type-id='type-id-38' visibility='default' filepath='./include/kith/sim/sim.h' line='290' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='actor_count' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='292' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='latest_publish_seq' type-id='type-id-31' visibility='default' filepath='./include/kith/sim/sim.h' line='294' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='authority_epoch' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='296' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_config' is-struct='yes' visibility='default' size-in-bits='768' filepath='./include/kith/sim/sim.h' line='111' column='1' hash='a026fd9b8b8fda3c' id='type-id-42'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='113' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='base_speed' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='run_speed' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='119' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='accel' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='121' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='decel' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='123' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='move_eps' type-id='type-id-6' visibility='default' filepath='./include/kith/sim/sim.h' line='129' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='collision_radius' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='131' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='reserved' type-id='type-id-25' visibility='default' filepath='./include/kith/sim/sim.h' line='133' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_input' is-struct='yes' visibility='default' size-in-bits='96' filepath='./include/kith/sim/sim.h' line='199' column='1' hash='2167cf07c439ff0f' id='type-id-43'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='input_tick' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='202' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='move_x' type-id='type-id-44' visibility='default' filepath='./include/kith/sim/sim.h' line='204' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='48'>
+        <var-decl name='move_y' type-id='type-id-44' visibility='default' filepath='./include/kith/sim/sim.h' line='206' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='move_z' type-id='type-id-44' visibility='default' filepath='./include/kith/sim/sim.h' line='208' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='80'>
+        <var-decl name='flags' type-id='type-id-37' visibility='default' filepath='./include/kith/sim/sim.h' line='210' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_model' is-struct='yes' visibility='default' size-in-bits='1024' filepath='./src/sim/sim_internal.h' line='115' column='1' hash='16bc7fab027a2818' id='type-id-45'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-27' visibility='default' filepath='./src/sim/sim_internal.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='vtable' type-id='type-id-46' visibility='default' filepath='./src/sim/sim_internal.h' line='118' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='960'>
+        <var-decl name='state' type-id='type-id-20' visibility='default' filepath='./src/sim/sim_internal.h' line='119' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_model_registry' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/sim/sim_internal.h' line='70' column='1' hash='87dcbd186cb93916' id='type-id-28'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='entries' type-id='type-id-47' visibility='default' filepath='./src/sim/sim_internal.h' line='72' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='count' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='73' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='cap' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='74' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_model_vtable' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/sim/sim.h' line='308' column='1' hash='d3014ada3007ceba' id='type-id-49'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='315' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='317' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='init' type-id='type-id-50' visibility='default' filepath='./include/kith/sim/sim.h' line='328' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='destroy' type-id='type-id-51' visibility='default' filepath='./include/kith/sim/sim.h' line='333' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='step' type-id='type-id-52' visibility='default' filepath='./include/kith/sim/sim.h' line='341' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='apply_input' type-id='type-id-53' visibility='default' filepath='./include/kith/sim/sim.h' line='349' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='load_behavior' type-id='type-id-54' visibility='default' filepath='./include/kith/sim/sim.h' line='360' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-25' visibility='default' filepath='./include/kith/sim/sim.h' line='363' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_params' is-struct='yes' visibility='default' size-in-bits='640' filepath='./include/kith/sim/sim.h' line='141' column='1' hash='0f75c90376a86890' id='type-id-55'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='143' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='144' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='tick_hz' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='147' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='artifact_bucket_count' type-id='type-id-19' visibility='default' filepath='./include/kith/sim/sim.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='reserved' type-id='type-id-25' visibility='default' filepath='./include/kith/sim/sim.h' line='151' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='sim_artifact_node' is-struct='yes' visibility='default' size-in-bits='832' filepath='./src/sim/sim_internal.h' line='127' column='1' hash='4d336177edab44e3' id='type-id-56'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='art' type-id='type-id-57' visibility='default' filepath='./src/sim/sim_internal.h' line='129' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='member_slot' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='134' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='sim_cell_node' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/sim/sim_internal.h' line='138' column='1' hash='bb5eb5916d9cac87' id='type-id-58'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-19' visibility='default' filepath='./src/sim/sim_internal.h' line='140' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-36' visibility='default' filepath='./src/sim/sim_internal.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-36' visibility='default' filepath='./src/sim/sim_internal.h' line='142' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-36' visibility='default' filepath='./src/sim/sim_internal.h' line='143' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-37' visibility='default' filepath='./src/sim/sim_internal.h' line='144' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/sim/sim_internal.h' line='145' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='144'>
+        <var-decl name='deleted' type-id='type-id-2' visibility='default' filepath='./src/sim/sim_internal.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch' type-id='type-id-19' visibility='default' filepath='./src/sim/sim_internal.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='latest_seq' type-id='type-id-31' visibility='default' filepath='./src/sim/sim_internal.h' line='150' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='actor_count' type-id='type-id-19' visibility='default' filepath='./src/sim/sim_internal.h' line='151' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='members' type-id='type-id-59' visibility='default' filepath='./src/sim/sim_internal.h' line='159' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='member_count' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='160' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='member_cap' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='161' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='sim_registry_entry' is-struct='yes' visibility='default' size-in-bits='960' filepath='./src/sim/sim_internal.h' line='64' column='1' hash='fac63e828e8eb0e4' id='type-id-60'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='name' type-id='type-id-61' visibility='default' filepath='./src/sim/sim_internal.h' line='66' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='vtable' type-id='type-id-46' visibility='default' filepath='./src/sim/sim_internal.h' line='67' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='sim_shard' is-struct='yes' visibility='default' size-in-bits='896' filepath='./src/sim/sim_internal.h' line='164' column='1' hash='9cd5304728a83d48' id='type-id-10'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-27' visibility='default' filepath='./src/sim/sim_internal.h' line='168' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='arts' type-id='type-id-62' visibility='default' filepath='./src/sim/sim_internal.h' line='169' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='art_count' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='170' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='art_cap' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='171' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='actor_keys' type-id='type-id-63' visibility='default' filepath='./src/sim/sim_internal.h' line='173' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='actor_used' type-id='type-id-64' visibility='default' filepath='./src/sim/sim_internal.h' line='174' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='actor_dense' type-id='type-id-59' visibility='default' filepath='./src/sim/sim_internal.h' line='181' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='actor_deleted' type-id='type-id-64' visibility='default' filepath='./src/sim/sim_internal.h' line='189' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='actor_buckets' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='190' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='actor_tombstones' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='193' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='cells' type-id='type-id-65' visibility='default' filepath='./src/sim/sim_internal.h' line='195' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='cell_buckets' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='196' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='cell_count' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='197' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='832'>
+        <var-decl name='cell_tombstones' type-id='type-id-48' visibility='default' filepath='./src/sim/sim_internal.h' line='201' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__int16_t' type-id='type-id-9' size-in-bits='16' filepath='/usr/include/bits/types.h' line='39' column='1' hash='6c2352eccdcd3eea' id='type-id-66'/>
+    <typedef-decl name='__int32_t' type-id='type-id-7' size-in-bits='32' filepath='/usr/include/bits/types.h' line='41' column='1' hash='09d17c08f594edc7' id='type-id-67'/>
+    <typedef-decl name='__int64_t' type-id='type-id-8' size-in-bits='64' filepath='/usr/include/bits/types.h' line='44' column='1' hash='b119fe0931d2ee10' id='type-id-68'/>
+    <typedef-decl name='__pthread_list_t' type-id='type-id-13' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='55' column='1' id='type-id-17'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-16' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-69'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-70' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-71'/>
+    <typedef-decl name='__uint8_t' type-id='type-id-72' size-in-bits='8' filepath='/usr/include/bits/types.h' line='38' column='1' hash='6ebac62b3366db68' id='type-id-73'/>
+    <typedef-decl name='int16_t' type-id='type-id-66' size-in-bits='16' filepath='/usr/include/bits/stdint-intn.h' line='25' column='1' hash='6c2352eccdcd3eea' id='type-id-44'/>
+    <typedef-decl name='int32_t' type-id='type-id-67' size-in-bits='32' filepath='/usr/include/bits/stdint-intn.h' line='26' column='1' hash='09d17c08f594edc7' id='type-id-36'/>
+    <typedef-decl name='int64_t' type-id='type-id-68' size-in-bits='64' filepath='/usr/include/bits/stdint-intn.h' line='27' column='1' hash='b119fe0931d2ee10' id='type-id-32'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-74' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-21'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-75' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-22'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-18' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-76'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-77' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-24'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-78' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-23'/>
+    <typedef-decl name='kith_sim_actor_t' type-id='type-id-30' size-in-bits='576' filepath='./include/kith/sim/sim.h' line='192' column='1' id='type-id-79'/>
+    <typedef-decl name='kith_sim_artifact_key_t' type-id='type-id-35' size-in-bits='256' filepath='./include/kith/sim/sim.h' line='241' column='1' id='type-id-34'/>
+    <typedef-decl name='kith_sim_artifact_t' type-id='type-id-33' size-in-bits='768' filepath='./include/kith/sim/sim.h' line='271' column='1' id='type-id-57'/>
+    <typedef-decl name='kith_sim_cell_product_t' type-id='type-id-41' size-in-bits='320' filepath='./include/kith/sim/sim.h' line='299' column='1' id='type-id-80'/>
+    <typedef-decl name='kith_sim_config_t' type-id='type-id-42' size-in-bits='768' filepath='./include/kith/sim/sim.h' line='136' column='1' id='type-id-81'/>
+    <typedef-decl name='kith_sim_input_t' type-id='type-id-43' size-in-bits='96' filepath='./include/kith/sim/sim.h' line='213' column='1' id='type-id-82'/>
+    <typedef-decl name='kith_sim_model_t' type-id='type-id-45' size-in-bits='1024' filepath='./include/kith/sim/sim.h' line='99' column='1' id='type-id-83'/>
+    <typedef-decl name='kith_sim_model_vtable_t' type-id='type-id-49' size-in-bits='896' filepath='./include/kith/sim/sim.h' line='366' column='1' id='type-id-46'/>
+    <typedef-decl name='kith_sim_params_t' type-id='type-id-55' size-in-bits='640' filepath='./include/kith/sim/sim.h' line='154' column='1' id='type-id-84'/>
+    <typedef-decl name='kith_sim_t' type-id='type-id-26' size-in-bits='384' filepath='./include/kith/sim/sim.h' line='89' column='1' id='type-id-85'/>
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-86' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-40'/>
+    <typedef-decl name='size_t' type-id='type-id-70' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-48'/>
+    <typedef-decl name='uint32_t' type-id='type-id-69' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-19'/>
+    <typedef-decl name='uint64_t' type-id='type-id-71' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-31'/>
+    <typedef-decl name='uint8_t' type-id='type-id-73' size-in-bits='8' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' hash='6ebac62b3366db68' id='type-id-37'/>
+    <array-type-def dimensions='1' type-id='type-id-37' size-in-bits='24' hash='5263bcb890c51214' id='type-id-38'>
+      <subrange length='3' lower-bound='0' upper-bound='2' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='30d99d19f0f4b2ea' id='type-id-87'/>
+    </array-type-def>
+    <union-decl name='pthread_mutex_t' naming-typedef-id='type-id-40' visibility='default' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' hash='8e3e5ddbcaed875f' id='type-id-86'>
+      <data-member access='public'>
+        <var-decl name='__data' type-id='type-id-15' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__size' type-id='type-id-4' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__align' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <type-decl name='unsigned char' size-in-bits='8' hash='6ebac62b3366db68' id='type-id-72'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-16'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-70'/>
+    <array-type-def dimensions='1' type-id='type-id-20' hash='8d913e14a8a96b62' id='type-id-25'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-88'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-13' size-in-bits='64' hash='b83eb2deac70d470' id='type-id-14'/>
+    <pointer-type-def type-id='type-id-2' size-in-bits='64' hash='9c0e3f8596726a0b' id='type-id-64'/>
+    <pointer-type-def type-id='type-id-3' size-in-bits='64' hash='e533f42d1dd4942c' id='type-id-61'/>
+    <qualified-type-def type-id='type-id-3' const='yes' hash='3e50fd33f9bb78d9' id='type-id-89'/>
+    <pointer-type-def type-id='type-id-89' size-in-bits='64' hash='c44743f354f6a443' id='type-id-90'/>
+    <qualified-type-def type-id='type-id-76' const='yes' hash='07c74f5fb4899ef5' id='type-id-91'/>
+    <pointer-type-def type-id='type-id-91' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-27'/>
+    <qualified-type-def type-id='type-id-79' const='yes' hash='8061ef7ab73faf81' id='type-id-92'/>
+    <pointer-type-def type-id='type-id-92' size-in-bits='64' hash='9710ff661f684d77' id='type-id-93'/>
+    <qualified-type-def type-id='type-id-34' const='yes' hash='b4b64c03a6530d5c' id='type-id-94'/>
+    <pointer-type-def type-id='type-id-94' size-in-bits='64' hash='366837574b169e3f' id='type-id-95'/>
+    <qualified-type-def type-id='type-id-81' const='yes' hash='d25694f31cbfcb6f' id='type-id-96'/>
+    <pointer-type-def type-id='type-id-96' size-in-bits='64' hash='e62f494bfa37760a' id='type-id-97'/>
+    <qualified-type-def type-id='type-id-82' const='yes' hash='80c6684c110c61a3' id='type-id-98'/>
+    <pointer-type-def type-id='type-id-98' size-in-bits='64' hash='4d27d82f2b294d38' id='type-id-99'/>
+    <qualified-type-def type-id='type-id-46' const='yes' hash='4995d905f7a22b7b' id='type-id-100'/>
+    <pointer-type-def type-id='type-id-100' size-in-bits='64' hash='76c44082cba0d227' id='type-id-101'/>
+    <qualified-type-def type-id='type-id-84' const='yes' hash='24ecd1e519e0aff4' id='type-id-102'/>
+    <pointer-type-def type-id='type-id-102' size-in-bits='64' hash='c0c88572d33f4220' id='type-id-103'/>
+    <qualified-type-def type-id='type-id-85' const='yes' hash='5ee6b3a9a0eab11b' id='type-id-104'/>
+    <pointer-type-def type-id='type-id-104' size-in-bits='64' hash='02900726264eaa04' id='type-id-105'/>
+    <pointer-type-def type-id='type-id-106' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-50'/>
+    <pointer-type-def type-id='type-id-107' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-108' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-53'/>
+    <pointer-type-def type-id='type-id-109' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-52'/>
+    <pointer-type-def type-id='type-id-79' size-in-bits='64' hash='0af4f197ed6e1582' id='type-id-110'/>
+    <pointer-type-def type-id='type-id-39' size-in-bits='64' hash='c29daafe9ce7179f' id='type-id-29'/>
+    <pointer-type-def type-id='type-id-57' size-in-bits='64' hash='081a6fa6cf080790' id='type-id-111'/>
+    <pointer-type-def type-id='type-id-80' size-in-bits='64' hash='9b40f225848f7df1' id='type-id-112'/>
+    <pointer-type-def type-id='type-id-83' size-in-bits='64' hash='e47399e86879e71b' id='type-id-113'/>
+    <pointer-type-def type-id='type-id-113' size-in-bits='64' hash='ec9ebb01be9aa4bb' id='type-id-114'/>
+    <pointer-type-def type-id='type-id-85' size-in-bits='64' hash='9e41ad954c0a47c3' id='type-id-115'/>
+    <pointer-type-def type-id='type-id-115' size-in-bits='64' hash='5ec96a9d7964c9ad' id='type-id-116'/>
+    <pointer-type-def type-id='type-id-56' size-in-bits='64' hash='114a4095dcc56dd6' id='type-id-62'/>
+    <pointer-type-def type-id='type-id-58' size-in-bits='64' hash='c8d05a3890eb4056' id='type-id-65'/>
+    <pointer-type-def type-id='type-id-60' size-in-bits='64' hash='f0cca426b4e3c05e' id='type-id-47'/>
+    <pointer-type-def type-id='type-id-48' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-59'/>
+    <pointer-type-def type-id='type-id-31' size-in-bits='64' hash='a7b536d51360d693' id='type-id-63'/>
+    <pointer-type-def type-id='type-id-117' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-51'/>
+    <pointer-type-def type-id='type-id-118' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-77'/>
+    <pointer-type-def type-id='type-id-119' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-74'/>
+    <pointer-type-def type-id='type-id-120' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-75'/>
+    <pointer-type-def type-id='type-id-121' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-78'/>
+    <function-decl name='kith_sim_create' mangled-name='kith_sim_create' filepath='././src/sim/sim.c' line='51' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_create@@KITH_SIM_1' hash='fb207ae02d667ce2'>
+      <parameter type-id='type-id-103' name='params' filepath='././src/sim/sim.c' line='51' column='1'/>
+      <parameter type-id='type-id-27' name='alloc' filepath='././src/sim/sim.c' line='52' column='1'/>
+      <parameter type-id='type-id-116' name='out_sim' filepath='././src/sim/sim.c' line='53' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_destroy' mangled-name='kith_sim_destroy' filepath='././src/sim/sim.c' line='123' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_destroy@@KITH_SIM_1' hash='96ab02fc703a4cf9'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='123' column='1'/>
+      <return type-id='type-id-122'/>
+    </function-decl>
+    <function-decl name='kith_sim_register_model' mangled-name='kith_sim_register_model' filepath='././src/sim/sim.c' line='139' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_register_model@@KITH_SIM_1' hash='e541ab5d3a913077'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='139' column='1'/>
+      <parameter type-id='type-id-90' name='name' filepath='././src/sim/sim.c' line='139' column='1'/>
+      <parameter type-id='type-id-101' name='vtable' filepath='././src/sim/sim.c' line='139' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_create_model' mangled-name='kith_sim_create_model' filepath='././src/sim/sim.c' line='148' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_create_model@@KITH_SIM_1' hash='1e4fe2985e8466ac'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='148' column='1'/>
+      <parameter type-id='type-id-90' name='name' filepath='././src/sim/sim.c' line='149' column='1'/>
+      <parameter type-id='type-id-97' name='cfg' filepath='././src/sim/sim.c' line='150' column='1'/>
+      <parameter type-id='type-id-27' name='alloc' filepath='././src/sim/sim.c' line='151' column='1'/>
+      <parameter type-id='type-id-114' name='out_model' filepath='././src/sim/sim.c' line='152' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_model_destroy' mangled-name='kith_sim_model_destroy' filepath='././src/sim/sim.c' line='213' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_model_destroy@@KITH_SIM_1' hash='a368c5e7a2e5e710'>
+      <parameter type-id='type-id-113'/>
+      <return type-id='type-id-122'/>
+    </function-decl>
+    <function-decl name='kith_sim_model_step' mangled-name='kith_sim_model_step' filepath='././src/sim/sim.c' line='226' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_model_step@@KITH_SIM_1' hash='f97c9cb701d82530'>
+      <parameter type-id='type-id-113'/>
+      <parameter type-id='type-id-110'/>
+      <parameter type-id='type-id-48'/>
+      <parameter type-id='type-id-19'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_model_apply_input' mangled-name='kith_sim_model_apply_input' filepath='././src/sim/sim.c' line='239' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_model_apply_input@@KITH_SIM_1' hash='329ca14e6a8270a5'>
+      <parameter type-id='type-id-113'/>
+      <parameter type-id='type-id-110'/>
+      <parameter type-id='type-id-99'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_model_load_behavior' mangled-name='kith_sim_model_load_behavior' filepath='././src/sim/sim.c' line='250' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_model_load_behavior@@KITH_SIM_1' hash='29bb1fb9fd82098a'>
+      <parameter type-id='type-id-113'/>
+      <parameter type-id='type-id-90'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_publish_artifact' mangled-name='kith_sim_publish_artifact' filepath='././src/sim/sim.c' line='263' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_publish_artifact@@KITH_SIM_1' hash='5b55f6c9115d0d9a'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='263' column='1'/>
+      <parameter type-id='type-id-95' name='key' filepath='././src/sim/sim.c' line='264' column='1'/>
+      <parameter type-id='type-id-93' name='actor' filepath='././src/sim/sim.c' line='265' column='1'/>
+      <parameter type-id='type-id-63' name='out_seq' filepath='././src/sim/sim.c' line='266' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_remove_artifact' mangled-name='kith_sim_remove_artifact' filepath='././src/sim/sim.c' line='275' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_remove_artifact@@KITH_SIM_1' hash='f6df0f75f95633f9'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='275' column='1'/>
+      <parameter type-id='type-id-31' name='actor_id' filepath='././src/sim/sim.c' line='275' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_remove_zone' mangled-name='kith_sim_remove_zone' filepath='././src/sim/sim.c' line='284' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_remove_zone@@KITH_SIM_1' hash='47a07edd2eb8e241'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='284' column='1'/>
+      <parameter type-id='type-id-19' name='zone' filepath='././src/sim/sim.c' line='284' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_snapshot_cell' mangled-name='kith_sim_snapshot_cell' filepath='././src/sim/sim.c' line='293' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_snapshot_cell@@KITH_SIM_1' hash='70188b778f7bb118'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='293' column='1'/>
+      <parameter type-id='type-id-95' name='key' filepath='././src/sim/sim.c' line='294' column='1'/>
+      <parameter type-id='type-id-111' name='out' filepath='././src/sim/sim.c' line='295' column='1'/>
+      <parameter type-id='type-id-48' name='max' filepath='././src/sim/sim.c' line='296' column='1'/>
+      <parameter type-id='type-id-59' name='out_count' filepath='././src/sim/sim.c' line='297' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_snapshot_zone_cells' mangled-name='kith_sim_snapshot_zone_cells' filepath='././src/sim/sim.c' line='306' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_snapshot_zone_cells@@KITH_SIM_1' hash='ae1b9b62298e0783'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='306' column='1'/>
+      <parameter type-id='type-id-19' name='zone' filepath='././src/sim/sim.c' line='307' column='1'/>
+      <parameter type-id='type-id-37' name='lod' filepath='././src/sim/sim.c' line='308' column='1'/>
+      <parameter type-id='type-id-112' name='out' filepath='././src/sim/sim.c' line='309' column='1'/>
+      <parameter type-id='type-id-48' name='max' filepath='././src/sim/sim.c' line='310' column='1'/>
+      <parameter type-id='type-id-59' name='out_count' filepath='././src/sim/sim.c' line='311' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_cell_product' mangled-name='kith_sim_cell_product' filepath='././src/sim/sim.c' line='320' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_cell_product@@KITH_SIM_1' hash='fa6118105882c820'>
+      <parameter type-id='type-id-115' name='sim' filepath='././src/sim/sim.c' line='320' column='1'/>
+      <parameter type-id='type-id-95' name='key' filepath='././src/sim/sim.c' line='321' column='1'/>
+      <parameter type-id='type-id-112' name='out_product' filepath='././src/sim/sim.c' line='322' column='1'/>
+      <return type-id='type-id-7'/>
+    </function-decl>
+    <function-decl name='kith_sim_artifact_count' mangled-name='kith_sim_artifact_count' filepath='././src/sim/sim.c' line='331' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_sim_artifact_count@@KITH_SIM_1' hash='42c68a56cc1de87d'>
+      <parameter type-id='type-id-105' name='sim' filepath='././src/sim/sim.c' line='331' column='1'/>
+      <return type-id='type-id-31'/>
+    </function-decl>
+    <type-decl name='void' id='type-id-122'/>
+    <pointer-type-def type-id='type-id-122' id='type-id-20'/>
+    <function-type size-in-bits='64' hash='e1b4e4c2462c937c' id='type-id-106'>
+      <parameter type-id='type-id-97'/>
+      <parameter type-id='type-id-27'/>
+      <parameter type-id='type-id-114'/>
+      <return type-id='type-id-7'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='29bb1fb9fd82098a' id='type-id-107'>
+      <parameter type-id='type-id-113'/>
+      <parameter type-id='type-id-90'/>
+      <return type-id='type-id-7'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='329ca14e6a8270a5' id='type-id-108'>
+      <parameter type-id='type-id-113'/>
+      <parameter type-id='type-id-110'/>
+      <parameter type-id='type-id-99'/>
+      <return type-id='type-id-7'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='f97c9cb701d82530' id='type-id-109'>
+      <parameter type-id='type-id-113'/>
+      <parameter type-id='type-id-110'/>
+      <parameter type-id='type-id-48'/>
+      <parameter type-id='type-id-19'/>
+      <return type-id='type-id-7'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='a368c5e7a2e5e710' id='type-id-117'>
+      <parameter type-id='type-id-113'/>
+      <return type-id='type-id-122'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-118'>
+      <parameter type-id='type-id-20'/>
+      <parameter type-id='type-id-20'/>
+      <return type-id='type-id-122'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-119'>
+      <parameter type-id='type-id-20'/>
+      <parameter type-id='type-id-48'/>
+      <return type-id='type-id-20'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-120'>
+      <parameter type-id='type-id-20'/>
+      <parameter type-id='type-id-48'/>
+      <parameter type-id='type-id-48'/>
+      <return type-id='type-id-20'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-121'>
+      <parameter type-id='type-id-20'/>
+      <parameter type-id='type-id-20'/>
+      <parameter type-id='type-id-48'/>
+      <return type-id='type-id-20'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>
