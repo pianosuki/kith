@@ -195,6 +195,16 @@ filterwarnings = [
 ]
 
 # ---------------------------------------------------------------------------
+# codespell: spelling checker (pre-commit hook rev v2.4.3)
+# ---------------------------------------------------------------------------
+
+[tool.codespell]
+# `lod` is the subcell level-of-detail refinement index in the canonical
+# cell key; it is not a typo for "load". Add framework vocabulary here as
+# it grows.
+ignore-words-list = "lod"
+
+# ---------------------------------------------------------------------------
 # Hatchling: build the Python wheel from python/kith/.
 #
 # The C shared libraries are compiled and bundled into the wheel by the custom
