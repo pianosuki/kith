@@ -5,7 +5,21 @@ from __future__ import annotations
 import ctypes
 from typing import Protocol
 
-from . import aoi, config, db, logger, metrics, net, proto, reactor, sim, state, util, worker
+from . import (
+    aoi,
+    config,
+    db,
+    fabric,
+    logger,
+    metrics,
+    net,
+    proto,
+    reactor,
+    sim,
+    state,
+    util,
+    worker,
+)
 
 
 class _LibProvider(Protocol):
@@ -21,6 +35,7 @@ def configure(bridge: _LibProvider) -> None:
     proto.configure(bridge.lib("proto"))
     sim.configure(bridge.lib("sim"))
     aoi.configure(bridge.lib("aoi"))
+    fabric.configure(bridge.lib("fabric"))
     net.configure(bridge.lib("net"))
     reactor.configure(bridge.lib("reactor"))
     worker.configure(bridge.lib("worker"))
