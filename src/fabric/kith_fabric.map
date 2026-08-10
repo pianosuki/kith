@@ -1,0 +1,21 @@
+KITH_FABRIC_1 {
+    global:
+        kith_fabric_create;
+        kith_fabric_destroy;
+        kith_fabric_publish;
+        kith_fabric_remove_cell;
+        kith_fabric_remove_zone;
+        kith_fabric_snapshot_cell;
+        kith_fabric_snapshot_zone_cells;
+        kith_fabric_cell_product;
+        kith_fabric_product_count;
+        kith_fabric_publish_total;
+        kith_fabric_create_subscription;
+        kith_fabric_subscription_destroy;
+        kith_fabric_subscription_add;
+        kith_fabric_subscription_remove;
+        kith_fabric_subscription_size;
+        kith_fabric_drain;
+    local:
+        *;
+};

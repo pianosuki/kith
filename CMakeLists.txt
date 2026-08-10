@@ -43,6 +43,7 @@ include(cmake/lib_worker.cmake)
 include(cmake/lib_state.cmake)
 include(cmake/lib_db.cmake)
 include(cmake/lib_sim.cmake)
+include(cmake/lib_fabric.cmake)
 include(cmake/lib_aoi.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
