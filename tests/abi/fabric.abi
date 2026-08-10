@@ -1,0 +1,580 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_fabric.so.1'>
+  <elf-needed>
+    <dependency name='libkith_sim.so.1'/>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_fabric_cell_product' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_create' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_create_subscription' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_destroy' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_drain' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_product_count' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_publish' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_publish_total' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_remove_cell' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_remove_zone' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_snapshot_cell' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_snapshot_zone_cells' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_subscription_add' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_subscription_destroy' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_subscription_remove' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_fabric_subscription_size' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_sim_cell_product' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_sim_snapshot_cell' version='KITH_SIM_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_lock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_unlock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='qsort' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/fabric/fabric.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-3'/>
+    <array-type-def dimensions='1' type-id='type-id-3' size-in-bits='320' hash='e7f9696e246a3049' id='type-id-4'>
+      <subrange length='40' lower-bound='0' upper-bound='39' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6281bd35fbce8744' id='type-id-5'/>
+    </array-type-def>
+    <enum-decl name='kith_fabric_product_level' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/fabric/fabric.h' line='80' column='1' hash='9fda89e88d1558e0' id='type-id-6'>
+      <underlying-type type-id='type-id-7'/>
+      <enumerator name='KITH_FABRIC_LEVEL_FULL' value='0'/>
+      <enumerator name='KITH_FABRIC_LEVEL_REDUCED' value='1'/>
+      <enumerator name='KITH_FABRIC_LEVEL_CROWD' value='2'/>
+    </enum-decl>
+    <array-type-def dimensions='1' type-id='type-id-8' size-in-bits='5120' hash='962b69ce0cb0d53d' id='type-id-9'>
+      <subrange length='16' lower-bound='0' upper-bound='15' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6c35b1e999eba398' id='type-id-10'/>
+    </array-type-def>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-11'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-12'/>
+    <type-decl name='short int' size-in-bits='16' hash='6c2352eccdcd3eea#3' id='type-id-13'/>
+    <class-decl name='__pthread_internal_list' is-struct='yes' visibility='default' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1' hash='5bcfb7f1ab39fa47' id='type-id-14'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__prev' type-id='type-id-15' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__next' type-id='type-id-15' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='__pthread_mutex_s' is-struct='yes' visibility='default' size-in-bits='320' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' hash='fc920e313849911d' id='type-id-16'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__lock' type-id='type-id-11' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='__count' type-id='type-id-17' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__owner' type-id='type-id-11' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='__nusers' type-id='type-id-17' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='__kind' type-id='type-id-11' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='__spins' type-id='type-id-13' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='__glibc_reserved' type-id='type-id-13' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='__list' type-id='type-id-18' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='fabric_cell_node' is-struct='yes' visibility='default' size-in-bits='320' filepath='./src/fabric/fabric_internal.h' line='59' column='1' hash='1d546637136ae44c' id='type-id-19'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-20' visibility='default' filepath='./src/fabric/fabric_internal.h' line='61' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-21' visibility='default' filepath='./src/fabric/fabric_internal.h' line='62' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-21' visibility='default' filepath='./src/fabric/fabric_internal.h' line='63' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-21' visibility='default' filepath='./src/fabric/fabric_internal.h' line='64' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-22' visibility='default' filepath='./src/fabric/fabric_internal.h' line='65' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/fabric/fabric_internal.h' line='67' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='144'>
+        <var-decl name='deleted' type-id='type-id-2' visibility='default' filepath='./src/fabric/fabric_internal.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch' type-id='type-id-20' visibility='default' filepath='./src/fabric/fabric_internal.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='publish_seq' type-id='type-id-23' visibility='default' filepath='./src/fabric/fabric_internal.h' line='71' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='actor_count' type-id='type-id-20' visibility='default' filepath='./src/fabric/fabric_internal.h' line='72' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='fabric_shard' is-struct='yes' visibility='default' size-in-bits='320' filepath='./src/fabric/fabric_internal.h' line='76' column='1' hash='21f30dfff159b4bf' id='type-id-8'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-24' visibility='default' filepath='./src/fabric/fabric_internal.h' line='80' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cells' type-id='type-id-25' visibility='default' filepath='./src/fabric/fabric_internal.h' line='81' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='buckets' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='82' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='count' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='tombstones' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='88' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='fabric_sub_node' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/fabric/fabric_internal.h' line='96' column='1' hash='a03b982058d9c743' id='type-id-27'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-28' visibility='default' filepath='./src/fabric/fabric_internal.h' line='98' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/fabric/fabric_internal.h' line='99' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='168'>
+        <var-decl name='deleted' type-id='type-id-2' visibility='default' filepath='./src/fabric/fabric_internal.h' line='100' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='pending' type-id='type-id-2' visibility='default' filepath='./src/fabric/fabric_internal.h' line='102' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-29'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-20' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-20' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-30' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-31' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-32' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-33' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-34' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-35' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric' is-struct='yes' visibility='default' size-in-bits='6336' filepath='./src/fabric/fabric_internal.h' line='109' column='1' hash='20813e0a80993995' id='type-id-36'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-24' visibility='default' filepath='./src/fabric/fabric_internal.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='sim' type-id='type-id-37' visibility='default' filepath='./src/fabric/fabric_internal.h' line='116' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='shards' type-id='type-id-9' visibility='default' filepath='./src/fabric/fabric_internal.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='5248'>
+        <var-decl name='subs' type-id='type-id-38' visibility='default' filepath='./src/fabric/fabric_internal.h' line='119' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='5312'>
+        <var-decl name='sub_count' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='5376'>
+        <var-decl name='sub_cap' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='121' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='5440'>
+        <var-decl name='total_count' type-id='type-id-23' visibility='default' filepath='./src/fabric/fabric_internal.h' line='122' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='5568'>
+        <var-decl name='lock' type-id='type-id-39' visibility='default' filepath='./src/fabric/fabric_internal.h' line='132' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='5888'>
+        <var-decl name='snapshot_lock' type-id='type-id-39' visibility='default' filepath='./src/fabric/fabric_internal.h' line='136' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='6208'>
+        <var-decl name='snapshot_scratch' type-id='type-id-40' visibility='default' filepath='./src/fabric/fabric_internal.h' line='142' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='6272'>
+        <var-decl name='snapshot_scratch_cap' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='144' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_artifact' is-struct='yes' visibility='default' size-in-bits='576' filepath='./include/kith/fabric/fabric.h' line='185' column='1' hash='8fbf5c1ab0a2f208' id='type-id-41'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='actor_id' type-id='type-id-23' visibility='default' filepath='./include/kith/fabric/fabric.h' line='188' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='pos_x' type-id='type-id-42' visibility='default' filepath='./include/kith/fabric/fabric.h' line='190' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pos_y' type-id='type-id-42' visibility='default' filepath='./include/kith/fabric/fabric.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='pos_z' type-id='type-id-42' visibility='default' filepath='./include/kith/fabric/fabric.h' line='194' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='vel_x' type-id='type-id-42' visibility='default' filepath='./include/kith/fabric/fabric.h' line='196' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='vel_y' type-id='type-id-42' visibility='default' filepath='./include/kith/fabric/fabric.h' line='198' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='vel_z' type-id='type-id-42' visibility='default' filepath='./include/kith/fabric/fabric.h' line='200' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='input_tick' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='202' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='480'>
+        <var-decl name='update_seq' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='206' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='product_level' type-id='type-id-43' visibility='default' filepath='./include/kith/fabric/fabric.h' line='208' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_cell_key' is-struct='yes' visibility='default' size-in-bits='160' filepath='./include/kith/fabric/fabric.h' line='138' column='1' hash='67de511002882714' id='type-id-44'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-21' visibility='default' filepath='./include/kith/fabric/fabric.h' line='143' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-21' visibility='default' filepath='./include/kith/fabric/fabric.h' line='145' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-21' visibility='default' filepath='./include/kith/fabric/fabric.h' line='147' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-22' visibility='default' filepath='./include/kith/fabric/fabric.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='pad' type-id='type-id-45' visibility='default' filepath='./include/kith/fabric/fabric.h' line='151' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_cell_product' is-struct='yes' visibility='default' size-in-bits='320' filepath='./include/kith/fabric/fabric.h' line='163' column='1' hash='52bb4569d6aa0a76' id='type-id-46'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-28' visibility='default' filepath='./include/kith/fabric/fabric.h' line='166' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='168' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='publish_seq' type-id='type-id-23' visibility='default' filepath='./include/kith/fabric/fabric.h' line='170' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='product_level' type-id='type-id-43' visibility='default' filepath='./include/kith/fabric/fabric.h' line='172' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <var-decl name='actor_count' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='174' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_params' is-struct='yes' visibility='default' size-in-bits='640' filepath='./include/kith/fabric/fabric.h' line='119' column='1' hash='1baeb5e53b7457bf' id='type-id-47'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='121' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='122' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_bucket_count' type-id='type-id-20' visibility='default' filepath='./include/kith/fabric/fabric.h' line='125' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='reserved' type-id='type-id-35' visibility='default' filepath='./include/kith/fabric/fabric.h' line='127' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_subscription' is-struct='yes' visibility='default' size-in-bits='640' filepath='./src/fabric/fabric_internal.h' line='147' column='1' hash='1ccac7cdabaa80c8' id='type-id-48'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-24' visibility='default' filepath='./src/fabric/fabric_internal.h' line='151' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='fabric' type-id='type-id-49' visibility='default' filepath='./src/fabric/fabric_internal.h' line='153' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='nodes' type-id='type-id-50' visibility='default' filepath='./src/fabric/fabric_internal.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='buckets' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='155' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='count' type-id='type-id-26' visibility='default' filepath='./src/fabric/fabric_internal.h' line='156' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='lock' type-id='type-id-39' visibility='default' filepath='./src/fabric/fabric_internal.h' line='160' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_artifact' is-struct='yes' visibility='default' size-in-bits='768' filepath='./include/kith/sim/sim.h' line='247' column='1' hash='76739fc8e0f1d76a' id='type-id-51'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-52' visibility='default' filepath='./include/kith/sim/sim.h' line='250' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='actor_id' type-id='type-id-23' visibility='default' filepath='./include/kith/sim/sim.h' line='252' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='pos_x' type-id='type-id-42' visibility='default' filepath='./include/kith/sim/sim.h' line='254' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='pos_y' type-id='type-id-42' visibility='default' filepath='./include/kith/sim/sim.h' line='256' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='pos_z' type-id='type-id-42' visibility='default' filepath='./include/kith/sim/sim.h' line='258' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='vel_x' type-id='type-id-42' visibility='default' filepath='./include/kith/sim/sim.h' line='260' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='vel_y' type-id='type-id-42' visibility='default' filepath='./include/kith/sim/sim.h' line='262' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='vel_z' type-id='type-id-42' visibility='default' filepath='./include/kith/sim/sim.h' line='264' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='input_tick' type-id='type-id-20' visibility='default' filepath='./include/kith/sim/sim.h' line='266' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='736'>
+        <var-decl name='update_seq' type-id='type-id-20' visibility='default' filepath='./include/kith/sim/sim.h' line='268' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_sim_artifact_key' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/sim/sim.h' line='221' column='1' hash='a413a8ef25ee2e93' id='type-id-53'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-20' visibility='default' filepath='./include/kith/sim/sim.h' line='224' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-21' visibility='default' filepath='./include/kith/sim/sim.h' line='226' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-21' visibility='default' filepath='./include/kith/sim/sim.h' line='228' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-21' visibility='default' filepath='./include/kith/sim/sim.h' line='230' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-22' visibility='default' filepath='./include/kith/sim/sim.h' line='232' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='pad' type-id='type-id-45' visibility='default' filepath='./include/kith/sim/sim.h' line='234' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch' type-id='type-id-20' visibility='default' filepath='./include/kith/sim/sim.h' line='236' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='publish_seq' type-id='type-id-23' visibility='default' filepath='./include/kith/sim/sim.h' line='238' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__int32_t' type-id='type-id-11' size-in-bits='32' filepath='/usr/include/bits/types.h' line='41' column='1' hash='09d17c08f594edc7' id='type-id-54'/>
+    <typedef-decl name='__int64_t' type-id='type-id-12' size-in-bits='64' filepath='/usr/include/bits/types.h' line='44' column='1' hash='b119fe0931d2ee10' id='type-id-55'/>
+    <typedef-decl name='__pthread_list_t' type-id='type-id-14' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='55' column='1' id='type-id-18'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-17' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-56'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-57' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-58'/>
+    <typedef-decl name='__uint8_t' type-id='type-id-59' size-in-bits='8' filepath='/usr/include/bits/types.h' line='38' column='1' hash='6ebac62b3366db68' id='type-id-60'/>
+    <typedef-decl name='int32_t' type-id='type-id-54' size-in-bits='32' filepath='/usr/include/bits/stdint-intn.h' line='26' column='1' hash='09d17c08f594edc7' id='type-id-21'/>
+    <typedef-decl name='int64_t' type-id='type-id-55' size-in-bits='64' filepath='/usr/include/bits/stdint-intn.h' line='27' column='1' hash='b119fe0931d2ee10' id='type-id-42'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-61' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-31'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-62' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-32'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-29' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-63'/>
+    <typedef-decl name='kith_fabric_artifact_t' type-id='type-id-41' size-in-bits='576' filepath='./include/kith/fabric/fabric.h' line='211' column='1' id='type-id-64'/>
+    <typedef-decl name='kith_fabric_cell_key_t' type-id='type-id-44' size-in-bits='160' filepath='./include/kith/fabric/fabric.h' line='154' column='1' id='type-id-28'/>
+    <typedef-decl name='kith_fabric_cell_product_t' type-id='type-id-46' size-in-bits='320' filepath='./include/kith/fabric/fabric.h' line='177' column='1' id='type-id-65'/>
+    <typedef-decl name='kith_fabric_params_t' type-id='type-id-47' size-in-bits='640' filepath='./include/kith/fabric/fabric.h' line='130' column='1' id='type-id-66'/>
+    <typedef-decl name='kith_fabric_product_level_t' type-id='type-id-6' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/fabric/fabric.h' line='90' column='1' hash='9fda89e88d1558e0' id='type-id-43'/>
+    <typedef-decl name='kith_fabric_subscription_t' type-id='type-id-48' size-in-bits='640' filepath='./include/kith/fabric/fabric.h' line='110' column='1' id='type-id-67'/>
+    <typedef-decl name='kith_fabric_t' type-id='type-id-36' size-in-bits='6336' filepath='./include/kith/fabric/fabric.h' line='100' column='1' id='type-id-68'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-69' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-34'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-70' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-33'/>
+    <typedef-decl name='kith_sim_artifact_key_t' type-id='type-id-53' size-in-bits='256' filepath='./include/kith/sim/sim.h' line='241' column='1' id='type-id-52'/>
+    <typedef-decl name='kith_sim_artifact_t' type-id='type-id-51' size-in-bits='768' filepath='./include/kith/sim/sim.h' line='271' column='1' id='type-id-71'/>
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-72' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-39'/>
+    <typedef-decl name='size_t' type-id='type-id-57' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-26'/>
+    <typedef-decl name='uint32_t' type-id='type-id-56' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-20'/>
+    <typedef-decl name='uint64_t' type-id='type-id-58' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-23'/>
+    <typedef-decl name='uint8_t' type-id='type-id-60' size-in-bits='8' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' hash='6ebac62b3366db68' id='type-id-22'/>
+    <array-type-def dimensions='1' type-id='type-id-22' size-in-bits='24' hash='5263bcb890c51214' id='type-id-45'>
+      <subrange length='3' lower-bound='0' upper-bound='2' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='30d99d19f0f4b2ea' id='type-id-73'/>
+    </array-type-def>
+    <union-decl name='pthread_mutex_t' naming-typedef-id='type-id-39' visibility='default' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' hash='8e3e5ddbcaed875f' id='type-id-72'>
+      <data-member access='public'>
+        <var-decl name='__data' type-id='type-id-16' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__size' type-id='type-id-4' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__align' type-id='type-id-12' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-7'/>
+    <type-decl name='unsigned char' size-in-bits='8' hash='6ebac62b3366db68' id='type-id-59'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-17'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-57'/>
+    <array-type-def dimensions='1' type-id='type-id-30' hash='8d913e14a8a96b62' id='type-id-35'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-74'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-14' size-in-bits='64' hash='b83eb2deac70d470' id='type-id-15'/>
+    <qualified-type-def type-id='type-id-63' const='yes' hash='07c74f5fb4899ef5' id='type-id-75'/>
+    <pointer-type-def type-id='type-id-75' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-24'/>
+    <qualified-type-def type-id='type-id-28' const='yes' hash='5c2097cc128b4722' id='type-id-76'/>
+    <pointer-type-def type-id='type-id-76' size-in-bits='64' hash='0c40218424be638c' id='type-id-77'/>
+    <qualified-type-def type-id='type-id-66' const='yes' hash='d268ac3603d5d450' id='type-id-78'/>
+    <pointer-type-def type-id='type-id-78' size-in-bits='64' hash='0abbfd4575f0ceda' id='type-id-79'/>
+    <qualified-type-def type-id='type-id-67' const='yes' hash='edf8a9b007a97c6d' id='type-id-80'/>
+    <pointer-type-def type-id='type-id-80' size-in-bits='64' hash='677b819ed852fbf2' id='type-id-81'/>
+    <qualified-type-def type-id='type-id-68' const='yes' hash='504e339a33b7bdc7' id='type-id-82'/>
+    <pointer-type-def type-id='type-id-82' size-in-bits='64' hash='8ca0fc013a010962' id='type-id-83'/>
+    <pointer-type-def type-id='type-id-19' size-in-bits='64' hash='6b61634d4100d70e' id='type-id-25'/>
+    <pointer-type-def type-id='type-id-27' size-in-bits='64' hash='ce1b967f4ef81fd6' id='type-id-50'/>
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' hash='68713bce984c0602' id='type-id-49'/>
+    <pointer-type-def type-id='type-id-64' size-in-bits='64' hash='8c9ffb0239b00924' id='type-id-84'/>
+    <pointer-type-def type-id='type-id-65' size-in-bits='64' hash='0cbfda16cac4e811' id='type-id-85'/>
+    <pointer-type-def type-id='type-id-48' size-in-bits='64' hash='de1fe1cfdd457ac0' id='type-id-86'/>
+    <pointer-type-def type-id='type-id-86' size-in-bits='64' hash='b29fac81ae8489af' id='type-id-38'/>
+    <pointer-type-def type-id='type-id-67' size-in-bits='64' hash='1f87d2a41ab9cc35' id='type-id-87'/>
+    <pointer-type-def type-id='type-id-87' size-in-bits='64' hash='9f7eeb470dbe7c9a' id='type-id-88'/>
+    <pointer-type-def type-id='type-id-68' size-in-bits='64' hash='37c5f41badd477d6' id='type-id-89'/>
+    <pointer-type-def type-id='type-id-89' size-in-bits='64' hash='cd3ee926f840d178' id='type-id-90'/>
+    <pointer-type-def type-id='type-id-71' size-in-bits='64' hash='081a6fa6cf080790' id='type-id-40'/>
+    <pointer-type-def type-id='type-id-26' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-91'/>
+    <pointer-type-def type-id='type-id-23' size-in-bits='64' hash='a7b536d51360d693' id='type-id-92'/>
+    <pointer-type-def type-id='type-id-93' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-69'/>
+    <pointer-type-def type-id='type-id-94' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-61'/>
+    <pointer-type-def type-id='type-id-95' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-62'/>
+    <pointer-type-def type-id='type-id-96' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-70'/>
+    <pointer-type-def type-id='type-id-97' size-in-bits='64' id='type-id-37'/>
+    <class-decl name='kith_sim' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-98'/>
+    <function-decl name='kith_fabric_create' mangled-name='kith_fabric_create' filepath='././src/fabric/fabric.c' line='286' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_create@@KITH_FABRIC_1' hash='02b12dae8c121595'>
+      <parameter type-id='type-id-79' name='params' filepath='././src/fabric/fabric.c' line='286' column='1'/>
+      <parameter type-id='type-id-37' name='sim' filepath='././src/fabric/fabric.c' line='287' column='1'/>
+      <parameter type-id='type-id-24' name='alloc' filepath='././src/fabric/fabric.c' line='288' column='1'/>
+      <parameter type-id='type-id-90' name='out_fabric' filepath='././src/fabric/fabric.c' line='289' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_destroy' mangled-name='kith_fabric_destroy' filepath='././src/fabric/fabric.c' line='368' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_destroy@@KITH_FABRIC_1' hash='6754308078516306'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='368' column='1'/>
+      <return type-id='type-id-99'/>
+    </function-decl>
+    <function-decl name='kith_fabric_publish' mangled-name='kith_fabric_publish' filepath='././src/fabric/fabric.c' line='519' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_publish@@KITH_FABRIC_1' hash='16a74e631e8728f7'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='519' column='1'/>
+      <parameter type-id='type-id-77' name='key' filepath='././src/fabric/fabric.c' line='520' column='1'/>
+      <parameter type-id='type-id-20' name='authority_epoch' filepath='././src/fabric/fabric.c' line='521' column='1'/>
+      <parameter type-id='type-id-92' name='out_seq' filepath='././src/fabric/fabric.c' line='522' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_remove_cell' mangled-name='kith_fabric_remove_cell' filepath='././src/fabric/fabric.c' line='574' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_remove_cell@@KITH_FABRIC_1' hash='405e35597e288e8f'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='574' column='1'/>
+      <parameter type-id='type-id-77' name='key' filepath='././src/fabric/fabric.c' line='575' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_remove_zone' mangled-name='kith_fabric_remove_zone' filepath='././src/fabric/fabric.c' line='602' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_remove_zone@@KITH_FABRIC_1' hash='9138e1b0772ec376'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='602' column='1'/>
+      <parameter type-id='type-id-20' name='zone' filepath='././src/fabric/fabric.c' line='602' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_cell_product' mangled-name='kith_fabric_cell_product' filepath='././src/fabric/fabric.c' line='695' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_cell_product@@KITH_FABRIC_1' hash='17c46ba13068feda'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='695' column='1'/>
+      <parameter type-id='type-id-77' name='key' filepath='././src/fabric/fabric.c' line='696' column='1'/>
+      <parameter type-id='type-id-85' name='out_product' filepath='././src/fabric/fabric.c' line='697' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_snapshot_zone_cells' mangled-name='kith_fabric_snapshot_zone_cells' filepath='././src/fabric/fabric.c' line='717' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_snapshot_zone_cells@@KITH_FABRIC_1' hash='6866a4fb0848d4dc'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='717' column='1'/>
+      <parameter type-id='type-id-20' name='zone' filepath='././src/fabric/fabric.c' line='718' column='1'/>
+      <parameter type-id='type-id-22' name='lod' filepath='././src/fabric/fabric.c' line='719' column='1'/>
+      <parameter type-id='type-id-85' name='out' filepath='././src/fabric/fabric.c' line='720' column='1'/>
+      <parameter type-id='type-id-26' name='max' filepath='././src/fabric/fabric.c' line='721' column='1'/>
+      <parameter type-id='type-id-91' name='out_count' filepath='././src/fabric/fabric.c' line='722' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_product_count' mangled-name='kith_fabric_product_count' filepath='././src/fabric/fabric.c' line='754' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_product_count@@KITH_FABRIC_1' hash='0d00d9851e6177f9'>
+      <parameter type-id='type-id-83' name='f' filepath='././src/fabric/fabric.c' line='754' column='1'/>
+      <return type-id='type-id-23'/>
+    </function-decl>
+    <function-decl name='kith_fabric_publish_total' mangled-name='kith_fabric_publish_total' filepath='././src/fabric/fabric.c' line='766' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_publish_total@@KITH_FABRIC_1' hash='0d00d9851e6177f9'>
+      <parameter type-id='type-id-83' name='f' filepath='././src/fabric/fabric.c' line='754' column='1'/>
+      <return type-id='type-id-23'/>
+    </function-decl>
+    <function-decl name='kith_fabric_snapshot_cell' mangled-name='kith_fabric_snapshot_cell' filepath='././src/fabric/fabric.c' line='1004' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_snapshot_cell@@KITH_FABRIC_1' hash='371290dcc3a2a457'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='1004' column='1'/>
+      <parameter type-id='type-id-77' name='key' filepath='././src/fabric/fabric.c' line='1005' column='1'/>
+      <parameter type-id='type-id-43' name='level' filepath='././src/fabric/fabric.c' line='1006' column='1'/>
+      <parameter type-id='type-id-84' name='out' filepath='././src/fabric/fabric.c' line='1007' column='1'/>
+      <parameter type-id='type-id-26' name='max' filepath='././src/fabric/fabric.c' line='1008' column='1'/>
+      <parameter type-id='type-id-91' name='out_count' filepath='././src/fabric/fabric.c' line='1009' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_create_subscription' mangled-name='kith_fabric_create_subscription' filepath='././src/fabric/fabric.c' line='1072' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_create_subscription@@KITH_FABRIC_1' hash='413e6c8d1884c713'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='1072' column='1'/>
+      <parameter type-id='type-id-88' name='out_sub' filepath='././src/fabric/fabric.c' line='1073' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_subscription_destroy' mangled-name='kith_fabric_subscription_destroy' filepath='././src/fabric/fabric.c' line='1110' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_subscription_destroy@@KITH_FABRIC_1' hash='b46fa7c632529534'>
+      <parameter type-id='type-id-87' name='sub' filepath='././src/fabric/fabric.c' line='1110' column='1'/>
+      <return type-id='type-id-99'/>
+    </function-decl>
+    <function-decl name='kith_fabric_subscription_add' mangled-name='kith_fabric_subscription_add' filepath='././src/fabric/fabric.c' line='1127' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_subscription_add@@KITH_FABRIC_1' hash='9e73ef92120a9814'>
+      <parameter type-id='type-id-87' name='sub' filepath='././src/fabric/fabric.c' line='1127' column='1'/>
+      <parameter type-id='type-id-77' name='key' filepath='././src/fabric/fabric.c' line='1128' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_subscription_remove' mangled-name='kith_fabric_subscription_remove' filepath='././src/fabric/fabric.c' line='1183' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_subscription_remove@@KITH_FABRIC_1' hash='9e73ef92120a9814'>
+      <parameter type-id='type-id-87' name='sub' filepath='././src/fabric/fabric.c' line='1127' column='1'/>
+      <parameter type-id='type-id-77' name='key' filepath='././src/fabric/fabric.c' line='1128' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_fabric_subscription_size' mangled-name='kith_fabric_subscription_size' filepath='././src/fabric/fabric.c' line='1205' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_subscription_size@@KITH_FABRIC_1' hash='1e0b79912e21e5d6'>
+      <parameter type-id='type-id-81' name='sub' filepath='././src/fabric/fabric.c' line='1205' column='1'/>
+      <return type-id='type-id-26'/>
+    </function-decl>
+    <function-decl name='kith_fabric_drain' mangled-name='kith_fabric_drain' filepath='././src/fabric/fabric.c' line='1221' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_fabric_drain@@KITH_FABRIC_1' hash='9a191caff50b759c'>
+      <parameter type-id='type-id-89' name='f' filepath='././src/fabric/fabric.c' line='1221' column='1'/>
+      <parameter type-id='type-id-87' name='sub' filepath='././src/fabric/fabric.c' line='1222' column='1'/>
+      <parameter type-id='type-id-85' name='out' filepath='././src/fabric/fabric.c' line='1223' column='1'/>
+      <parameter type-id='type-id-26' name='max' filepath='././src/fabric/fabric.c' line='1224' column='1'/>
+      <parameter type-id='type-id-91' name='out_count' filepath='././src/fabric/fabric.c' line='1225' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <typedef-decl name='kith_sim_t' type-id='type-id-98' filepath='./include/kith/sim/sim.h' line='89' column='1' id='type-id-97'/>
+    <type-decl name='void' id='type-id-99'/>
+    <pointer-type-def type-id='type-id-99' id='type-id-30'/>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-93'>
+      <parameter type-id='type-id-30'/>
+      <parameter type-id='type-id-30'/>
+      <return type-id='type-id-99'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-94'>
+      <parameter type-id='type-id-30'/>
+      <parameter type-id='type-id-26'/>
+      <return type-id='type-id-30'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-95'>
+      <parameter type-id='type-id-30'/>
+      <parameter type-id='type-id-26'/>
+      <parameter type-id='type-id-26'/>
+      <return type-id='type-id-30'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-96'>
+      <parameter type-id='type-id-30'/>
+      <parameter type-id='type-id-30'/>
+      <parameter type-id='type-id-26'/>
+      <return type-id='type-id-30'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>
