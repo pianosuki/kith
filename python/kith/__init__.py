@@ -6,8 +6,8 @@ them. The exception families below are the package's public error surface:
 every C error code crosses the boundary as one of these. The typed
 configuration source wrapper, the protocol wrapper, the reactor
 wrapper, the worker pool wrapper, the persistence wrapper, the
-area-of-interest wrapper, and the simulation wrapper are re-exported
-alongside them.
+area-of-interest wrapper, the simulation wrapper, and the fabric
+wrapper are re-exported alongside them.
 """
 
 from kith.aoi import Aoi
@@ -25,6 +25,7 @@ from kith.exceptions import (
     KithResponseOverflowError,
     KithStateError,
 )
+from kith.fabric import CellKey, Fabric, Subscription
 from kith.proto import Proto
 from kith.reactor import Reactor
 from kith.sim import (
@@ -45,8 +46,10 @@ __all__ = [
     "ArtifactKey",
     "BridgeError",
     "BridgeLoadError",
+    "CellKey",
     "Config",
     "Database",
+    "Fabric",
     "KithConfigError",
     "KithError",
     "KithNetworkError",
@@ -61,6 +64,7 @@ __all__ = [
     "SimInput",
     "SimModel",
     "SimModelConfig",
+    "Subscription",
     "Transaction",
     "Worker",
 ]

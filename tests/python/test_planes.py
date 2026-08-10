@@ -19,16 +19,20 @@ from _build_gate import _BUILD_DEBUG, needs_build
 from kith import (
     Aoi,
     Config,
+    Fabric,
     KithConfigError,
     KithError,
     KithNotFoundError,
     KithProtocolError,
     KithStateError,
+    Sim,
 )
 from kith._bridge import reset
 from kith._generated import types as gen_types
 from kith.aoi import Box, Object, Sphere
+from kith.fabric import CellKey, FabricArtifact, ProductLevel
 from kith.proto import MsgFlag, Proto
+from kith.sim import ArtifactKey
 
 
 @pytest.fixture(autouse=True)
@@ -214,3 +218,90 @@ def _collect(into: list[int]) -> Callable[[Object], bool]:
         return True
 
     return _visit
+
+
+# ---------------------------------------------------------------------------
+# sim + Fabric
+# ---------------------------------------------------------------------------
+
+
+@needs_build
+class TestSimFabric:
+    def test_publish_then_snapshot(self) -> None:
+        with Sim() as sim:
+            key = ArtifactKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0, authority_epoch=1)
+            seq = sim.publish(key, actor_id=42, pos=(1, 2, 3), input_tick=1)
+            assert seq >= 1
+            assert sim.artifact_count() == 1
+            arts = sim.snapshot_cell(key)
+            assert len(arts) == 1
+            assert arts[0].actor_id == 42
+            assert arts[0].pos_x == 1
+            product = sim.cell_product(key)
+            assert product is not None
+            assert product.actor_count == 1
+            sim.remove_actor(42)
+            assert sim.artifact_count() == 0
+            assert sim.cell_product(key) is None
+
+    def test_remove_zone_clears_cells(self) -> None:
+        with Sim() as sim:
+            key = ArtifactKey(zone=5, cell_x=0, cell_y=0, cell_z=0, lod=0, authority_epoch=1)
+            sim.publish(key, actor_id=1, pos=(0, 0, 0))
+            assert sim.artifact_count() == 1
+            sim.remove_zone(5)
+            assert sim.artifact_count() == 0
+
+    def test_fabric_publish_and_subscription(self) -> None:
+        with Sim() as sim, Fabric(sim) as fabric:
+            key = CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0)
+            fabric.publish(key, authority_epoch=1)
+            assert fabric.product_count() == 1
+            product = fabric.cell_product(key)
+            assert product is not None
+            assert product.authority_epoch == 1
+
+            # Subscribe before publishing again so the change is captured.
+            with fabric.create_subscription() as sub:
+                sub.add(key)
+                assert sub.size() == 1
+                assert sub.drain() == []  # nothing changed since subscribing
+                fabric.publish(key, authority_epoch=1)
+                drained = sub.drain()
+                assert len(drained) >= 1
+                assert any(p.key == key for p in drained)
+            assert sub.size() == 0
+
+    def test_fabric_snapshot_zone_cells(self) -> None:
+        with Sim() as sim, Fabric(sim) as fabric:
+            key = CellKey(zone=2, cell_x=0, cell_y=0, cell_z=0, lod=0)
+            fabric.publish(key, authority_epoch=1)
+            products = fabric.snapshot_zone_cells(zone=2, lod=0)
+            assert any(p.key == key for p in products)
+
+    def test_fabric_snapshot_cell_returns_dataclasses(self) -> None:
+        with Sim() as sim, Fabric(sim) as fabric:
+            sim.publish(
+                ArtifactKey(zone=3, cell_x=0, cell_y=0, cell_z=0, lod=0, authority_epoch=1),
+                actor_id=13,
+                pos=(4, 5, 6),
+                input_tick=7,
+            )
+            key = CellKey(zone=3, cell_x=0, cell_y=0, cell_z=0, lod=0)
+            fabric.publish(key, authority_epoch=1)
+            arts = fabric.snapshot_cell(key, ProductLevel.FULL)
+            assert len(arts) == 1
+            art = arts[0]
+            assert isinstance(art, FabricArtifact)
+            assert art.actor_id == 13
+            assert (art.pos_x, art.pos_y, art.pos_z) == (4, 5, 6)
+            assert art.input_tick == 7
+            assert art.product_level == ProductLevel.FULL
+
+    def test_fabric_stale_authority_raises(self) -> None:
+        with Sim() as sim, Fabric(sim) as fabric:
+            key = CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0)
+            fabric.publish(key, authority_epoch=2)
+            with pytest.raises(KithError) as exc_info:
+                fabric.publish(key, authority_epoch=1)  # stale epoch
+            assert exc_info.value.code == gen_types.kith_error.KITH_EPERM
