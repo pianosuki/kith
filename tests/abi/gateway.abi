@@ -1,0 +1,1635 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_gateway.so.1'>
+  <elf-needed>
+    <dependency name='libkith_fabric.so.1'/>
+    <dependency name='libkith_net.so.1'/>
+    <dependency name='libkith_proto.so.1'/>
+    <dependency name='libkith_worker.so.1'/>
+    <dependency name='libkith_util.so.1'/>
+    <dependency name='libc.so.6'/>
+    <dependency name='ld-linux-x86-64.so.2'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_gateway_attach_worker_pool' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_broadcast_cell' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_broadcast_drops' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_broadcast_refusals' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_cache_refresh' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_cache_snapshot_cell' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_cache_stats' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_compose_deferrals' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_compose_skips' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_compose_stats' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_create' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_deliver' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_deliver_frame' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_delivery_executor_stats' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_delivery_totals' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_destroy' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_dispatch' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_dispatch_drops' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_lifecycle_drops' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_phase_stats' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_register_delivery' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_register_handler' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_register_handler_flags' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_register_session_destroyed_handler' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_register_session_destroyed_handler_flags' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_acquire' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_bind_actor' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_conn' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_count' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_create' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_delivery_totals' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_destroy' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_info' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_populate' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_release' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_snapshot' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_window_add' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_window_clear' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_window_count' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_session_window_remove' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_sessions_without_cells' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_subscribe' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_tick' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_unregister_handler' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_unregister_session_destroyed_handler' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_unsubscribe' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_view_locate_failures' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_view_refresh' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_view_snapshot' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_view_totals' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_window_add_failures' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_window_retries_pending' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_gateway_window_retry_adds' version='KITH_GATEWAY_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__tls_get_addr' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='clock_gettime' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_create_subscription' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_drain' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_snapshot_cell' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_subscription_add' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_subscription_destroy' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_subscription_remove' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_fabric_subscription_size' version='KITH_FABRIC_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_conn_acquire' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_conn_enqueue' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_conn_release' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_frame_create' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_frame_data' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_frame_len' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_frame_release' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_net_frame_set_len' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_proto_encode' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_python_finalizing' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_worker_create' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_worker_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_worker_submit' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memmove' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='nanosleep' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_destroy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_init' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_lock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='pthread_mutex_unlock' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='qsort' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strcmp' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='strlen' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/gateway/broadcast.c' comp-dir-path='.' language='LANG_C11'>
+    <qualified-type-def type-id='type-id-1' const='yes' hash='5c2097cc128b4722' id='type-id-2'/>
+    <pointer-type-def type-id='type-id-2' size-in-bits='64' hash='0c40218424be638c' id='type-id-3'/>
+    <function-decl name='kith_gateway_broadcast_cell' mangled-name='kith_gateway_broadcast_cell' filepath='././src/gateway/broadcast.c' line='39' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_broadcast_cell@@KITH_GATEWAY_1' hash='b1e2dd38c5d3050f'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/broadcast.c' line='39' column='1'/>
+      <parameter type-id='type-id-3' name='cell' filepath='././src/gateway/broadcast.c' line='40' column='1'/>
+      <parameter type-id='type-id-5' name='type_id' filepath='././src/gateway/broadcast.c' line='41' column='1'/>
+      <parameter type-id='type-id-6' name='payload' filepath='././src/gateway/broadcast.c' line='42' column='1'/>
+      <parameter type-id='type-id-7' name='payload_len' filepath='././src/gateway/broadcast.c' line='43' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/gateway/cache/cache.c' comp-dir-path='.' language='LANG_C11'>
+    <class-decl name='kith_gateway_cache_stats' is-struct='yes' visibility='default' size-in-bits='128' filepath='./include/kith/gateway/gateway.h' line='423' column='1' hash='d3cb33a1b4f83bf4' id='type-id-9'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='cell_count' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='426' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='subscribed_cell_count' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='428' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='last_refresh_ms' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='430' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_cell_snapshot' is-struct='yes' visibility='default' size-in-bits='448' filepath='./include/kith/gateway/gateway.h' line='397' column='1' hash='64db902d0b84e119' id='type-id-12'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-1' visibility='default' filepath='./include/kith/gateway/gateway.h' line='400' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='402' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='latest_publish_seq' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='404' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='refreshed_at_ms' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='406' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='refcount' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='408' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='352'>
+        <var-decl name='actor_count' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='410' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='product_level' type-id='type-id-13' visibility='default' filepath='./include/kith/gateway/gateway.h' line='412' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='416'>
+        <var-decl name='pad' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='414' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='kith_gateway_cache_stats_t' type-id='type-id-9' size-in-bits='128' filepath='./include/kith/gateway/gateway.h' line='433' column='1' id='type-id-14'/>
+    <typedef-decl name='kith_gateway_cell_snapshot_t' type-id='type-id-12' size-in-bits='448' filepath='./include/kith/gateway/gateway.h' line='417' column='1' id='type-id-15'/>
+    <pointer-type-def type-id='type-id-14' size-in-bits='64' hash='9db59451687ed186' id='type-id-16'/>
+    <pointer-type-def type-id='type-id-15' size-in-bits='64' hash='3afa2c67722b9819' id='type-id-17'/>
+    <function-decl name='kith_gateway_subscribe' mangled-name='kith_gateway_subscribe' filepath='././src/gateway/cache/cache.c' line='525' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_subscribe@@KITH_GATEWAY_1' hash='0c6c16737743d812'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/cache/cache.c' line='525' column='1'/>
+      <parameter type-id='type-id-3' name='key' filepath='././src/gateway/cache/cache.c' line='526' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_unsubscribe' mangled-name='kith_gateway_unsubscribe' filepath='././src/gateway/cache/cache.c' line='588' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_unsubscribe@@KITH_GATEWAY_1' hash='0c6c16737743d812'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/cache/cache.c' line='525' column='1'/>
+      <parameter type-id='type-id-3' name='key' filepath='././src/gateway/cache/cache.c' line='526' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_cache_refresh' mangled-name='kith_gateway_cache_refresh' filepath='././src/gateway/cache/cache.c' line='619' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_cache_refresh@@KITH_GATEWAY_1' hash='7a9029b46274bf01'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/cache/cache.c' line='619' column='1'/>
+      <parameter type-id='type-id-11' name='now_ms' filepath='././src/gateway/cache/cache.c' line='619' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_cache_snapshot_cell' mangled-name='kith_gateway_cache_snapshot_cell' filepath='././src/gateway/cache/cache.c' line='702' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_cache_snapshot_cell@@KITH_GATEWAY_1' hash='fa7db7fa6c0daeda'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/cache/cache.c' line='702' column='1'/>
+      <parameter type-id='type-id-3' name='key' filepath='././src/gateway/cache/cache.c' line='703' column='1'/>
+      <parameter type-id='type-id-17' name='out' filepath='././src/gateway/cache/cache.c' line='704' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_cache_stats' mangled-name='kith_gateway_cache_stats' filepath='././src/gateway/cache/cache.c' line='731' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_cache_stats@@KITH_GATEWAY_1' hash='f344cb7707a08d94'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/cache/cache.c' line='731' column='1'/>
+      <parameter type-id='type-id-16' name='out_stats' filepath='././src/gateway/cache/cache.c' line='732' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/gateway/delivery/delivery.c' comp-dir-path='.' language='LANG_C11'>
+    <pointer-type-def type-id='type-id-19' size-in-bits='64' id='type-id-20'/>
+    <class-decl name='kith_net_conn' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-21'/>
+    <function-decl name='kith_gateway_deliver_frame' mangled-name='kith_gateway_deliver_frame' filepath='././src/gateway/delivery/delivery.c' line='131' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_deliver_frame@@KITH_GATEWAY_1' hash='66087027fd61cb20'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/delivery/delivery.c' line='131' column='1'/>
+      <parameter type-id='type-id-20' name='conn' filepath='././src/gateway/delivery/delivery.c' line='132' column='1'/>
+      <parameter type-id='type-id-5' name='type_id' filepath='././src/gateway/delivery/delivery.c' line='133' column='1'/>
+      <parameter type-id='type-id-6' name='payload' filepath='././src/gateway/delivery/delivery.c' line='134' column='1'/>
+      <parameter type-id='type-id-7' name='payload_len' filepath='././src/gateway/delivery/delivery.c' line='135' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_deliver' mangled-name='kith_gateway_deliver' filepath='././src/gateway/delivery/delivery.c' line='186' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_deliver@@KITH_GATEWAY_1' hash='021f4873c777a0ca'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/delivery/delivery.c' line='186' column='1'/>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/delivery/delivery.c' line='187' column='1'/>
+      <parameter type-id='type-id-11' name='now_ms' filepath='././src/gateway/delivery/delivery.c' line='188' column='1'/>
+      <parameter type-id='type-id-23' name='out_stats' filepath='././src/gateway/delivery/delivery.c' line='189' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <typedef-decl name='kith_net_conn_t' type-id='type-id-21' filepath='./include/kith/net/net.h' line='108' column='1' id='type-id-19'/>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/gateway/gateway.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-24'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-25'/>
+    <type-decl name='char' size-in-bits='8' hash='65b2d157027b431a' id='type-id-26'/>
+    <array-type-def dimensions='1' type-id='type-id-26' size-in-bits='320' hash='e7f9696e246a3049' id='type-id-27'>
+      <subrange length='40' lower-bound='0' upper-bound='39' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='6281bd35fbce8744' id='type-id-28'/>
+    </array-type-def>
+    <enum-decl name='kith_fabric_product_level' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/fabric/fabric.h' line='80' column='1' hash='9fda89e88d1558e0' id='type-id-29'>
+      <underlying-type type-id='type-id-30'/>
+      <enumerator name='KITH_FABRIC_LEVEL_FULL' value='0'/>
+      <enumerator name='KITH_FABRIC_LEVEL_REDUCED' value='1'/>
+      <enumerator name='KITH_FABRIC_LEVEL_CROWD' value='2'/>
+    </enum-decl>
+    <enum-decl name='kith_gateway_session_type' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/gateway/gateway.h' line='176' column='1' hash='d02a04f695e3876c' id='type-id-31'>
+      <underlying-type type-id='type-id-30'/>
+      <enumerator name='KITH_GATEWAY_SESSION_SUBSCRIBER' value='0'/>
+      <enumerator name='KITH_GATEWAY_SESSION_APP' value='1'/>
+      <enumerator name='KITH_GATEWAY_SESSION_SERVICE' value='2'/>
+    </enum-decl>
+    <enum-decl name='kith_gateway_view_class' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/gateway/gateway.h' line='195' column='1' hash='1e386cb72e9fecdd' id='type-id-32'>
+      <underlying-type type-id='type-id-30'/>
+      <enumerator name='KITH_GATEWAY_VIEW_CLASS_SELF' value='0'/>
+      <enumerator name='KITH_GATEWAY_VIEW_CLASS_ACTOR' value='1'/>
+      <enumerator name='KITH_GATEWAY_VIEW_CLASS_CROWD' value='2'/>
+    </enum-decl>
+    <array-type-def dimensions='1' type-id='type-id-33' size-in-bits='20480' hash='f9fba55a32aaa441' id='type-id-34'>
+      <subrange length='64' lower-bound='0' upper-bound='63' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='6066f2053fe47763' id='type-id-35'/>
+    </array-type-def>
+    <array-type-def dimensions='1' type-id='type-id-36' size-in-bits='8192' hash='7df11ff4117f988f' id='type-id-37'>
+      <subrange length='16' lower-bound='0' upper-bound='15' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='6c35b1e999eba398' id='type-id-38'/>
+    </array-type-def>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-8'/>
+    <type-decl name='long int' size-in-bits='64' hash='b119fe0931d2ee10#2' id='type-id-39'/>
+    <type-decl name='short int' size-in-bits='16' hash='6c2352eccdcd3eea#3' id='type-id-40'/>
+    <class-decl name='__pthread_internal_list' is-struct='yes' visibility='default' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='51' column='1' hash='5bcfb7f1ab39fa47' id='type-id-41'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__prev' type-id='type-id-42' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__next' type-id='type-id-42' visibility='default' filepath='/usr/include/bits/thread-shared-types.h' line='54' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='__pthread_mutex_s' is-struct='yes' visibility='default' size-in-bits='320' filepath='/usr/include/bits/struct_mutex.h' line='22' column='1' hash='fc920e313849911d' id='type-id-43'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='__lock' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='24' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='__count' type-id='type-id-44' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='25' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='__owner' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='__nusers' type-id='type-id-44' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='__kind' type-id='type-id-8' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='32' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='__spins' type-id='type-id-40' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='34' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='176'>
+        <var-decl name='__glibc_reserved' type-id='type-id-40' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='35' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='__list' type-id='type-id-45' visibility='default' filepath='/usr/include/bits/struct_mutex.h' line='36' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_broadcast_queue' is-struct='yes' visibility='default' size-in-bits='20992' filepath='./src/gateway/gateway_internal.h' line='753' column='1' hash='570a5390bf2eef38' id='type-id-46'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='lock' type-id='type-id-47' visibility='default' filepath='./src/gateway/gateway_internal.h' line='755' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='slots' type-id='type-id-34' visibility='default' filepath='./src/gateway/gateway_internal.h' line='758' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='20800'>
+        <var-decl name='head' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='759' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='20864'>
+        <var-decl name='count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='760' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='20928'>
+        <var-decl name='frozen' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='764' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_broadcast_request' is-struct='yes' visibility='default' size-in-bits='320' filepath='./src/gateway/gateway_internal.h' line='736' column='1' hash='503a782ba239568e' id='type-id-33'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='cell' type-id='type-id-1' visibility='default' filepath='./src/gateway/gateway_internal.h' line='739' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='type_id' type-id='type-id-5' visibility='default' filepath='./src/gateway/gateway_internal.h' line='741' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload_len' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='743' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='payload' type-id='type-id-6' visibility='default' filepath='./src/gateway/gateway_internal.h' line='746' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_cache' is-struct='yes' visibility='default' size-in-bits='9728' filepath='./src/gateway/gateway_internal.h' line='277' column='1' hash='af86fe9b9b8d2db3' id='type-id-48'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='282' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='stripes' type-id='type-id-37' visibility='default' filepath='./src/gateway/gateway_internal.h' line='284' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='8704'>
+        <var-decl name='sub' type-id='type-id-50' visibility='default' filepath='./src/gateway/gateway_internal.h' line='288' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='8768'>
+        <var-decl name='last_refresh_ms' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='292' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_cache_node' is-struct='yes' visibility='default' size-in-bits='1088' filepath='./src/gateway/gateway_internal.h' line='168' column='1' hash='a166d93ccea1eaaf' id='type-id-51'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-1' visibility='default' filepath='./src/gateway/gateway_internal.h' line='171' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='refcount' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='173' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='authority_epoch' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='175' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='latest_publish_seq' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='177' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='refreshed_at_ms' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='179' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='content_seq' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='188' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='actor_count' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='190' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='480'>
+        <var-decl name='product_level' type-id='type-id-13' visibility='default' filepath='./src/gateway/gateway_internal.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='used' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='194' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='520'>
+        <var-decl name='deleted' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='196' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='artifacts' type-id='type-id-52' visibility='default' filepath='./src/gateway/gateway_internal.h' line='200' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='artifact_count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='202' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='artifact_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='204' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='staging' type-id='type-id-52' visibility='default' filepath='./src/gateway/gateway_internal.h' line='209' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='832'>
+        <var-decl name='staging_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='211' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='896'>
+        <var-decl name='sum_x' type-id='type-id-53' visibility='default' filepath='./src/gateway/gateway_internal.h' line='216' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='960'>
+        <var-decl name='sum_y' type-id='type-id-53' visibility='default' filepath='./src/gateway/gateway_internal.h' line='218' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1024'>
+        <var-decl name='sum_z' type-id='type-id-53' visibility='default' filepath='./src/gateway/gateway_internal.h' line='220' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_cache_stripe' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/gateway/gateway_internal.h' line='253' column='1' hash='d9775f75fdb1b010' id='type-id-36'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='lock' type-id='type-id-47' visibility='default' filepath='./src/gateway/gateway_internal.h' line='260' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='nodes' type-id='type-id-54' visibility='default' filepath='./src/gateway/gateway_internal.h' line='262' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='buckets' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='264' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='266' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_compose_scratch' is-struct='yes' visibility='default' size-in-bits='576' filepath='./src/gateway/gateway_internal.h' line='368' column='1' hash='ac80ddaa89657377' id='type-id-55'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='372' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='window' type-id='type-id-56' visibility='default' filepath='./src/gateway/gateway_internal.h' line='376' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='window_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='378' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='heap' type-id='type-id-57' visibility='default' filepath='./src/gateway/gateway_internal.h' line='381' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='heap_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='383' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='prior_set' type-id='type-id-58' visibility='default' filepath='./src/gateway/gateway_internal.h' line='388' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='prior_set_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='390' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='prior_snapshot' type-id='type-id-58' visibility='default' filepath='./src/gateway/gateway_internal.h' line='394' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='prior_snap_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='396' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_delivery_entry' is-struct='yes' visibility='default' size-in-bits='832' filepath='./src/gateway/gateway_internal.h' line='313' column='1' hash='9e92b97c7215314a' id='type-id-59'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='name' type-id='type-id-60' visibility='default' filepath='./src/gateway/gateway_internal.h' line='316' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='vtable' type-id='type-id-61' visibility='default' filepath='./src/gateway/gateway_internal.h' line='318' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_delivery_executor' is-struct='yes' visibility='default' size-in-bits='1024' filepath='./src/gateway/gateway_internal.h' line='469' column='1' hash='08aa240ee9fcd0dd' id='type-id-62'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='474' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='workers' type-id='type-id-63' visibility='default' filepath='./src/gateway/gateway_internal.h' line='477' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='scratch_lock' type-id='type-id-47' visibility='default' filepath='./src/gateway/gateway_internal.h' line='499' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='960'>
+        <var-decl name='claimed_scratches' type-id='type-id-64' visibility='default' filepath='./src/gateway/gateway_internal.h' line='501' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_delivery_job' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/gateway/gateway_internal.h' line='438' column='1' hash='c6ff0f183775396a' id='type-id-65'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='gateway' type-id='type-id-4' visibility='default' filepath='./src/gateway/gateway_internal.h' line='441' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='session' type-id='type-id-66' visibility='default' filepath='./src/gateway/gateway_internal.h' line='444' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='now_ms' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='446' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_delivery_registry' is-struct='yes' visibility='default' size-in-bits='256' filepath='./src/gateway/gateway_internal.h' line='325' column='1' hash='64be616ef67308b8' id='type-id-67'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='329' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='entries' type-id='type-id-68' visibility='default' filepath='./src/gateway/gateway_internal.h' line='331' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='333' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='335' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_delivery_scratch' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/gateway/gateway_internal.h' line='410' column='1' hash='0801f02b663e40d2' id='type-id-69'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='415' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='batch' type-id='type-id-70' visibility='default' filepath='./src/gateway/gateway_internal.h' line='418' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='batch_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='420' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_destroyed_slot' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/gateway/gateway_internal.h' line='148' column='1' hash='31c9dae83f28647b' id='type-id-71'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='fn' type-id='type-id-72' visibility='default' filepath='./src/gateway/gateway_internal.h' line='151' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-6' visibility='default' filepath='./src/gateway/gateway_internal.h' line='153' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='flags' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='155' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='lock' type-id='type-id-47' visibility='default' filepath='./src/gateway/gateway_internal.h' line='157' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_handler_slot' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/gateway/gateway_internal.h' line='112' column='1' hash='d43f8c93c48ee3f0' id='type-id-73'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='fn' type-id='type-id-74' visibility='default' filepath='./src/gateway/gateway_internal.h' line='115' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-6' visibility='default' filepath='./src/gateway/gateway_internal.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='flags' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_handler_table' is-struct='yes' visibility='default' size-in-bits='512' filepath='./src/gateway/gateway_internal.h' line='126' column='1' hash='fccc18ab63d0dd66' id='type-id-75'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='130' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='slots' type-id='type-id-76' visibility='default' filepath='./src/gateway/gateway_internal.h' line='131' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='capacity' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='132' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='lock' type-id='type-id-47' visibility='default' filepath='./src/gateway/gateway_internal.h' line='133' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_scratch_node' is-struct='yes' visibility='default' size-in-bits='256' filepath='./src/gateway/gateway_internal.h' line='452' column='1' hash='6af2ea3d692a3f2d' id='type-id-77'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='next' type-id='type-id-64' visibility='default' filepath='./src/gateway/gateway_internal.h' line='455' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='scratch' type-id='type-id-69' visibility='default' filepath='./src/gateway/gateway_internal.h' line='457' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_session_table' is-struct='yes' visibility='default' size-in-bits='384' filepath='./src/gateway/gateway_internal.h' line='715' column='1' hash='fb98b7e9bb5e4f98' id='type-id-78'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='719' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='slots' type-id='type-id-79' visibility='default' filepath='./src/gateway/gateway_internal.h' line='720' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='buckets' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='721' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='722' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='max_sessions' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='723' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='next_session_id' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='725' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_view_event' is-struct='yes' visibility='default' size-in-bits='128' filepath='./src/gateway/gateway_internal.h' line='514' column='1' hash='d6c36014b995a1af' id='type-id-80'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='actor_id' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='517' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='kind' type-id='type-id-44' visibility='default' filepath='./src/gateway/gateway_internal.h' line='519' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='gateway_view_state' is-struct='yes' visibility='default' size-in-bits='1536' filepath='./src/gateway/gateway_internal.h' line='524' column='1' hash='41aef34f208e1dc1' id='type-id-81'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='528' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='subjects' type-id='type-id-82' visibility='default' filepath='./src/gateway/gateway_internal.h' line='530' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='subject_count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='532' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='subject_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='534' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='meta' type-id='type-id-83' visibility='default' filepath='./src/gateway/gateway_internal.h' line='536' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='last_refresh_ms' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='538' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='has_view' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='540' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='prior_ids' type-id='type-id-58' visibility='default' filepath='./src/gateway/gateway_internal.h' line='542' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='prior_count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='544' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='832'>
+        <var-decl name='prior_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='546' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='896'>
+        <var-decl name='cached_window_seq' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='554' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='960'>
+        <var-decl name='cached_actor_id' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='558' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1024'>
+        <var-decl name='cached_budget' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='562' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1088'>
+        <var-decl name='cached_node_seqs' type-id='type-id-58' visibility='default' filepath='./src/gateway/gateway_internal.h' line='567' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1152'>
+        <var-decl name='cached_node_seq_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='569' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1216'>
+        <var-decl name='crowd_latch' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='575' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1280'>
+        <var-decl name='delta_events' type-id='type-id-84' visibility='default' filepath='./src/gateway/gateway_internal.h' line='582' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1344'>
+        <var-decl name='delta_count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='584' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1408'>
+        <var-decl name='delta_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='586' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1472'>
+        <var-decl name='delta_consumed' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='589' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-85'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-10' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-10' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-6' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-86' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-87' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-88' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-89' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-90' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_artifact' is-struct='yes' visibility='default' size-in-bits='576' filepath='./include/kith/fabric/fabric.h' line='185' column='1' hash='8fbf5c1ab0a2f208' id='type-id-91'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='actor_id' type-id='type-id-11' visibility='default' filepath='./include/kith/fabric/fabric.h' line='188' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='pos_x' type-id='type-id-53' visibility='default' filepath='./include/kith/fabric/fabric.h' line='190' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pos_y' type-id='type-id-53' visibility='default' filepath='./include/kith/fabric/fabric.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='pos_z' type-id='type-id-53' visibility='default' filepath='./include/kith/fabric/fabric.h' line='194' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='vel_x' type-id='type-id-53' visibility='default' filepath='./include/kith/fabric/fabric.h' line='196' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='vel_y' type-id='type-id-53' visibility='default' filepath='./include/kith/fabric/fabric.h' line='198' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='vel_z' type-id='type-id-53' visibility='default' filepath='./include/kith/fabric/fabric.h' line='200' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='input_tick' type-id='type-id-10' visibility='default' filepath='./include/kith/fabric/fabric.h' line='202' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='480'>
+        <var-decl name='update_seq' type-id='type-id-10' visibility='default' filepath='./include/kith/fabric/fabric.h' line='206' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='product_level' type-id='type-id-13' visibility='default' filepath='./include/kith/fabric/fabric.h' line='208' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_cell_key' is-struct='yes' visibility='default' size-in-bits='160' filepath='./include/kith/fabric/fabric.h' line='138' column='1' hash='67de511002882714' id='type-id-92'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-10' visibility='default' filepath='./include/kith/fabric/fabric.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-93' visibility='default' filepath='./include/kith/fabric/fabric.h' line='143' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-93' visibility='default' filepath='./include/kith/fabric/fabric.h' line='145' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-93' visibility='default' filepath='./include/kith/fabric/fabric.h' line='147' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-94' visibility='default' filepath='./include/kith/fabric/fabric.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='pad' type-id='type-id-95' visibility='default' filepath='./include/kith/fabric/fabric.h' line='151' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway' is-struct='yes' visibility='default' size-in-bits='36864' filepath='./src/gateway/gateway_internal.h' line='771' column='1' hash='3938cb6fa5795a0d' id='type-id-96'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='776' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='net' type-id='type-id-97' visibility='default' filepath='./src/gateway/gateway_internal.h' line='778' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='fabric' type-id='type-id-98' visibility='default' filepath='./src/gateway/gateway_internal.h' line='780' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='proto' type-id='type-id-99' visibility='default' filepath='./src/gateway/gateway_internal.h' line='782' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='workers' type-id='type-id-63' visibility='default' filepath='./src/gateway/gateway_internal.h' line='786' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2304'>
+        <var-decl name='sessions' type-id='type-id-78' visibility='default' filepath='./src/gateway/gateway_internal.h' line='992' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2688'>
+        <var-decl name='broadcasts' type-id='type-id-46' visibility='default' filepath='./src/gateway/gateway_internal.h' line='995' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='24064'>
+        <var-decl name='cache' type-id='type-id-48' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1006' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='33792'>
+        <var-decl name='handlers' type-id='type-id-75' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1008' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='34304'>
+        <var-decl name='destroyed' type-id='type-id-71' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1013' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='34816'>
+        <var-decl name='compose' type-id='type-id-55' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1015' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35392'>
+        <var-decl name='delivery' type-id='type-id-69' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1017' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35584'>
+        <var-decl name='delivery_executor' type-id='type-id-100' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1020' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35648'>
+        <var-decl name='max_sessions' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1022' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35680'>
+        <var-decl name='view_max_subjects' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1024' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35712'>
+        <var-decl name='view_refresh_interval_ms' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1026' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35744'>
+        <var-decl name='compose_budget_us' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1030' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35776'>
+        <var-decl name='delivery_wait_budget_us' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1034' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35808'>
+        <var-decl name='cache_refresh_interval_ms' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1036' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35840'>
+        <var-decl name='crowd_exit_margin' type-id='type-id-10' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1040' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35872'>
+        <var-decl name='self_echo_enabled' type-id='type-id-25' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1044' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35904'>
+        <var-decl name='sched_cursor' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1050' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35968'>
+        <var-decl name='replication_type_id' type-id='type-id-5' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1052' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='35984'>
+        <var-decl name='replication_batch_type_id' type-id='type-id-5' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1056' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='36032'>
+        <var-decl name='deliveries' type-id='type-id-67' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1058' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='36288'>
+        <var-decl name='delivery_strategy_name' type-id='type-id-60' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1061' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='36352'>
+        <var-decl name='delivery_config' type-id='type-id-6' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1064' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='36416'>
+        <var-decl name='delivery_config_size' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='1066' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_compose_stats' is-struct='yes' visibility='default' size-in-bits='384' filepath='./include/kith/gateway/gateway.h' line='489' column='1' hash='f4c85de01e852a5c' id='type-id-101'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='window_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='493' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='prior_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='495' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lock_wait_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='498' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='scan_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='501' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='sort_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='503' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='select_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='506' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_delivery_executor_stats' is-struct='yes' visibility='default' size-in-bits='448' filepath='./include/kith/gateway/gateway.h' line='526' column='1' hash='4285c8ead5a79af7' id='type-id-102'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='jobs_submitted_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='529' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='inflight_skips_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='532' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='ebusy_skips_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='536' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='wait_budget_exhausted_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='539' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='compose_wait_timeouts_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='542' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='inflight_current' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='544' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='inflight_high_watermark' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='546' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_delivery_stats' is-struct='yes' visibility='default' size-in-bits='192' filepath='./include/kith/gateway/gateway.h' line='635' column='1' hash='9d9d1a3ee6a0ea6e' id='type-id-103'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='enqueued' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='638' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='dropped' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='640' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='events_enqueued' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='644' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='suppressed' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='647' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pad' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='649' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_delivery_totals' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/gateway/gateway.h' line='670' column='1' hash='6fe2556343877bbf' id='type-id-104'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='enqueued' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='673' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='dropped' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='675' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='events_enqueued' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='678' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='suppressed' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='680' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_delivery_vtable' is-struct='yes' visibility='default' size-in-bits='768' filepath='./include/kith/gateway/gateway.h' line='739' column='1' hash='f4bd8af9b19033fd' id='type-id-105'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='741' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='742' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='session_init' type-id='type-id-106' visibility='default' filepath='./include/kith/gateway/gateway.h' line='760' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='session_fini' type-id='type-id-107' visibility='default' filepath='./include/kith/gateway/gateway.h' line='769' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='deliver' type-id='type-id-108' visibility='default' filepath='./include/kith/gateway/gateway.h' line='782' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='reserved' type-id='type-id-90' visibility='default' filepath='./include/kith/gateway/gateway.h' line='790' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_params' is-struct='yes' visibility='default' size-in-bits='1152' filepath='./include/kith/gateway/gateway.h' line='239' column='1' hash='ee860b35eb07664f' id='type-id-109'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='241' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='242' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='max_sessions' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='245' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cache_bucket_count' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='247' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='view_bucket_count' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='249' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='view_max_subjects' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='251' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='view_refresh_interval_ms' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='253' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='cache_refresh_interval_ms' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='255' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='handler_table_size' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='257' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <var-decl name='replication_type_id' type-id='type-id-5' visibility='default' filepath='./include/kith/gateway/gateway.h' line='266' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='304'>
+        <var-decl name='replication_batch_type_id' type-id='type-id-5' visibility='default' filepath='./include/kith/gateway/gateway.h' line='278' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='compose_budget_us' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='297' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='delivery_strategy' type-id='type-id-110' visibility='default' filepath='./include/kith/gateway/gateway.h' line='308' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='delivery_config' type-id='type-id-6' visibility='default' filepath='./include/kith/gateway/gateway.h' line='317' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='crowd_exit_margin' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='327' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='544'>
+        <var-decl name='delivery_worker_count' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='339' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='delivery_wait_budget_us' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='354' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='608'>
+        <var-decl name='self_echo_disabled' type-id='type-id-25' visibility='default' filepath='./include/kith/gateway/gateway.h' line='364' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='reserved' type-id='type-id-90' visibility='default' filepath='./include/kith/gateway/gateway.h' line='366' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_phase_stats' is-struct='yes' visibility='default' size-in-bits='384' filepath='./include/kith/gateway/gateway.h' line='443' column='1' hash='1b40442d45c61330' id='type-id-111'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='refresh_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='446' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='compose_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='449' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='deliver_ns_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='452' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='dispatch_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='455' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='self_echo_stamps_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='459' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='self_echo_fallbacks_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='464' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_session' is-struct='yes' visibility='default' size-in-bits='4096' filepath='./src/gateway/gateway_internal.h' line='600' column='1' hash='653261f34a44da6d' id='type-id-112'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-49' visibility='default' filepath='./src/gateway/gateway_internal.h' line='607' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='gateway' type-id='type-id-4' visibility='default' filepath='./src/gateway/gateway_internal.h' line='609' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='conn' type-id='type-id-113' visibility='default' filepath='./src/gateway/gateway_internal.h' line='611' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='session_id' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='613' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='principal_id' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='615' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='type' type-id='type-id-114' visibility='default' filepath='./src/gateway/gateway_internal.h' line='624' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='view' type-id='type-id-81' visibility='default' filepath='./src/gateway/gateway_internal.h' line='637' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1984'>
+        <var-decl name='window' type-id='type-id-56' visibility='default' filepath='./src/gateway/gateway_internal.h' line='642' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2048'>
+        <var-decl name='window_count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='644' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2112'>
+        <var-decl name='window_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='646' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2176'>
+        <var-decl name='window_seq' type-id='type-id-11' visibility='default' filepath='./src/gateway/gateway_internal.h' line='658' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2240'>
+        <var-decl name='window_lock' type-id='type-id-47' visibility='default' filepath='./src/gateway/gateway_internal.h' line='662' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2560'>
+        <var-decl name='pending' type-id='type-id-56' visibility='default' filepath='./src/gateway/gateway_internal.h' line='670' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2624'>
+        <var-decl name='pending_count' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='672' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2688'>
+        <var-decl name='pending_cap' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='674' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2752'>
+        <var-decl name='pending_head' type-id='type-id-7' visibility='default' filepath='./src/gateway/gateway_internal.h' line='678' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2816'>
+        <var-decl name='delivery_strategy' type-id='type-id-115' visibility='default' filepath='./src/gateway/gateway_internal.h' line='682' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='2880'>
+        <var-decl name='delivery_state' type-id='type-id-6' visibility='default' filepath='./src/gateway/gateway_internal.h' line='687' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3648'>
+        <var-decl name='delivery_job' type-id='type-id-65' visibility='default' filepath='./src/gateway/gateway_internal.h' line='711' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_session_info' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/gateway/gateway.h' line='375' column='1' hash='77f955b57ef085e5' id='type-id-116'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='session_id' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='378' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='principal_id' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='380' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='actor_id' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='382' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='type' type-id='type-id-114' visibility='default' filepath='./include/kith/gateway/gateway.h' line='384' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='pad' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='386' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_view_snapshot' is-struct='yes' visibility='default' size-in-bits='320' filepath='./include/kith/gateway/gateway.h' line='602' column='1' hash='d1574bb23dadb271' id='type-id-117'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='subscriber_actor_id' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='605' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='built_at_ms' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='610' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='candidate_count' type-id='type-id-5' visibility='default' filepath='./include/kith/gateway/gateway.h' line='612' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='144'>
+        <var-decl name='selected_count' type-id='type-id-5' visibility='default' filepath='./include/kith/gateway/gateway.h' line='614' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='tier_selected_count' type-id='type-id-118' visibility='default' filepath='./include/kith/gateway/gateway.h' line='616' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='208'>
+        <var-decl name='class_selected_count' type-id='type-id-118' visibility='default' filepath='./include/kith/gateway/gateway.h' line='618' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='sticky_selected_count' type-id='type-id-5' visibility='default' filepath='./include/kith/gateway/gateway.h' line='620' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='272'>
+        <var-decl name='demoted_selected_count' type-id='type-id-5' visibility='default' filepath='./include/kith/gateway/gateway.h' line='624' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <var-decl name='pad' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='626' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_view_subject' is-struct='yes' visibility='default' size-in-bits='640' filepath='./include/kith/gateway/gateway.h' line='557' column='1' hash='7cfc64ad823ef6d5' id='type-id-119'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='actor_id' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='560' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='pos_x' type-id='type-id-53' visibility='default' filepath='./include/kith/gateway/gateway.h' line='562' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pos_y' type-id='type-id-53' visibility='default' filepath='./include/kith/gateway/gateway.h' line='564' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='pos_z' type-id='type-id-53' visibility='default' filepath='./include/kith/gateway/gateway.h' line='566' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='vel_x' type-id='type-id-53' visibility='default' filepath='./include/kith/gateway/gateway.h' line='568' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='vel_y' type-id='type-id-53' visibility='default' filepath='./include/kith/gateway/gateway.h' line='570' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='vel_z' type-id='type-id-53' visibility='default' filepath='./include/kith/gateway/gateway.h' line='572' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='input_tick' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='574' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='480'>
+        <var-decl name='update_seq' type-id='type-id-10' visibility='default' filepath='./include/kith/gateway/gateway.h' line='579' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='level' type-id='type-id-13' visibility='default' filepath='./include/kith/gateway/gateway.h' line='581' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='544'>
+        <var-decl name='subject_class' type-id='type-id-120' visibility='default' filepath='./include/kith/gateway/gateway.h' line='583' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='sticky' type-id='type-id-25' visibility='default' filepath='./include/kith/gateway/gateway.h' line='585' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='584'>
+        <var-decl name='demoted' type-id='type-id-25' visibility='default' filepath='./include/kith/gateway/gateway.h' line='588' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='592'>
+        <var-decl name='pad' type-id='type-id-121' visibility='default' filepath='./include/kith/gateway/gateway.h' line='590' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_gateway_view_totals' is-struct='yes' visibility='default' size-in-bits='320' filepath='./include/kith/gateway/gateway.h' line='701' column='1' hash='5caa89c3dc23740d' id='type-id-122'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='visits' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='704' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='candidate_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='706' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='selected_total' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='708' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='candidate_high_watermark' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='710' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='selected_high_watermark' type-id='type-id-11' visibility='default' filepath='./include/kith/gateway/gateway.h' line='712' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__int32_t' type-id='type-id-8' size-in-bits='32' filepath='/usr/include/bits/types.h' line='41' column='1' hash='09d17c08f594edc7' id='type-id-123'/>
+    <typedef-decl name='__int64_t' type-id='type-id-39' size-in-bits='64' filepath='/usr/include/bits/types.h' line='44' column='1' hash='b119fe0931d2ee10' id='type-id-124'/>
+    <typedef-decl name='__pthread_list_t' type-id='type-id-41' size-in-bits='128' filepath='/usr/include/bits/thread-shared-types.h' line='55' column='1' id='type-id-45'/>
+    <typedef-decl name='__uint16_t' type-id='type-id-125' size-in-bits='16' filepath='/usr/include/bits/types.h' line='40' column='1' hash='d7723bb93a30b11d' id='type-id-126'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-44' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-127'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-128' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-129'/>
+    <typedef-decl name='__uint8_t' type-id='type-id-130' size-in-bits='8' filepath='/usr/include/bits/types.h' line='38' column='1' hash='6ebac62b3366db68' id='type-id-131'/>
+    <typedef-decl name='int32_t' type-id='type-id-123' size-in-bits='32' filepath='/usr/include/bits/stdint-intn.h' line='26' column='1' hash='09d17c08f594edc7' id='type-id-93'/>
+    <typedef-decl name='int64_t' type-id='type-id-124' size-in-bits='64' filepath='/usr/include/bits/stdint-intn.h' line='27' column='1' hash='b119fe0931d2ee10' id='type-id-53'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-132' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-86'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-133' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-87'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-85' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-134'/>
+    <typedef-decl name='kith_fabric_artifact_t' type-id='type-id-91' size-in-bits='576' filepath='./include/kith/fabric/fabric.h' line='211' column='1' id='type-id-135'/>
+    <typedef-decl name='kith_fabric_cell_key_t' type-id='type-id-92' size-in-bits='160' filepath='./include/kith/fabric/fabric.h' line='154' column='1' id='type-id-1'/>
+    <typedef-decl name='kith_fabric_product_level_t' type-id='type-id-29' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/fabric/fabric.h' line='90' column='1' hash='9fda89e88d1558e0' id='type-id-13'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-136' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-89'/>
+    <typedef-decl name='kith_gateway_compose_stats_t' type-id='type-id-101' size-in-bits='384' filepath='./include/kith/gateway/gateway.h' line='509' column='1' id='type-id-137'/>
+    <typedef-decl name='kith_gateway_delivery_executor_stats_t' type-id='type-id-102' size-in-bits='448' filepath='./include/kith/gateway/gateway.h' line='549' column='1' id='type-id-138'/>
+    <typedef-decl name='kith_gateway_delivery_stats_t' type-id='type-id-103' size-in-bits='192' filepath='./include/kith/gateway/gateway.h' line='652' column='1' id='type-id-139'/>
+    <typedef-decl name='kith_gateway_delivery_totals_t' type-id='type-id-104' size-in-bits='256' filepath='./include/kith/gateway/gateway.h' line='683' column='1' id='type-id-140'/>
+    <typedef-decl name='kith_gateway_delivery_vtable_t' type-id='type-id-105' size-in-bits='768' filepath='./include/kith/gateway/gateway.h' line='793' column='1' id='type-id-61'/>
+    <typedef-decl name='kith_gateway_msg_handler_fn' type-id='type-id-141' size-in-bits='64' filepath='./include/kith/gateway/gateway.h' line='903' column='1' hash='fd7a63c0c6c822c4' id='type-id-74'/>
+    <typedef-decl name='kith_gateway_params_t' type-id='type-id-109' size-in-bits='1152' filepath='./include/kith/gateway/gateway.h' line='369' column='1' id='type-id-142'/>
+    <typedef-decl name='kith_gateway_phase_stats_t' type-id='type-id-111' size-in-bits='384' filepath='./include/kith/gateway/gateway.h' line='467' column='1' id='type-id-143'/>
+    <typedef-decl name='kith_gateway_session_destroyed_fn' type-id='type-id-144' size-in-bits='64' filepath='./include/kith/gateway/gateway.h' line='1482' column='1' hash='fd7a63c0c6c822c4' id='type-id-72'/>
+    <typedef-decl name='kith_gateway_session_info_t' type-id='type-id-116' size-in-bits='256' filepath='./include/kith/gateway/gateway.h' line='389' column='1' id='type-id-145'/>
+    <typedef-decl name='kith_gateway_session_t' type-id='type-id-112' size-in-bits='4096' filepath='./include/kith/gateway/gateway.h' line='228' column='1' id='type-id-146'/>
+    <typedef-decl name='kith_gateway_session_type_t' type-id='type-id-31' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/gateway/gateway.h' line='186' column='1' hash='d02a04f695e3876c' id='type-id-114'/>
+    <typedef-decl name='kith_gateway_t' type-id='type-id-96' size-in-bits='36864' filepath='./include/kith/gateway/gateway.h' line='217' column='1' id='type-id-147'/>
+    <typedef-decl name='kith_gateway_view_class_t' type-id='type-id-32' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/gateway/gateway.h' line='205' column='1' hash='1e386cb72e9fecdd' id='type-id-120'/>
+    <typedef-decl name='kith_gateway_view_snapshot_t' type-id='type-id-117' size-in-bits='320' filepath='./include/kith/gateway/gateway.h' line='629' column='1' id='type-id-83'/>
+    <typedef-decl name='kith_gateway_view_subject_t' type-id='type-id-119' size-in-bits='640' filepath='./include/kith/gateway/gateway.h' line='593' column='1' id='type-id-148'/>
+    <typedef-decl name='kith_gateway_view_totals_t' type-id='type-id-122' size-in-bits='320' filepath='./include/kith/gateway/gateway.h' line='715' column='1' id='type-id-149'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-150' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-88'/>
+    <typedef-decl name='pthread_mutex_t' type-id='type-id-151' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='72' column='1' id='type-id-47'/>
+    <typedef-decl name='size_t' type-id='type-id-128' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-7'/>
+    <typedef-decl name='uint16_t' type-id='type-id-126' size-in-bits='16' filepath='/usr/include/bits/stdint-uintn.h' line='25' column='1' hash='d7723bb93a30b11d' id='type-id-5'/>
+    <typedef-decl name='uint32_t' type-id='type-id-127' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-10'/>
+    <typedef-decl name='uint64_t' type-id='type-id-129' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-11'/>
+    <typedef-decl name='uint8_t' type-id='type-id-131' size-in-bits='8' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' hash='6ebac62b3366db68' id='type-id-94'/>
+    <array-type-def dimensions='1' type-id='type-id-5' size-in-bits='48' hash='2acba3b681188244' id='type-id-118'>
+      <subrange length='3' lower-bound='0' upper-bound='2' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='30d99d19f0f4b2ea' id='type-id-152'/>
+    </array-type-def>
+    <array-type-def dimensions='1' type-id='type-id-94' size-in-bits='16' hash='92399eb84731c3e2' id='type-id-121'>
+      <subrange length='2' lower-bound='0' upper-bound='1' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='95f31efc53154467' id='type-id-153'/>
+    </array-type-def>
+    <array-type-def dimensions='1' type-id='type-id-94' size-in-bits='24' hash='5263bcb890c51214' id='type-id-95'>
+      <subrange length='3' lower-bound='0' upper-bound='2' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='30d99d19f0f4b2ea' id='type-id-152'/>
+    </array-type-def>
+    <union-decl name='pthread_mutex_t' naming-typedef-id='type-id-47' visibility='default' size-in-bits='320' filepath='/usr/include/bits/pthreadtypes.h' line='67' column='1' hash='8e3e5ddbcaed875f' id='type-id-151'>
+      <data-member access='public'>
+        <var-decl name='__data' type-id='type-id-43' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__size' type-id='type-id-27' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public'>
+        <var-decl name='__align' type-id='type-id-39' visibility='default' filepath='/usr/include/bits/pthreadtypes.h' line='71' column='1'/>
+      </data-member>
+    </union-decl>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-30'/>
+    <type-decl name='unsigned char' size-in-bits='8' hash='6ebac62b3366db68' id='type-id-130'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-44'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-128'/>
+    <type-decl name='unsigned short int' size-in-bits='16' hash='d7723bb93a30b11d#3' id='type-id-125'/>
+    <array-type-def dimensions='1' type-id='type-id-6' hash='8d913e14a8a96b62' id='type-id-90'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-24' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-154'/>
+    </array-type-def>
+    <pointer-type-def type-id='type-id-41' size-in-bits='64' hash='b83eb2deac70d470' id='type-id-42'/>
+    <pointer-type-def type-id='type-id-26' size-in-bits='64' hash='e533f42d1dd4942c' id='type-id-60'/>
+    <qualified-type-def type-id='type-id-26' const='yes' hash='3e50fd33f9bb78d9' id='type-id-155'/>
+    <pointer-type-def type-id='type-id-155' size-in-bits='64' hash='c44743f354f6a443' id='type-id-110'/>
+    <qualified-type-def type-id='type-id-134' const='yes' hash='07c74f5fb4899ef5' id='type-id-156'/>
+    <pointer-type-def type-id='type-id-156' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-49'/>
+    <qualified-type-def type-id='type-id-61' const='yes' hash='e87d0442f201247d' id='type-id-157'/>
+    <pointer-type-def type-id='type-id-157' size-in-bits='64' hash='3147c3382671e627' id='type-id-115'/>
+    <qualified-type-def type-id='type-id-142' const='yes' hash='3241b3bbbbbb99c8' id='type-id-158'/>
+    <pointer-type-def type-id='type-id-158' size-in-bits='64' hash='7f27eb179595eab9' id='type-id-159'/>
+    <qualified-type-def type-id='type-id-145' const='yes' hash='ed9d3eb1b8570581' id='type-id-160'/>
+    <pointer-type-def type-id='type-id-160' size-in-bits='64' hash='88f3623dd1aa8875' id='type-id-161'/>
+    <qualified-type-def type-id='type-id-146' const='yes' hash='35f3b43dc70337ce' id='type-id-162'/>
+    <pointer-type-def type-id='type-id-162' size-in-bits='64' hash='b7cd7cbdea2e05d8' id='type-id-163'/>
+    <qualified-type-def type-id='type-id-147' const='yes' hash='04b37c2650503756' id='type-id-164'/>
+    <pointer-type-def type-id='type-id-164' size-in-bits='64' hash='5c11365442b63f91' id='type-id-18'/>
+    <qualified-type-def type-id='type-id-148' const='yes' hash='b045b74c2c51ea5e' id='type-id-165'/>
+    <pointer-type-def type-id='type-id-165' size-in-bits='64' hash='0cf7500e44f9cfcc' id='type-id-166'/>
+    <pointer-type-def type-id='type-id-51' size-in-bits='64' hash='e37c1ab376b4d06b' id='type-id-54'/>
+    <pointer-type-def type-id='type-id-167' size-in-bits='64' hash='140ab9275709c0cb' id='type-id-57'/>
+    <pointer-type-def type-id='type-id-59' size-in-bits='64' hash='dd8e2023ce8f1e23' id='type-id-68'/>
+    <pointer-type-def type-id='type-id-62' size-in-bits='64' hash='54032a57adbe7f77' id='type-id-100'/>
+    <pointer-type-def type-id='type-id-73' size-in-bits='64' hash='b7a9a115a2635cc8' id='type-id-76'/>
+    <pointer-type-def type-id='type-id-77' size-in-bits='64' hash='5c476ea170c700d9' id='type-id-64'/>
+    <pointer-type-def type-id='type-id-80' size-in-bits='64' hash='dfcfd49f55540a87' id='type-id-84'/>
+    <pointer-type-def type-id='type-id-168' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-106'/>
+    <pointer-type-def type-id='type-id-169' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-108'/>
+    <pointer-type-def type-id='type-id-135' size-in-bits='64' hash='8c9ffb0239b00924' id='type-id-52'/>
+    <pointer-type-def type-id='type-id-1' size-in-bits='64' hash='207468c6db9a566a' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-137' size-in-bits='64' hash='1c64801545983392' id='type-id-170'/>
+    <pointer-type-def type-id='type-id-138' size-in-bits='64' hash='17d9ad3c00904a75' id='type-id-171'/>
+    <pointer-type-def type-id='type-id-139' size-in-bits='64' hash='a3d288d3365bac22' id='type-id-23'/>
+    <pointer-type-def type-id='type-id-140' size-in-bits='64' hash='299f130fd254c4cc' id='type-id-172'/>
+    <pointer-type-def type-id='type-id-143' size-in-bits='64' hash='dc621040429f38a9' id='type-id-173'/>
+    <pointer-type-def type-id='type-id-112' size-in-bits='64' hash='e1bbd768b3ca3300' id='type-id-66'/>
+    <pointer-type-def type-id='type-id-66' size-in-bits='64' hash='ff51539686f1dbbc' id='type-id-79'/>
+    <pointer-type-def type-id='type-id-146' size-in-bits='64' hash='5a5cd59542da7a17' id='type-id-22'/>
+    <pointer-type-def type-id='type-id-147' size-in-bits='64' hash='4c55bfd81bc851b3' id='type-id-4'/>
+    <pointer-type-def type-id='type-id-4' size-in-bits='64' hash='f0bdaced6161995d' id='type-id-174'/>
+    <pointer-type-def type-id='type-id-148' size-in-bits='64' hash='c4e7b12f3c6e4cf2' id='type-id-82'/>
+    <pointer-type-def type-id='type-id-149' size-in-bits='64' hash='9ffe5c45af218842' id='type-id-175'/>
+    <pointer-type-def type-id='type-id-11' size-in-bits='64' hash='a7b536d51360d693' id='type-id-58'/>
+    <pointer-type-def type-id='type-id-94' size-in-bits='64' hash='24d8cca8965ce13e' id='type-id-70'/>
+    <pointer-type-def type-id='type-id-176' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-144'/>
+    <pointer-type-def type-id='type-id-177' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-141'/>
+    <pointer-type-def type-id='type-id-178' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-107'/>
+    <pointer-type-def type-id='type-id-179' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-136'/>
+    <pointer-type-def type-id='type-id-180' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-132'/>
+    <pointer-type-def type-id='type-id-181' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-133'/>
+    <pointer-type-def type-id='type-id-182' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-150'/>
+    <pointer-type-def type-id='type-id-6' size-in-bits='64' hash='473a9667a2856e32' id='type-id-183'/>
+    <pointer-type-def type-id='type-id-184' size-in-bits='64' id='type-id-50'/>
+    <pointer-type-def type-id='type-id-185' size-in-bits='64' id='type-id-98'/>
+    <pointer-type-def type-id='type-id-186' size-in-bits='64' id='type-id-113'/>
+    <pointer-type-def type-id='type-id-187' size-in-bits='64' id='type-id-97'/>
+    <pointer-type-def type-id='type-id-188' size-in-bits='64' id='type-id-99'/>
+    <pointer-type-def type-id='type-id-189' size-in-bits='64' id='type-id-63'/>
+    <class-decl name='gateway_compose_entry' is-struct='yes' visibility='default' size-in-bits='256' filepath='././src/gateway/view/view.c' line='23' column='1' hash='9869664dc0650983' id='type-id-167'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='artifact' type-id='type-id-190' visibility='default' filepath='././src/gateway/view/view.c' line='26' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell' type-id='type-id-3' visibility='default' filepath='././src/gateway/view/view.c' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='dist_sq' type-id='type-id-53' visibility='default' filepath='././src/gateway/view/view.c' line='30' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='was_prior' type-id='type-id-25' visibility='default' filepath='././src/gateway/view/view.c' line='32' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-191'/>
+    <class-decl name='kith_fabric_subscription' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-192'/>
+    <class-decl name='kith_net' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-193'/>
+    <class-decl name='kith_net_conn' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-194'/>
+    <class-decl name='kith_proto' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-195'/>
+    <class-decl name='kith_worker' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-196'/>
+    <function-decl name='kith_gateway_create' mangled-name='kith_gateway_create' filepath='././src/gateway/gateway.c' line='287' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_create@@KITH_GATEWAY_1' hash='268725d053da51a0'>
+      <parameter type-id='type-id-159' name='params' filepath='././src/gateway/gateway.c' line='287' column='1'/>
+      <parameter type-id='type-id-97' name='net' filepath='././src/gateway/gateway.c' line='288' column='1'/>
+      <parameter type-id='type-id-98' name='fabric' filepath='././src/gateway/gateway.c' line='289' column='1'/>
+      <parameter type-id='type-id-99' name='proto' filepath='././src/gateway/gateway.c' line='290' column='1'/>
+      <parameter type-id='type-id-49' name='alloc' filepath='././src/gateway/gateway.c' line='291' column='1'/>
+      <parameter type-id='type-id-174' name='out_gateway' filepath='././src/gateway/gateway.c' line='292' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_destroy' mangled-name='kith_gateway_destroy' filepath='././src/gateway/gateway.c' line='343' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_destroy@@KITH_GATEWAY_1' hash='4d5d69363a7032bb'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/gateway.c' line='343' column='1'/>
+      <return type-id='type-id-197'/>
+    </function-decl>
+    <function-decl name='kith_gateway_register_delivery' mangled-name='kith_gateway_register_delivery' filepath='././src/gateway/gateway.c' line='356' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_register_delivery@@KITH_GATEWAY_1' hash='f9b4eb440ef0ce70'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/gateway.c' line='357' column='1'/>
+      <parameter type-id='type-id-110' name='name' filepath='././src/gateway/gateway.c' line='357' column='1'/>
+      <parameter type-id='type-id-115' name='vtable' filepath='././src/gateway/gateway.c' line='357' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_tick' mangled-name='kith_gateway_tick' filepath='././src/gateway/gateway.c' line='698' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_tick@@KITH_GATEWAY_1' hash='7a9029b46274bf01'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/cache/cache.c' line='619' column='1'/>
+      <parameter type-id='type-id-11' name='now_ms' filepath='././src/gateway/cache/cache.c' line='619' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_phase_stats' mangled-name='kith_gateway_phase_stats' filepath='././src/gateway/gateway.c' line='747' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_phase_stats@@KITH_GATEWAY_1' hash='c18e822061b274e9'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='747' column='1'/>
+      <parameter type-id='type-id-173' name='out_stats' filepath='././src/gateway/gateway.c' line='748' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_compose_stats' mangled-name='kith_gateway_compose_stats' filepath='././src/gateway/gateway.c' line='769' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_compose_stats@@KITH_GATEWAY_1' hash='d5993d3a331eedea'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='769' column='1'/>
+      <parameter type-id='type-id-170' name='out_stats' filepath='././src/gateway/gateway.c' line='770' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_compose_skips' mangled-name='kith_gateway_compose_skips' filepath='././src/gateway/gateway.c' line='791' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_compose_skips@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_compose_deferrals' mangled-name='kith_gateway_compose_deferrals' filepath='././src/gateway/gateway.c' line='802' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_compose_deferrals@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_broadcast_refusals' mangled-name='kith_gateway_broadcast_refusals' filepath='././src/gateway/gateway.c' line='813' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_broadcast_refusals@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_broadcast_drops' mangled-name='kith_gateway_broadcast_drops' filepath='././src/gateway/gateway.c' line='824' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_broadcast_drops@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_view_locate_failures' mangled-name='kith_gateway_view_locate_failures' filepath='././src/gateway/gateway.c' line='835' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_view_locate_failures@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_window_add_failures' mangled-name='kith_gateway_window_add_failures' filepath='././src/gateway/gateway.c' line='847' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_window_add_failures@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_window_retry_adds' mangled-name='kith_gateway_window_retry_adds' filepath='././src/gateway/gateway.c' line='858' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_window_retry_adds@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_window_retries_pending' mangled-name='kith_gateway_window_retries_pending' filepath='././src/gateway/gateway.c' line='869' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_window_retries_pending@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_sessions_without_cells' mangled-name='kith_gateway_sessions_without_cells' filepath='././src/gateway/gateway.c' line='880' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_sessions_without_cells@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_delivery_executor_stats' mangled-name='kith_gateway_delivery_executor_stats' filepath='././src/gateway/gateway.c' line='892' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_delivery_executor_stats@@KITH_GATEWAY_1' hash='2db97bebd98b0158'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='892' column='1'/>
+      <parameter type-id='type-id-171' name='out_stats' filepath='././src/gateway/gateway.c' line='893' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_delivery_totals' mangled-name='kith_gateway_delivery_totals' filepath='././src/gateway/gateway.c' line='907' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_delivery_totals@@KITH_GATEWAY_1' hash='578aa81439c22f4c'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='907' column='1'/>
+      <parameter type-id='type-id-172' name='out_totals' filepath='././src/gateway/gateway.c' line='908' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_delivery_totals' mangled-name='kith_gateway_session_delivery_totals' filepath='././src/gateway/gateway.c' line='926' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_delivery_totals@@KITH_GATEWAY_1' hash='8f4a50bbabbcb2a1'>
+      <parameter type-id='type-id-163' name='session' filepath='././src/gateway/gateway.c' line='926' column='1'/>
+      <parameter type-id='type-id-172' name='out_totals' filepath='././src/gateway/gateway.c' line='927' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_view_totals' mangled-name='kith_gateway_view_totals' filepath='././src/gateway/gateway.c' line='944' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_view_totals@@KITH_GATEWAY_1' hash='0cfa4a33b7ebaf62'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='944' column='1'/>
+      <parameter type-id='type-id-175' name='out_totals' filepath='././src/gateway/gateway.c' line='945' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <typedef-decl name='kith_fabric_t' type-id='type-id-191' filepath='./include/kith/fabric/fabric.h' line='100' column='1' id='type-id-185'/>
+    <typedef-decl name='kith_fabric_subscription_t' type-id='type-id-192' filepath='./include/kith/fabric/fabric.h' line='110' column='1' id='type-id-184'/>
+    <typedef-decl name='kith_net_t' type-id='type-id-193' filepath='./include/kith/net/net.h' line='98' column='1' id='type-id-187'/>
+    <typedef-decl name='kith_net_conn_t' type-id='type-id-194' filepath='./include/kith/net/net.h' line='108' column='1' id='type-id-186'/>
+    <typedef-decl name='kith_proto_t' type-id='type-id-195' filepath='./include/kith/proto/proto.h' line='111' column='1' id='type-id-188'/>
+    <typedef-decl name='kith_worker_t' type-id='type-id-196' filepath='./include/kith/worker/worker.h' line='92' column='1' id='type-id-189'/>
+    <type-decl name='void' id='type-id-197'/>
+    <pointer-type-def type-id='type-id-197' id='type-id-6'/>
+    <function-type size-in-bits='64' hash='1cee97ed30629cf0' id='type-id-168'>
+      <parameter type-id='type-id-163'/>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-183'/>
+      <return type-id='type-id-8'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='98fe6369fc5b96a7' id='type-id-169'>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-4'/>
+      <parameter type-id='type-id-22'/>
+      <parameter type-id='type-id-166'/>
+      <parameter type-id='type-id-7'/>
+      <parameter type-id='type-id-11'/>
+      <parameter type-id='type-id-23'/>
+      <return type-id='type-id-8'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='ef86720c33ed426c' id='type-id-176'>
+      <parameter type-id='type-id-161'/>
+      <parameter type-id='type-id-6'/>
+      <return type-id='type-id-197'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='f6bfc764f8f9f95b' id='type-id-177'>
+      <parameter type-id='type-id-5'/>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-22'/>
+      <parameter type-id='type-id-6'/>
+      <return type-id='type-id-197'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-178'>
+      <parameter type-id='type-id-6'/>
+      <return type-id='type-id-197'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-179'>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-6'/>
+      <return type-id='type-id-197'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-180'>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-7'/>
+      <return type-id='type-id-6'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-181'>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-7'/>
+      <parameter type-id='type-id-7'/>
+      <return type-id='type-id-6'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-182'>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-6'/>
+      <parameter type-id='type-id-7'/>
+      <return type-id='type-id-6'/>
+    </function-type>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/gateway/handler.c' comp-dir-path='.' language='LANG_C11'>
+    <class-decl name='kith_proto_frame' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/proto/proto.h' line='145' column='1' hash='bb337662c9578eca' id='type-id-198'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='type_id' type-id='type-id-5' visibility='default' filepath='./include/kith/proto/proto.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='16'>
+        <var-decl name='flags' type-id='type-id-94' visibility='default' filepath='./include/kith/proto/proto.h' line='150' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='24'>
+        <var-decl name='has_correlation' type-id='type-id-25' visibility='default' filepath='./include/kith/proto/proto.h' line='152' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='correlation_id' type-id='type-id-11' visibility='default' filepath='./include/kith/proto/proto.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='payload' type-id='type-id-6' visibility='default' filepath='./include/kith/proto/proto.h' line='156' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload_len' type-id='type-id-10' visibility='default' filepath='./include/kith/proto/proto.h' line='158' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='kith_proto_frame_t' type-id='type-id-198' size-in-bits='256' filepath='./include/kith/proto/proto.h' line='161' column='1' id='type-id-199'/>
+    <qualified-type-def type-id='type-id-199' const='yes' hash='1337b887667616c1' id='type-id-200'/>
+    <pointer-type-def type-id='type-id-200' size-in-bits='64' hash='a2ed33ecce5ff5e8' id='type-id-201'/>
+    <pointer-type-def type-id='type-id-202' size-in-bits='64' id='type-id-203'/>
+    <pointer-type-def type-id='type-id-204' size-in-bits='64' id='type-id-205'/>
+    <class-decl name='kith_net_conn' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-206'/>
+    <class-decl name='kith_worker' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-207'/>
+    <function-decl name='kith_gateway_register_handler' mangled-name='kith_gateway_register_handler' filepath='././src/gateway/handler.c' line='56' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_register_handler@@KITH_GATEWAY_1' hash='37e0260983a33991'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='56' column='1'/>
+      <parameter type-id='type-id-5' name='msg_type' filepath='././src/gateway/handler.c' line='57' column='1'/>
+      <parameter type-id='type-id-74' name='fn' filepath='././src/gateway/handler.c' line='58' column='1'/>
+      <parameter type-id='type-id-6' name='user_data' filepath='././src/gateway/handler.c' line='59' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_register_handler_flags' mangled-name='kith_gateway_register_handler_flags' filepath='././src/gateway/handler.c' line='65' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_register_handler_flags@@KITH_GATEWAY_1' hash='d68e0f9bce0bcaf6'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='65' column='1'/>
+      <parameter type-id='type-id-5' name='msg_type' filepath='././src/gateway/handler.c' line='66' column='1'/>
+      <parameter type-id='type-id-74' name='fn' filepath='././src/gateway/handler.c' line='67' column='1'/>
+      <parameter type-id='type-id-6' name='user_data' filepath='././src/gateway/handler.c' line='68' column='1'/>
+      <parameter type-id='type-id-10' name='flags' filepath='././src/gateway/handler.c' line='69' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_unregister_handler' mangled-name='kith_gateway_unregister_handler' filepath='././src/gateway/handler.c' line='94' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_unregister_handler@@KITH_GATEWAY_1' hash='7c06152a5d4be154'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='94' column='1'/>
+      <parameter type-id='type-id-5' name='msg_type' filepath='././src/gateway/handler.c' line='95' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_register_session_destroyed_handler' mangled-name='kith_gateway_register_session_destroyed_handler' filepath='././src/gateway/handler.c' line='113' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_register_session_destroyed_handler@@KITH_GATEWAY_1' hash='64b14cc4895b2837'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='114' column='1'/>
+      <parameter type-id='type-id-72' name='fn' filepath='././src/gateway/handler.c' line='114' column='1'/>
+      <parameter type-id='type-id-6' name='user_data' filepath='././src/gateway/handler.c' line='114' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_register_session_destroyed_handler_flags' mangled-name='kith_gateway_register_session_destroyed_handler_flags' filepath='././src/gateway/handler.c' line='120' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_register_session_destroyed_handler_flags@@KITH_GATEWAY_1' hash='45d21c63b8607ebf'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='121' column='1'/>
+      <parameter type-id='type-id-72' name='fn' filepath='././src/gateway/handler.c' line='121' column='1'/>
+      <parameter type-id='type-id-6' name='user_data' filepath='././src/gateway/handler.c' line='121' column='1'/>
+      <parameter type-id='type-id-10' name='flags' filepath='././src/gateway/handler.c' line='121' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_unregister_session_destroyed_handler' mangled-name='kith_gateway_unregister_session_destroyed_handler' filepath='././src/gateway/handler.c' line='143' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_unregister_session_destroyed_handler@@KITH_GATEWAY_1' hash='3f3dbc3c42ac00ec'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='143' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_attach_worker_pool' mangled-name='kith_gateway_attach_worker_pool' filepath='././src/gateway/handler.c' line='157' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_attach_worker_pool@@KITH_GATEWAY_1' hash='3f3dbc3c42ac00ec'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='157' column='1'/>
+      <parameter type-id='type-id-205' name='pool' filepath='././src/gateway/handler.c' line='158' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_dispatch' mangled-name='kith_gateway_dispatch' filepath='././src/gateway/handler.c' line='273' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_dispatch@@KITH_GATEWAY_1' hash='b678964e2b8fbfbd'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/handler.c' line='273' column='1'/>
+      <parameter type-id='type-id-203' name='conn' filepath='././src/gateway/handler.c' line='274' column='1'/>
+      <parameter type-id='type-id-201' name='frame' filepath='././src/gateway/handler.c' line='275' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_dispatch_drops' mangled-name='kith_gateway_dispatch_drops' filepath='././src/gateway/handler.c' line='337' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_dispatch_drops@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_lifecycle_drops' mangled-name='kith_gateway_lifecycle_drops' filepath='././src/gateway/handler.c' line='348' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_lifecycle_drops@@KITH_GATEWAY_1' hash='a357f71b5d5e92f1'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/gateway.c' line='791' column='1'/>
+      <parameter type-id='type-id-58' name='out_skips' filepath='././src/gateway/gateway.c' line='792' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <typedef-decl name='kith_net_conn_t' type-id='type-id-206' filepath='./include/kith/net/net.h' line='108' column='1' id='type-id-202'/>
+    <typedef-decl name='kith_worker_t' type-id='type-id-207' filepath='./include/kith/worker/worker.h' line='92' column='1' id='type-id-204'/>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/gateway/session/session.c' comp-dir-path='.' language='LANG_C11'>
+    <pointer-type-def type-id='type-id-145' size-in-bits='64' hash='e4c60234900f97ae' id='type-id-208'/>
+    <pointer-type-def type-id='type-id-22' size-in-bits='64' hash='c78458fbc9c88699' id='type-id-209'/>
+    <pointer-type-def type-id='type-id-7' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-210'/>
+    <pointer-type-def type-id='type-id-211' size-in-bits='64' id='type-id-212'/>
+    <class-decl name='kith_net_conn' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-213'/>
+    <function-decl name='kith_gateway_session_create' mangled-name='kith_gateway_session_create' filepath='././src/gateway/session/session.c' line='300' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_create@@KITH_GATEWAY_1' hash='cd0957de2df1c1d4'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/session/session.c' line='300' column='1'/>
+      <parameter type-id='type-id-212' name='conn' filepath='././src/gateway/session/session.c' line='301' column='1'/>
+      <parameter type-id='type-id-114' name='type' filepath='././src/gateway/session/session.c' line='302' column='1'/>
+      <parameter type-id='type-id-11' name='principal_id' filepath='././src/gateway/session/session.c' line='303' column='1'/>
+      <parameter type-id='type-id-49' name='alloc' filepath='././src/gateway/session/session.c' line='304' column='1'/>
+      <parameter type-id='type-id-209' name='out_session' filepath='././src/gateway/session/session.c' line='305' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_destroy' mangled-name='kith_gateway_session_destroy' filepath='././src/gateway/session/session.c' line='476' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_destroy@@KITH_GATEWAY_1' hash='8c3cfb44a43cebcf'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='476' column='1'/>
+      <return type-id='type-id-197'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_acquire' mangled-name='kith_gateway_session_acquire' filepath='././src/gateway/session/session.c' line='532' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_acquire@@KITH_GATEWAY_1' hash='8c3cfb44a43cebcf'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='476' column='1'/>
+      <return type-id='type-id-197'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_release' mangled-name='kith_gateway_session_release' filepath='././src/gateway/session/session.c' line='537' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_release@@KITH_GATEWAY_1' hash='8c3cfb44a43cebcf'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='476' column='1'/>
+      <return type-id='type-id-197'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_info' mangled-name='kith_gateway_session_info' filepath='././src/gateway/session/session.c' line='542' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_info@@KITH_GATEWAY_1' hash='2c15c01a6ce6ffd7'>
+      <parameter type-id='type-id-163' name='session' filepath='././src/gateway/session/session.c' line='542' column='1'/>
+      <parameter type-id='type-id-208' name='out_info' filepath='././src/gateway/session/session.c' line='543' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_conn' mangled-name='kith_gateway_session_conn' filepath='././src/gateway/session/session.c' line='557' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_conn@@KITH_GATEWAY_1' hash='590b46a4e4cf6b42'>
+      <parameter type-id='type-id-163' name='session' filepath='././src/gateway/session/session.c' line='557' column='1'/>
+      <return type-id='type-id-212'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_bind_actor' mangled-name='kith_gateway_session_bind_actor' filepath='././src/gateway/session/session.c' line='566' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_bind_actor@@KITH_GATEWAY_1' hash='6b666ee7e5c10017'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='566' column='1'/>
+      <parameter type-id='type-id-11' name='actor_id' filepath='././src/gateway/session/session.c' line='567' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_window_add' mangled-name='kith_gateway_session_window_add' filepath='././src/gateway/session/session.c' line='749' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_window_add@@KITH_GATEWAY_1' hash='74c0b4fc8e3806a9'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='749' column='1'/>
+      <parameter type-id='type-id-3' name='key' filepath='././src/gateway/session/session.c' line='750' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_window_remove' mangled-name='kith_gateway_session_window_remove' filepath='././src/gateway/session/session.c' line='794' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_window_remove@@KITH_GATEWAY_1' hash='74c0b4fc8e3806a9'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='749' column='1'/>
+      <parameter type-id='type-id-3' name='key' filepath='././src/gateway/session/session.c' line='750' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_window_clear' mangled-name='kith_gateway_session_window_clear' filepath='././src/gateway/session/session.c' line='834' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_window_clear@@KITH_GATEWAY_1' hash='8c3cfb44a43cebcf'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='476' column='1'/>
+      <return type-id='type-id-197'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_populate' mangled-name='kith_gateway_session_populate' filepath='././src/gateway/session/session.c' line='867' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_populate@@KITH_GATEWAY_1' hash='5dd3250c714b4a53'>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/session/session.c' line='867' column='1'/>
+      <parameter type-id='type-id-11' name='actor_id' filepath='././src/gateway/session/session.c' line='868' column='1'/>
+      <parameter type-id='type-id-3' name='keys' filepath='././src/gateway/session/session.c' line='869' column='1'/>
+      <parameter type-id='type-id-7' name='count' filepath='././src/gateway/session/session.c' line='870' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_window_count' mangled-name='kith_gateway_session_window_count' filepath='././src/gateway/session/session.c' line='920' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_window_count@@KITH_GATEWAY_1' hash='0eb8fac8df7c6e92'>
+      <parameter type-id='type-id-163' name='session' filepath='././src/gateway/session/session.c' line='920' column='1'/>
+      <parameter type-id='type-id-210' name='out_count' filepath='././src/gateway/session/session.c' line='921' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_count' mangled-name='kith_gateway_session_count' filepath='././src/gateway/session/session.c' line='1026' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_count@@KITH_GATEWAY_1' hash='3b8b4afdd0502858'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/session/session.c' line='1026' column='1'/>
+      <return type-id='type-id-11'/>
+    </function-decl>
+    <function-decl name='kith_gateway_session_snapshot' mangled-name='kith_gateway_session_snapshot' filepath='././src/gateway/session/session.c' line='1035' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_session_snapshot@@KITH_GATEWAY_1' hash='12c42957c371857a'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/session/session.c' line='1035' column='1'/>
+      <parameter type-id='type-id-208' name='out' filepath='././src/gateway/session/session.c' line='1036' column='1'/>
+      <parameter type-id='type-id-7' name='max' filepath='././src/gateway/session/session.c' line='1037' column='1'/>
+      <parameter type-id='type-id-210' name='out_count' filepath='././src/gateway/session/session.c' line='1038' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <typedef-decl name='kith_net_conn_t' type-id='type-id-213' filepath='./include/kith/net/net.h' line='108' column='1' id='type-id-211'/>
+  </abi-instr>
+  <abi-instr address-size='64' path='./src/gateway/view/view.c' comp-dir-path='.' language='LANG_C11'>
+    <qualified-type-def type-id='type-id-135' const='yes' hash='8ade78be2de141b3' id='type-id-214'/>
+    <pointer-type-def type-id='type-id-214' size-in-bits='64' hash='e0336294058b3cf7' id='type-id-190'/>
+    <pointer-type-def type-id='type-id-83' size-in-bits='64' hash='3ccf5d8e0ab21a95' id='type-id-215'/>
+    <pointer-type-def type-id='type-id-216' size-in-bits='64' id='type-id-217'/>
+    <pointer-type-def type-id='type-id-218' size-in-bits='64' id='type-id-219'/>
+    <pointer-type-def type-id='type-id-220' size-in-bits='64' id='type-id-221'/>
+    <pointer-type-def type-id='type-id-222' size-in-bits='64' id='type-id-223'/>
+    <pointer-type-def type-id='type-id-224' size-in-bits='64' id='type-id-225'/>
+    <class-decl name='kith_fabric' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-226'/>
+    <class-decl name='kith_net' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-227'/>
+    <class-decl name='kith_net_conn' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-228'/>
+    <class-decl name='kith_proto' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-229'/>
+    <class-decl name='kith_worker' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-230'/>
+    <function-decl name='kith_gateway_view_refresh' mangled-name='kith_gateway_view_refresh' filepath='././src/gateway/view/view.c' line='1202' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_view_refresh@@KITH_GATEWAY_1' hash='1dda45e3dc5c1e0c'>
+      <parameter type-id='type-id-4' name='gateway' filepath='././src/gateway/view/view.c' line='1202' column='1'/>
+      <parameter type-id='type-id-22' name='session' filepath='././src/gateway/view/view.c' line='1202' column='1'/>
+      <parameter type-id='type-id-11' name='now_ms' filepath='././src/gateway/view/view.c' line='1202' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <function-decl name='kith_gateway_view_snapshot' mangled-name='kith_gateway_view_snapshot' filepath='././src/gateway/view/view.c' line='1224' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_gateway_view_snapshot@@KITH_GATEWAY_1' hash='1f0f0d16e33af98b'>
+      <parameter type-id='type-id-18' name='gateway' filepath='././src/gateway/view/view.c' line='1224' column='1'/>
+      <parameter type-id='type-id-163' name='session' filepath='././src/gateway/view/view.c' line='1225' column='1'/>
+      <parameter type-id='type-id-215' name='out_view' filepath='././src/gateway/view/view.c' line='1226' column='1'/>
+      <parameter type-id='type-id-82' name='out_subjects' filepath='././src/gateway/view/view.c' line='1227' column='1'/>
+      <parameter type-id='type-id-7' name='max' filepath='././src/gateway/view/view.c' line='1228' column='1'/>
+      <parameter type-id='type-id-210' name='out_count' filepath='././src/gateway/view/view.c' line='1229' column='1'/>
+      <return type-id='type-id-8'/>
+    </function-decl>
+    <typedef-decl name='kith_fabric_t' type-id='type-id-226' filepath='./include/kith/fabric/fabric.h' line='100' column='1' id='type-id-216'/>
+    <typedef-decl name='kith_net_t' type-id='type-id-227' filepath='./include/kith/net/net.h' line='98' column='1' id='type-id-220'/>
+    <typedef-decl name='kith_net_conn_t' type-id='type-id-228' filepath='./include/kith/net/net.h' line='108' column='1' id='type-id-218'/>
+    <typedef-decl name='kith_proto_t' type-id='type-id-229' filepath='./include/kith/proto/proto.h' line='111' column='1' id='type-id-222'/>
+    <typedef-decl name='kith_worker_t' type-id='type-id-230' filepath='./include/kith/worker/worker.h' line='92' column='1' id='type-id-224'/>
+  </abi-instr>
+</abi-corpus>

@@ -215,3 +215,102 @@ target_link_libraries(test_aoi_buckets PRIVATE kith_util)
 target_include_directories(test_aoi_buckets PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_compile_definitions(test_aoi_buckets PRIVATE _GNU_SOURCE)
 add_test(NAME test_aoi_buckets COMMAND test_aoi_buckets)
+
+add_executable(test_gateway_create test_gateway_create.c)
+target_link_libraries(test_gateway_create PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_util)
+add_test(NAME test_gateway_create COMMAND test_gateway_create)
+
+# Gateway-internal sources that gateway tests compile directly to reach
+# private functions; one list so a new gateway source lands in every test
+# that links the internal layout.
+set(KITH_GATEWAY_TEST_SOURCES
+    ${PROJECT_SOURCE_DIR}/src/gateway/session/session.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/view/view.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/cache/cache.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/delivery/delivery.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/delivery/executor.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/delivery/strategy.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/delivery/strategy_full.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/delivery/strategy_tiered.c
+)
+
+add_executable(test_gateway_session test_gateway_session.c ${KITH_GATEWAY_TEST_SOURCES})
+target_link_libraries(test_gateway_session PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_gateway_session PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_session PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_gateway_session COMMAND test_gateway_session)
+
+add_executable(test_gateway_cache test_gateway_cache.c)
+target_link_libraries(test_gateway_cache PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_util)
+add_test(NAME test_gateway_cache COMMAND test_gateway_cache)
+
+add_executable(test_gateway_phase_stats test_gateway_phase_stats.c)
+target_link_libraries(test_gateway_phase_stats PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_util)
+target_compile_definitions(test_gateway_phase_stats PRIVATE _GNU_SOURCE)
+add_test(NAME test_gateway_phase_stats COMMAND test_gateway_phase_stats)
+
+add_executable(test_gateway_compose_stats test_gateway_compose_stats.c)
+target_link_libraries(test_gateway_compose_stats PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_util)
+target_compile_definitions(test_gateway_compose_stats PRIVATE _GNU_SOURCE)
+add_test(NAME test_gateway_compose_stats COMMAND test_gateway_compose_stats)
+
+add_executable(test_gateway_compose_budget test_gateway_compose_budget.c)
+target_link_libraries(test_gateway_compose_budget PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_util)
+target_compile_definitions(test_gateway_compose_budget PRIVATE _GNU_SOURCE)
+add_test(NAME test_gateway_compose_budget COMMAND test_gateway_compose_budget)
+
+add_executable(test_gateway_handler test_gateway_handler.c)
+target_link_libraries(test_gateway_handler PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker kith_util)
+target_compile_definitions(test_gateway_handler PRIVATE _GNU_SOURCE)
+add_test(NAME test_gateway_handler COMMAND test_gateway_handler)
+
+add_executable(test_gateway_lifecycle test_gateway_lifecycle.c)
+target_link_libraries(test_gateway_lifecycle PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker kith_util)
+target_compile_definitions(test_gateway_lifecycle PRIVATE _GNU_SOURCE)
+add_test(NAME test_gateway_lifecycle COMMAND test_gateway_lifecycle)
+
+add_executable(test_gateway_window test_gateway_window.c)
+target_link_libraries(test_gateway_window PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker kith_util)
+target_compile_definitions(test_gateway_window PRIVATE _GNU_SOURCE)
+add_test(NAME test_gateway_window COMMAND test_gateway_window)
+
+add_executable(test_gateway_view test_gateway_view.c ${KITH_GATEWAY_TEST_SOURCES})
+target_link_libraries(test_gateway_view PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_gateway_view PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_view PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_gateway_view COMMAND test_gateway_view)
+
+add_executable(test_gateway_delivery test_gateway_delivery.c ${KITH_GATEWAY_TEST_SOURCES})
+target_compile_definitions(test_gateway_delivery PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_delivery PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_gateway_delivery PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker kith_util)
+add_test(NAME test_gateway_delivery COMMAND test_gateway_delivery)
+
+add_executable(test_gateway_broadcast test_gateway_broadcast.c ${KITH_GATEWAY_TEST_SOURCES})
+target_compile_definitions(test_gateway_broadcast PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_broadcast PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_gateway_broadcast PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+add_test(NAME test_gateway_broadcast COMMAND test_gateway_broadcast)
+
+add_executable(test_gateway_registry test_gateway_registry.c ${KITH_GATEWAY_TEST_SOURCES})
+target_link_libraries(test_gateway_registry PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_gateway_registry PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_registry PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_gateway_registry COMMAND test_gateway_registry)
+add_executable(test_gateway_tiered test_gateway_tiered.c ${KITH_GATEWAY_TEST_SOURCES})
+target_link_libraries(test_gateway_tiered PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_gateway_tiered PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_tiered PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_gateway_tiered COMMAND test_gateway_tiered)
+
+add_executable(test_gateway_executor test_gateway_executor.c ${KITH_GATEWAY_TEST_SOURCES})
+target_link_libraries(test_gateway_executor PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_gateway_executor PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_executor PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_gateway_executor COMMAND test_gateway_executor)
+
+add_executable(test_gateway_totals test_gateway_totals.c ${KITH_GATEWAY_TEST_SOURCES})
+target_link_libraries(test_gateway_totals PRIVATE kith_gateway kith_fabric kith_net kith_proto kith_sim kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_gateway_totals PRIVATE _GNU_SOURCE)
+target_include_directories(test_gateway_totals PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_gateway_totals COMMAND test_gateway_totals)
