@@ -10,6 +10,7 @@ from . import (
     config,
     db,
     fabric,
+    gateway,
     logger,
     metrics,
     net,
@@ -41,3 +42,4 @@ def configure(bridge: _LibProvider) -> None:
     worker.configure(bridge.lib("worker"))
     state.configure(bridge.lib("state"))
     db.configure(bridge.lib("db"))
+    gateway.configure(bridge.lib("gateway"))
