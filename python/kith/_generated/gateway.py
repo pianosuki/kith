@@ -11,6 +11,8 @@ from enum import IntEnum
 from kith._generated.fabric import kith_fabric_cell_key_t, kith_fabric_t
 from kith._generated.net import kith_net_conn_t, kith_net_t
 from kith._generated.proto import kith_proto_frame_t, kith_proto_t
+from kith._generated.types import kith_allocator_t
+from kith._generated.worker import kith_worker_t
 
 
 class kith_gateway(ctypes.Structure):
@@ -55,6 +57,27 @@ class kith_gateway_cache_stats(ctypes.Structure):
 kith_gateway_cache_stats_t = kith_gateway_cache_stats
 
 
+class kith_gateway_phase_stats(ctypes.Structure):
+    pass
+
+
+kith_gateway_phase_stats_t = kith_gateway_phase_stats
+
+
+class kith_gateway_compose_stats(ctypes.Structure):
+    pass
+
+
+kith_gateway_compose_stats_t = kith_gateway_compose_stats
+
+
+class kith_gateway_delivery_executor_stats(ctypes.Structure):
+    pass
+
+
+kith_gateway_delivery_executor_stats_t = kith_gateway_delivery_executor_stats
+
+
 class kith_gateway_view_subject(ctypes.Structure):
     pass
 
@@ -76,6 +99,34 @@ class kith_gateway_delivery_stats(ctypes.Structure):
 kith_gateway_delivery_stats_t = kith_gateway_delivery_stats
 
 
+class kith_gateway_delivery_totals(ctypes.Structure):
+    pass
+
+
+kith_gateway_delivery_totals_t = kith_gateway_delivery_totals
+
+
+class kith_gateway_view_totals(ctypes.Structure):
+    pass
+
+
+kith_gateway_view_totals_t = kith_gateway_view_totals
+
+
+class kith_gateway_delivery_vtable(ctypes.Structure):
+    pass
+
+
+kith_gateway_delivery_vtable_t = kith_gateway_delivery_vtable
+
+
+class kith_gateway_tiered_config(ctypes.Structure):
+    pass
+
+
+kith_gateway_tiered_config_t = kith_gateway_tiered_config
+
+
 class kith_gateway_format(IntEnum):
     KITH_GATEWAY_VIEW_TIER_COUNT = 3
     KITH_GATEWAY_VIEW_CLASS_COUNT = 3
@@ -89,6 +140,8 @@ class kith_gateway_default(IntEnum):
     KITH_GATEWAY_DEFAULT_VIEW_REFRESH_MS = 100
     KITH_GATEWAY_DEFAULT_CACHE_REFRESH_MS = 100
     KITH_GATEWAY_DEFAULT_HANDLER_TABLE_SIZE = 256
+    KITH_GATEWAY_DEFAULT_COMPOSE_BUDGET_US = 25000
+    KITH_GATEWAY_DEFAULT_DELIVERY_WAIT_BUDGET_US = 8000
 
 
 class kith_gateway_session_type(IntEnum):
@@ -108,6 +161,21 @@ class kith_gateway_view_class(IntEnum):
 
 kith_gateway_view_class_t = kith_gateway_view_class
 
+
+class kith_gateway_tiered_default(IntEnum):
+    KITH_GATEWAY_TIERED_DEFAULT_REDUCED_INTERVAL_MS = 200
+    KITH_GATEWAY_TIERED_DEFAULT_CROWD_INTERVAL_MS = 500
+    KITH_GATEWAY_TIERED_DEFAULT_MAX_GAP_MS = 1000
+
+
+class kith_gateway_handler_flag(IntEnum):
+    KITH_GATEWAY_HANDLER_NONE = 0
+    KITH_GATEWAY_HANDLER_PYTHON = 1
+    KITH_GATEWAY_HANDLER_POOL = 2
+
+
+kith_gateway_handler_flag_t = kith_gateway_handler_flag
+
 kith_gateway_msg_handler_fn = ctypes.CFUNCTYPE(
     None,
     ctypes.c_uint16,
@@ -115,6 +183,10 @@ kith_gateway_msg_handler_fn = ctypes.CFUNCTYPE(
     ctypes.c_uint,
     ctypes.POINTER(kith_gateway_session),
     ctypes.c_void_p,
+)
+
+kith_gateway_session_destroyed_fn = ctypes.CFUNCTYPE(
+    None, ctypes.POINTER(kith_gateway_session_info), ctypes.c_void_p
 )
 
 kith_gateway_params._fields_ = [
@@ -128,7 +200,14 @@ kith_gateway_params._fields_ = [
     ("cache_refresh_interval_ms", ctypes.c_uint32),
     ("handler_table_size", ctypes.c_uint32),
     ("replication_type_id", ctypes.c_uint16),
-    ("pad", ctypes.c_uint16),
+    ("replication_batch_type_id", ctypes.c_uint16),
+    ("compose_budget_us", ctypes.c_uint32),
+    ("delivery_strategy", ctypes.c_char_p),
+    ("delivery_config", ctypes.c_void_p),
+    ("crowd_exit_margin", ctypes.c_uint32),
+    ("delivery_worker_count", ctypes.c_uint32),
+    ("delivery_wait_budget_us", ctypes.c_uint32),
+    ("self_echo_disabled", ctypes.c_bool),
     ("reserved", ctypes.c_void_p * 8),
 ]
 
@@ -157,6 +236,34 @@ kith_gateway_cache_stats._fields_ = [
     ("last_refresh_ms", ctypes.c_uint64),
 ]
 
+kith_gateway_phase_stats._fields_ = [
+    ("refresh_ns_total", ctypes.c_uint64),
+    ("compose_ns_total", ctypes.c_uint64),
+    ("deliver_ns_total", ctypes.c_uint64),
+    ("dispatch_total", ctypes.c_uint64),
+    ("self_echo_stamps_total", ctypes.c_uint64),
+    ("self_echo_fallbacks_total", ctypes.c_uint64),
+]
+
+kith_gateway_compose_stats._fields_ = [
+    ("window_ns_total", ctypes.c_uint64),
+    ("prior_ns_total", ctypes.c_uint64),
+    ("lock_wait_ns_total", ctypes.c_uint64),
+    ("scan_ns_total", ctypes.c_uint64),
+    ("sort_ns_total", ctypes.c_uint64),
+    ("select_ns_total", ctypes.c_uint64),
+]
+
+kith_gateway_delivery_executor_stats._fields_ = [
+    ("jobs_submitted_total", ctypes.c_uint64),
+    ("inflight_skips_total", ctypes.c_uint64),
+    ("ebusy_skips_total", ctypes.c_uint64),
+    ("wait_budget_exhausted_total", ctypes.c_uint64),
+    ("compose_wait_timeouts_total", ctypes.c_uint64),
+    ("inflight_current", ctypes.c_uint64),
+    ("inflight_high_watermark", ctypes.c_uint64),
+]
+
 kith_gateway_view_subject._fields_ = [
     ("actor_id", ctypes.c_uint64),
     ("pos_x", ctypes.c_int64),
@@ -166,6 +273,7 @@ kith_gateway_view_subject._fields_ = [
     ("vel_y", ctypes.c_int64),
     ("vel_z", ctypes.c_int64),
     ("input_tick", ctypes.c_uint32),
+    ("update_seq", ctypes.c_uint32),
     ("level", ctypes.c_uint32),
     ("subject_class", ctypes.c_uint32),
     ("sticky", ctypes.c_bool),
@@ -188,13 +296,78 @@ kith_gateway_view_snapshot._fields_ = [
 kith_gateway_delivery_stats._fields_ = [
     ("enqueued", ctypes.c_uint32),
     ("dropped", ctypes.c_uint32),
+    ("events_enqueued", ctypes.c_uint32),
+    ("suppressed", ctypes.c_uint32),
     ("pad", ctypes.c_uint64),
+]
+
+kith_gateway_delivery_totals._fields_ = [
+    ("enqueued", ctypes.c_uint64),
+    ("dropped", ctypes.c_uint64),
+    ("events_enqueued", ctypes.c_uint64),
+    ("suppressed", ctypes.c_uint64),
+]
+
+kith_gateway_view_totals._fields_ = [
+    ("visits", ctypes.c_uint64),
+    ("candidate_total", ctypes.c_uint64),
+    ("selected_total", ctypes.c_uint64),
+    ("candidate_high_watermark", ctypes.c_uint64),
+    ("selected_high_watermark", ctypes.c_uint64),
+]
+
+kith_gateway_delivery_vtable._fields_ = [
+    ("size", ctypes.c_uint32),
+    ("abi_version", ctypes.c_uint32),
+    (
+        "session_init",
+        ctypes.CFUNCTYPE(
+            ctypes.c_int,
+            ctypes.POINTER(kith_gateway_session),
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_void_p),
+        ),
+    ),
+    ("session_fini", ctypes.CFUNCTYPE(None, ctypes.c_void_p)),
+    (
+        "deliver",
+        ctypes.CFUNCTYPE(
+            ctypes.c_int,
+            ctypes.c_void_p,
+            ctypes.POINTER(kith_gateway),
+            ctypes.POINTER(kith_gateway_session),
+            ctypes.POINTER(kith_gateway_view_subject),
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.POINTER(kith_gateway_delivery_stats),
+        ),
+    ),
+    ("reserved", ctypes.c_void_p * 8),
+]
+
+kith_gateway_tiered_config._fields_ = [
+    ("size", ctypes.c_uint32),
+    ("abi_version", ctypes.c_uint32),
+    ("full_interval_ms", ctypes.c_uint32),
+    ("reduced_interval_ms", ctypes.c_uint32),
+    ("crowd_interval_ms", ctypes.c_uint32),
+    ("max_gap_ms", ctypes.c_uint32),
+    ("reserved", ctypes.c_void_p * 8),
 ]
 
 # ---------------------------------------------------------------------------
 # function signatures
 # ---------------------------------------------------------------------------
 _FUNCTIONS: list[tuple[str, object, list[object]]] = [
+    (
+        "kith_gateway_register_delivery",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_t),
+            ctypes.c_char_p,
+            ctypes.POINTER(kith_gateway_delivery_vtable_t),
+        ],
+    ),
     (
         "kith_gateway_create",
         ctypes.c_int,
@@ -203,6 +376,7 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
             ctypes.POINTER(kith_net_t),
             ctypes.POINTER(kith_fabric_t),
             ctypes.POINTER(kith_proto_t),
+            ctypes.POINTER(kith_allocator_t),
             ctypes.POINTER(ctypes.POINTER(kith_gateway_t)),
         ],
     ),
@@ -215,10 +389,13 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
             ctypes.POINTER(kith_net_conn_t),
             ctypes.c_uint32,
             ctypes.c_uint64,
+            ctypes.POINTER(kith_allocator_t),
             ctypes.POINTER(ctypes.POINTER(kith_gateway_session_t)),
         ],
     ),
     ("kith_gateway_session_destroy", None, [ctypes.POINTER(kith_gateway_session_t)]),
+    ("kith_gateway_session_acquire", None, [ctypes.POINTER(kith_gateway_session_t)]),
+    ("kith_gateway_session_release", None, [ctypes.POINTER(kith_gateway_session_t)]),
     (
         "kith_gateway_session_info",
         ctypes.c_int,
@@ -235,6 +412,43 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
         [ctypes.POINTER(kith_gateway_session_t), ctypes.c_uint64],
     ),
     (
+        "kith_gateway_session_window_add",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_session_t), ctypes.POINTER(kith_fabric_cell_key_t)],
+    ),
+    (
+        "kith_gateway_session_window_remove",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_session_t), ctypes.POINTER(kith_fabric_cell_key_t)],
+    ),
+    ("kith_gateway_session_window_clear", None, [ctypes.POINTER(kith_gateway_session_t)]),
+    (
+        "kith_gateway_session_populate",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_session_t),
+            ctypes.c_uint64,
+            ctypes.POINTER(kith_fabric_cell_key_t),
+            ctypes.c_size_t,
+        ],
+    ),
+    (
+        "kith_gateway_session_window_count",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_session_t), ctypes.POINTER(ctypes.c_size_t)],
+    ),
+    ("kith_gateway_session_count", ctypes.c_uint64, [ctypes.POINTER(kith_gateway_t)]),
+    (
+        "kith_gateway_session_snapshot",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_t),
+            ctypes.POINTER(kith_gateway_session_info_t),
+            ctypes.c_size_t,
+            ctypes.POINTER(ctypes.c_size_t),
+        ],
+    ),
+    (
         "kith_gateway_register_handler",
         ctypes.c_int,
         [
@@ -245,9 +459,45 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
         ],
     ),
     (
+        "kith_gateway_register_handler_flags",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_t),
+            ctypes.c_uint16,
+            kith_gateway_msg_handler_fn,
+            ctypes.c_void_p,
+            ctypes.c_uint32,
+        ],
+    ),
+    (
+        "kith_gateway_attach_worker_pool",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_worker_t)],
+    ),
+    (
         "kith_gateway_unregister_handler",
         ctypes.c_int,
         [ctypes.POINTER(kith_gateway_t), ctypes.c_uint16],
+    ),
+    (
+        "kith_gateway_register_session_destroyed_handler",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), kith_gateway_session_destroyed_fn, ctypes.c_void_p],
+    ),
+    (
+        "kith_gateway_register_session_destroyed_handler_flags",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_t),
+            kith_gateway_session_destroyed_fn,
+            ctypes.c_void_p,
+            ctypes.c_uint32,
+        ],
+    ),
+    (
+        "kith_gateway_unregister_session_destroyed_handler",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t)],
     ),
     (
         "kith_gateway_dispatch",
@@ -257,6 +507,36 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
             ctypes.POINTER(kith_net_conn_t),
             ctypes.POINTER(kith_proto_frame_t),
         ],
+    ),
+    (
+        "kith_gateway_dispatch_drops",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_lifecycle_drops",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_window_add_failures",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_window_retry_adds",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_window_retries_pending",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_sessions_without_cells",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
     ),
     (
         "kith_gateway_subscribe",
@@ -284,6 +564,51 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
         [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_cache_stats_t)],
     ),
     (
+        "kith_gateway_phase_stats",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_phase_stats_t)],
+    ),
+    (
+        "kith_gateway_compose_stats",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_compose_stats_t)],
+    ),
+    (
+        "kith_gateway_compose_skips",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_compose_deferrals",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_view_locate_failures",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_delivery_executor_stats",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_delivery_executor_stats_t)],
+    ),
+    (
+        "kith_gateway_delivery_totals",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_delivery_totals_t)],
+    ),
+    (
+        "kith_gateway_session_delivery_totals",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_session_t), ctypes.POINTER(kith_gateway_delivery_totals_t)],
+    ),
+    (
+        "kith_gateway_view_totals",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_view_totals_t)],
+    ),
+    (
         "kith_gateway_view_refresh",
         ctypes.c_int,
         [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(kith_gateway_session_t), ctypes.c_uint64],
@@ -301,6 +626,38 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
         ],
     ),
     (
+        "kith_gateway_deliver_frame",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_t),
+            ctypes.POINTER(kith_net_conn_t),
+            ctypes.c_uint16,
+            ctypes.c_void_p,
+            ctypes.c_size_t,
+        ],
+    ),
+    (
+        "kith_gateway_broadcast_cell",
+        ctypes.c_int,
+        [
+            ctypes.POINTER(kith_gateway_t),
+            ctypes.POINTER(kith_fabric_cell_key_t),
+            ctypes.c_uint16,
+            ctypes.c_void_p,
+            ctypes.c_size_t,
+        ],
+    ),
+    (
+        "kith_gateway_broadcast_refusals",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_gateway_broadcast_drops",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_gateway_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
         "kith_gateway_deliver",
         ctypes.c_int,
         [
@@ -310,6 +667,7 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
             ctypes.POINTER(kith_gateway_delivery_stats_t),
         ],
     ),
+    ("kith_gateway_tick", ctypes.c_int, [ctypes.POINTER(kith_gateway_t), ctypes.c_uint64]),
 ]
 
 

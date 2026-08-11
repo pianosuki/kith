@@ -52,8 +52,8 @@ was a wire-format break for any consumer that decoded the old host-order
 payload; before v1.0.0 there was no external consumer to migrate. Byte-order
 helpers remain module-local in proto, client, and delivery — the
 established idiom, with consolidation a styling choice rather than a
-contract need. The per-cell publish sequence and the
-publisher-minted coverage counter are distinct counter spaces,
+contract need. The per-cell publish sequence (ADR-0002) and the
+publisher-minted coverage counter (ADR-0023) are distinct counter spaces,
 both minted at publish; neither meaning changes with byte order. The
 correlation ID propagates into observability explicitly: a call site that
 has one in scope passes it as the correlation-ID caller field on a log entry
