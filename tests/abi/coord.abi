@@ -1,0 +1,653 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_coord.so.1'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_coord_authority' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_add_member' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_create' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_destroy' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_drain' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_instance_id' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_member_count' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_member_status' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_publish' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_subscribe' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_tick' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_bus_unsubscribe' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_cell_count' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_clear_authority' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_create' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_destroy' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_on_rebalance' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_owned_cell_count' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_report_density' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_set_authority' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_snapshot_zone' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_coord_tick' version='KITH_COORD_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' version='GLIBC_2.2.5' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/coord/coord.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <array-type-def dimensions='1' type-id='type-id-3' size-in-bits='3072' hash='fc35418e3b50225f' id='type-id-4'>
+      <subrange length='16' lower-bound='0' upper-bound='15' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6c35b1e999eba398' id='type-id-5'/>
+    </array-type-def>
+    <enum-decl name='kith_coord_bus_event_type' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/coord/coord.h' line='119' column='1' hash='4f8c823f000a9cbe' id='type-id-6'>
+      <underlying-type type-id='type-id-7'/>
+      <enumerator name='KITH_COORD_BUS_EVENT_REBALANCE' value='0'/>
+      <enumerator name='KITH_COORD_BUS_EVENT_MEMBERSHIP' value='1'/>
+      <enumerator name='KITH_COORD_BUS_EVENT_SNAPSHOT_REQUEST' value='2'/>
+    </enum-decl>
+    <enum-decl name='kith_coord_bus_transport' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/coord/coord.h' line='107' column='1' hash='4002e1650f2a81d0' id='type-id-8'>
+      <underlying-type type-id='type-id-7'/>
+      <enumerator name='KITH_COORD_BUS_TRANSPORT_LOOPBACK' value='0'/>
+    </enum-decl>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-9'/>
+    <class-decl name='coord_bus_event_slot' is-struct='yes' visibility='default' size-in-bits='320' filepath='./src/coord/coord_internal.h' line='124' column='1' hash='cd9ec084dde5651e' id='type-id-10'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='event_type' type-id='type-id-11' visibility='default' filepath='./src/coord/coord_internal.h' line='127' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='zone' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='129' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='source_instance_id' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='131' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='timestamp_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='133' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload_len' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='135' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='payload' type-id='type-id-14' visibility='default' filepath='./src/coord/coord_internal.h' line='137' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='coord_bus_member' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/coord/coord_internal.h' line='102' column='1' hash='53ee082f5384ac2c' id='type-id-15'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='heartbeat_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='107' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='owned_cell_count' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='109' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='active_input_count' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='111' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='coord_bus_zone_sub' is-struct='yes' visibility='default' size-in-bits='64' filepath='./src/coord/coord_internal.h' line='115' column='1' hash='165a3829778ab580' id='type-id-16'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='118' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='refcount' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='120' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='coord_cell_node' is-struct='yes' visibility='default' size-in-bits='224' filepath='./src/coord/coord_internal.h' line='44' column='1' hash='3b635d0c4b3f9051' id='type-id-17'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='46' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-18' visibility='default' filepath='./src/coord/coord_internal.h' line='47' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-18' visibility='default' filepath='./src/coord/coord_internal.h' line='48' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-18' visibility='default' filepath='./src/coord/coord_internal.h' line='49' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-19' visibility='default' filepath='./src/coord/coord_internal.h' line='50' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/coord/coord_internal.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='144'>
+        <var-decl name='deleted' type-id='type-id-2' visibility='default' filepath='./src/coord/coord_internal.h' line='54' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='56' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='authority_epoch' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='58' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='coord_density_node' is-struct='yes' visibility='default' size-in-bits='384' filepath='./src/coord/coord_internal.h' line='74' column='1' hash='0ae6548f720aef2c' id='type-id-20'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='76' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-18' visibility='default' filepath='./src/coord/coord_internal.h' line='77' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-18' visibility='default' filepath='./src/coord/coord_internal.h' line='78' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-18' visibility='default' filepath='./src/coord/coord_internal.h' line='79' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-19' visibility='default' filepath='./src/coord/coord_internal.h' line='80' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='used' type-id='type-id-2' visibility='default' filepath='./src/coord/coord_internal.h' line='82' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='144'>
+        <var-decl name='deleted' type-id='type-id-2' visibility='default' filepath='./src/coord/coord_internal.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='actor_count' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='86' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='split_since_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='89' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='merge_since_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='92' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='last_report_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='94' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='coord_shard' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/coord/coord_internal.h' line='62' column='1' hash='eb29213c150d0278' id='type-id-3'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='cells' type-id='type-id-21' visibility='default' filepath='./src/coord/coord_internal.h' line='64' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='buckets' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='65' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='count' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='66' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-23'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-12' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-12' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-24' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-25' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-26' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-27' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-28' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-29' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord' is-struct='yes' visibility='default' size-in-bits='3712' filepath='./src/coord/coord_internal.h' line='144' column='1' hash='77c5994f05cdaa70' id='type-id-30'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-31' visibility='default' filepath='./src/coord/coord_internal.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='bus' type-id='type-id-32' visibility='default' filepath='./src/coord/coord_internal.h' line='150' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='152' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='authority_epoch_counter' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='shards' type-id='type-id-4' visibility='default' filepath='./src/coord/coord_internal.h' line='156' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3264'>
+        <var-decl name='density' type-id='type-id-33' visibility='default' filepath='./src/coord/coord_internal.h' line='158' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3328'>
+        <var-decl name='density_buckets' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='159' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3392'>
+        <var-decl name='density_count' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='160' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3456'>
+        <var-decl name='split_threshold' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='162' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3488'>
+        <var-decl name='merge_threshold' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='164' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3520'>
+        <var-decl name='split_min_dwell_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='166' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3584'>
+        <var-decl name='merge_min_dwell_ms' type-id='type-id-13' visibility='default' filepath='./src/coord/coord_internal.h' line='168' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3648'>
+        <var-decl name='density_stride' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='170' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='3680'>
+        <var-decl name='tick_counter' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='172' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_authority' is-struct='yes' visibility='default' size-in-bits='64' filepath='./include/kith/coord/coord.h' line='210' column='1' hash='284c7d844b1071b7' id='type-id-34'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='213' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='authority_epoch' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='215' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_bus' is-struct='yes' visibility='default' size-in-bits='832' filepath='./src/coord/coord_internal.h' line='175' column='1' hash='ee297f0e9a6c34ed' id='type-id-35'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-31' visibility='default' filepath='./src/coord/coord_internal.h' line='180' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./src/coord/coord_internal.h' line='182' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='transport' type-id='type-id-36' visibility='default' filepath='./src/coord/coord_internal.h' line='184' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='members' type-id='type-id-37' visibility='default' filepath='./src/coord/coord_internal.h' line='187' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='member_count' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='188' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='member_cap' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='189' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='zone_subs' type-id='type-id-38' visibility='default' filepath='./src/coord/coord_internal.h' line='191' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='zone_sub_count' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='192' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='zone_sub_cap' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='193' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='pending' type-id='type-id-39' visibility='default' filepath='./src/coord/coord_internal.h' line='195' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='pending_count' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='196' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='pending_cap' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='197' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='drained' type-id='type-id-39' visibility='default' filepath='./src/coord/coord_internal.h' line='200' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='drained_count' type-id='type-id-22' visibility='default' filepath='./src/coord/coord_internal.h' line='201' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_bus_event' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/coord/coord.h' line='265' column='1' hash='d83eab84c4e7668e' id='type-id-40'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='event_type' type-id='type-id-11' visibility='default' filepath='./include/kith/coord/coord.h' line='268' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='zone' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='270' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='source_instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='272' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='payload_len' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='274' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='timestamp_ms' type-id='type-id-13' visibility='default' filepath='./include/kith/coord/coord.h' line='277' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload' type-id='type-id-24' visibility='default' filepath='./include/kith/coord/coord.h' line='280' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_bus_member_status' is-struct='yes' visibility='default' size-in-bits='192' filepath='./include/kith/coord/coord.h' line='289' column='1' hash='4152480e633e924a' id='type-id-41'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='292' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='heartbeat_ms' type-id='type-id-13' visibility='default' filepath='./include/kith/coord/coord.h' line='294' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='owned_cell_count' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='298' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='active_input_count' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='301' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_bus_params' is-struct='yes' visibility='default' size-in-bits='704' filepath='./include/kith/coord/coord.h' line='188' column='1' hash='21f20eff740b8727' id='type-id-42'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='190' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='191' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='194' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='transport' type-id='type-id-36' visibility='default' filepath='./include/kith/coord/coord.h' line='196' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='pad' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='198' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='reserved' type-id='type-id-29' visibility='default' filepath='./include/kith/coord/coord.h' line='200' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_cell_entry' is-struct='yes' visibility='default' size-in-bits='224' filepath='./include/kith/coord/coord.h' line='224' column='1' hash='7b28b635942cbe34' id='type-id-43'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-44' visibility='default' filepath='./include/kith/coord/coord.h' line='227' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='229' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='authority_epoch' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='231' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_params' is-struct='yes' visibility='default' size-in-bits='960' filepath='./include/kith/coord/coord.h' line='158' column='1' hash='6f4d01cad12bbf05' id='type-id-45'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='160' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='161' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='164' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_bucket_count' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='166' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='density_stride' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='168' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='split_threshold' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='170' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='merge_threshold' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='172' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='split_min_dwell_ms' type-id='type-id-13' visibility='default' filepath='./include/kith/coord/coord.h' line='174' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='merge_min_dwell_ms' type-id='type-id-13' visibility='default' filepath='./include/kith/coord/coord.h' line='176' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='pad' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='178' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='reserved' type-id='type-id-29' visibility='default' filepath='./include/kith/coord/coord.h' line='180' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_coord_rebalance_contract' is-struct='yes' visibility='default' size-in-bits='288' filepath='./include/kith/coord/coord.h' line='243' column='1' hash='73a89761e8687ad3' id='type-id-46'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='key' type-id='type-id-44' visibility='default' filepath='./include/kith/coord/coord.h' line='246' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='source_instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='248' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='target_instance_id' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='250' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='authority_epoch' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='252' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='pad' type-id='type-id-12' visibility='default' filepath='./include/kith/coord/coord.h' line='254' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_fabric_cell_key' is-struct='yes' visibility='default' size-in-bits='160' filepath='./include/kith/fabric/fabric.h' line='138' column='1' hash='67de511002882714' id='type-id-47'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='zone' type-id='type-id-12' visibility='default' filepath='./include/kith/fabric/fabric.h' line='141' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='cell_x' type-id='type-id-18' visibility='default' filepath='./include/kith/fabric/fabric.h' line='143' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cell_y' type-id='type-id-18' visibility='default' filepath='./include/kith/fabric/fabric.h' line='145' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='cell_z' type-id='type-id-18' visibility='default' filepath='./include/kith/fabric/fabric.h' line='147' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='lod' type-id='type-id-19' visibility='default' filepath='./include/kith/fabric/fabric.h' line='149' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='136'>
+        <var-decl name='pad' type-id='type-id-48' visibility='default' filepath='./include/kith/fabric/fabric.h' line='151' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__int32_t' type-id='type-id-9' size-in-bits='32' filepath='/usr/include/bits/types.h' line='41' column='1' hash='09d17c08f594edc7' id='type-id-49'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-50' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-51'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-52' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-53'/>
+    <typedef-decl name='__uint8_t' type-id='type-id-54' size-in-bits='8' filepath='/usr/include/bits/types.h' line='38' column='1' hash='6ebac62b3366db68' id='type-id-55'/>
+    <typedef-decl name='int32_t' type-id='type-id-49' size-in-bits='32' filepath='/usr/include/bits/stdint-intn.h' line='26' column='1' hash='09d17c08f594edc7' id='type-id-18'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-56' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-25'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-57' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-26'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-23' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-58'/>
+    <typedef-decl name='kith_coord_authority_t' type-id='type-id-34' size-in-bits='64' filepath='./include/kith/coord/coord.h' line='218' column='1' id='type-id-59'/>
+    <typedef-decl name='kith_coord_bus_event_t' type-id='type-id-40' size-in-bits='256' filepath='./include/kith/coord/coord.h' line='283' column='1' id='type-id-60'/>
+    <typedef-decl name='kith_coord_bus_event_type_t' type-id='type-id-6' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/coord/coord.h' line='129' column='1' hash='4f8c823f000a9cbe' id='type-id-11'/>
+    <typedef-decl name='kith_coord_bus_member_status_t' type-id='type-id-41' size-in-bits='192' filepath='./include/kith/coord/coord.h' line='304' column='1' id='type-id-61'/>
+    <typedef-decl name='kith_coord_bus_params_t' type-id='type-id-42' size-in-bits='704' filepath='./include/kith/coord/coord.h' line='203' column='1' id='type-id-62'/>
+    <typedef-decl name='kith_coord_bus_t' type-id='type-id-35' size-in-bits='832' filepath='./include/kith/coord/coord.h' line='149' column='1' id='type-id-63'/>
+    <typedef-decl name='kith_coord_bus_transport_t' type-id='type-id-8' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/coord/coord.h' line='113' column='1' hash='4002e1650f2a81d0' id='type-id-36'/>
+    <typedef-decl name='kith_coord_cell_entry_t' type-id='type-id-43' size-in-bits='224' filepath='./include/kith/coord/coord.h' line='234' column='1' id='type-id-64'/>
+    <typedef-decl name='kith_coord_params_t' type-id='type-id-45' size-in-bits='960' filepath='./include/kith/coord/coord.h' line='183' column='1' id='type-id-65'/>
+    <typedef-decl name='kith_coord_rebalance_contract_t' type-id='type-id-46' size-in-bits='288' filepath='./include/kith/coord/coord.h' line='257' column='1' id='type-id-66'/>
+    <typedef-decl name='kith_coord_t' type-id='type-id-30' size-in-bits='3712' filepath='./include/kith/coord/coord.h' line='140' column='1' id='type-id-67'/>
+    <typedef-decl name='kith_fabric_cell_key_t' type-id='type-id-47' size-in-bits='160' filepath='./include/kith/fabric/fabric.h' line='154' column='1' id='type-id-44'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-68' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-28'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-69' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-27'/>
+    <typedef-decl name='size_t' type-id='type-id-52' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-22'/>
+    <typedef-decl name='uint32_t' type-id='type-id-51' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-12'/>
+    <typedef-decl name='uint64_t' type-id='type-id-53' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-13'/>
+    <typedef-decl name='uint8_t' type-id='type-id-55' size-in-bits='8' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' hash='6ebac62b3366db68' id='type-id-19'/>
+    <array-type-def dimensions='1' type-id='type-id-19' size-in-bits='24' hash='5263bcb890c51214' id='type-id-48'>
+      <subrange length='3' lower-bound='0' upper-bound='2' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='30d99d19f0f4b2ea' id='type-id-70'/>
+    </array-type-def>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-7'/>
+    <type-decl name='unsigned char' size-in-bits='8' hash='6ebac62b3366db68' id='type-id-54'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-50'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-52'/>
+    <array-type-def dimensions='1' type-id='type-id-24' hash='8d913e14a8a96b62' id='type-id-29'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-71'/>
+    </array-type-def>
+    <qualified-type-def type-id='type-id-58' const='yes' hash='07c74f5fb4899ef5' id='type-id-72'/>
+    <pointer-type-def type-id='type-id-72' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-31'/>
+    <qualified-type-def type-id='type-id-62' const='yes' hash='368d85bd41952e49' id='type-id-73'/>
+    <pointer-type-def type-id='type-id-73' size-in-bits='64' hash='f22e86bac2b66164' id='type-id-74'/>
+    <qualified-type-def type-id='type-id-63' const='yes' hash='c4ebcce42bd0091d' id='type-id-75'/>
+    <pointer-type-def type-id='type-id-75' size-in-bits='64' hash='fe62b6d54a524c19' id='type-id-76'/>
+    <qualified-type-def type-id='type-id-65' const='yes' hash='5ff3f481fd8f3628' id='type-id-77'/>
+    <pointer-type-def type-id='type-id-77' size-in-bits='64' hash='3fa87f8d86436689' id='type-id-78'/>
+    <qualified-type-def type-id='type-id-66' const='yes' hash='effbbe4ed28599c5' id='type-id-79'/>
+    <pointer-type-def type-id='type-id-79' size-in-bits='64' hash='ae169b7804527703' id='type-id-80'/>
+    <qualified-type-def type-id='type-id-67' const='yes' hash='118d2e3d522df0c2' id='type-id-81'/>
+    <pointer-type-def type-id='type-id-81' size-in-bits='64' hash='af07e32042eb1c1d' id='type-id-82'/>
+    <qualified-type-def type-id='type-id-44' const='yes' hash='5c2097cc128b4722' id='type-id-83'/>
+    <pointer-type-def type-id='type-id-83' size-in-bits='64' hash='0c40218424be638c' id='type-id-84'/>
+    <pointer-type-def type-id='type-id-10' size-in-bits='64' hash='40cb359264a84dd0' id='type-id-39'/>
+    <pointer-type-def type-id='type-id-15' size-in-bits='64' hash='6f326c8f20e145d5' id='type-id-37'/>
+    <pointer-type-def type-id='type-id-16' size-in-bits='64' hash='9b9a3c75e5d6f216' id='type-id-38'/>
+    <pointer-type-def type-id='type-id-17' size-in-bits='64' hash='06c22ebc13c3e73c' id='type-id-21'/>
+    <pointer-type-def type-id='type-id-20' size-in-bits='64' hash='a37e8a8a376dfeb7' id='type-id-33'/>
+    <pointer-type-def type-id='type-id-59' size-in-bits='64' hash='4ae2ced5d9de3a22' id='type-id-85'/>
+    <pointer-type-def type-id='type-id-60' size-in-bits='64' hash='fdc776c3c193e15e' id='type-id-86'/>
+    <pointer-type-def type-id='type-id-61' size-in-bits='64' hash='8031c150c866820e' id='type-id-87'/>
+    <pointer-type-def type-id='type-id-63' size-in-bits='64' hash='37608c12ca52d7ad' id='type-id-32'/>
+    <pointer-type-def type-id='type-id-32' size-in-bits='64' hash='8f6871ce2b43eb5d' id='type-id-88'/>
+    <pointer-type-def type-id='type-id-64' size-in-bits='64' hash='7f7eb57892feee47' id='type-id-89'/>
+    <pointer-type-def type-id='type-id-67' size-in-bits='64' hash='028f22e25bc599f2' id='type-id-90'/>
+    <pointer-type-def type-id='type-id-90' size-in-bits='64' hash='b165f119d6f57684' id='type-id-91'/>
+    <pointer-type-def type-id='type-id-22' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-92'/>
+    <pointer-type-def type-id='type-id-19' size-in-bits='64' hash='24d8cca8965ce13e' id='type-id-14'/>
+    <pointer-type-def type-id='type-id-93' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-68'/>
+    <pointer-type-def type-id='type-id-94' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-95' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-57'/>
+    <pointer-type-def type-id='type-id-96' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-69'/>
+    <function-decl name='kith_coord_create' mangled-name='kith_coord_create' filepath='././src/coord/coord.c' line='409' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_create@@KITH_COORD_1' hash='e97fb86eb221fe41'>
+      <parameter type-id='type-id-78' name='params' filepath='././src/coord/coord.c' line='409' column='1'/>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='410' column='1'/>
+      <parameter type-id='type-id-31' name='alloc' filepath='././src/coord/coord.c' line='411' column='1'/>
+      <parameter type-id='type-id-91' name='out_coord' filepath='././src/coord/coord.c' line='412' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_destroy' mangled-name='kith_coord_destroy' filepath='././src/coord/coord.c' line='486' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_destroy@@KITH_COORD_1' hash='3d8d02249368a860'>
+      <parameter type-id='type-id-90' name='coord' filepath='././src/coord/coord.c' line='486' column='1'/>
+      <return type-id='type-id-97'/>
+    </function-decl>
+    <function-decl name='kith_coord_authority' mangled-name='kith_coord_authority' filepath='././src/coord/coord.c' line='504' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_authority@@KITH_COORD_1' hash='3a551e778ed75020'>
+      <parameter type-id='type-id-82' name='coord' filepath='././src/coord/coord.c' line='504' column='1'/>
+      <parameter type-id='type-id-84' name='key' filepath='././src/coord/coord.c' line='505' column='1'/>
+      <parameter type-id='type-id-85' name='out_authority' filepath='././src/coord/coord.c' line='506' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_set_authority' mangled-name='kith_coord_set_authority' filepath='././src/coord/coord.c' line='526' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_set_authority@@KITH_COORD_1' hash='924ef4cdc193b769'>
+      <parameter type-id='type-id-90' name='coord' filepath='././src/coord/coord.c' line='526' column='1'/>
+      <parameter type-id='type-id-84' name='key' filepath='././src/coord/coord.c' line='527' column='1'/>
+      <parameter type-id='type-id-12' name='instance_id' filepath='././src/coord/coord.c' line='528' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_clear_authority' mangled-name='kith_coord_clear_authority' filepath='././src/coord/coord.c' line='556' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_clear_authority@@KITH_COORD_1' hash='5936ba9f991784fc'>
+      <parameter type-id='type-id-90' name='coord' filepath='././src/coord/coord.c' line='556' column='1'/>
+      <parameter type-id='type-id-84' name='key' filepath='././src/coord/coord.c' line='557' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_cell_count' mangled-name='kith_coord_cell_count' filepath='././src/coord/coord.c' line='578' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_cell_count@@KITH_COORD_1' hash='d73dae4289d1d406'>
+      <parameter type-id='type-id-82' name='coord' filepath='././src/coord/coord.c' line='578' column='1'/>
+      <return type-id='type-id-12'/>
+    </function-decl>
+    <function-decl name='kith_coord_owned_cell_count' mangled-name='kith_coord_owned_cell_count' filepath='././src/coord/coord.c' line='592' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_owned_cell_count@@KITH_COORD_1' hash='12cf4f1a77ef71a5'>
+      <parameter type-id='type-id-82' name='coord' filepath='././src/coord/coord.c' line='592' column='1'/>
+      <parameter type-id='type-id-12' name='instance_id' filepath='././src/coord/coord.c' line='593' column='1'/>
+      <return type-id='type-id-12'/>
+    </function-decl>
+    <function-decl name='kith_coord_snapshot_zone' mangled-name='kith_coord_snapshot_zone' filepath='././src/coord/coord.c' line='615' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_snapshot_zone@@KITH_COORD_1' hash='75dca39992ad69a1'>
+      <parameter type-id='type-id-82' name='coord' filepath='././src/coord/coord.c' line='615' column='1'/>
+      <parameter type-id='type-id-12' name='zone' filepath='././src/coord/coord.c' line='616' column='1'/>
+      <parameter type-id='type-id-19' name='lod' filepath='././src/coord/coord.c' line='617' column='1'/>
+      <parameter type-id='type-id-89' name='out' filepath='././src/coord/coord.c' line='618' column='1'/>
+      <parameter type-id='type-id-22' name='max' filepath='././src/coord/coord.c' line='619' column='1'/>
+      <parameter type-id='type-id-92' name='out_count' filepath='././src/coord/coord.c' line='620' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_report_density' mangled-name='kith_coord_report_density' filepath='././src/coord/coord.c' line='663' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_report_density@@KITH_COORD_1' hash='f595c806888cd06c'>
+      <parameter type-id='type-id-90' name='coord' filepath='././src/coord/coord.c' line='663' column='1'/>
+      <parameter type-id='type-id-84' name='key' filepath='././src/coord/coord.c' line='664' column='1'/>
+      <parameter type-id='type-id-12' name='actor_count' filepath='././src/coord/coord.c' line='665' column='1'/>
+      <parameter type-id='type-id-13' name='now_ms' filepath='././src/coord/coord.c' line='666' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_tick' mangled-name='kith_coord_tick' filepath='././src/coord/coord.c' line='847' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_tick@@KITH_COORD_1' hash='a7c1c820da255a9d'>
+      <parameter type-id='type-id-90' name='coord' filepath='././src/coord/coord.c' line='847' column='1'/>
+      <parameter type-id='type-id-13' name='now_ms' filepath='././src/coord/coord.c' line='847' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_on_rebalance' mangled-name='kith_coord_on_rebalance' filepath='././src/coord/coord.c' line='897' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_on_rebalance@@KITH_COORD_1' hash='45916eeef7fbb5cc'>
+      <parameter type-id='type-id-90' name='coord' filepath='././src/coord/coord.c' line='897' column='1'/>
+      <parameter type-id='type-id-80' name='contract' filepath='././src/coord/coord.c' line='898' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_create' mangled-name='kith_coord_bus_create' filepath='././src/coord/coord.c' line='954' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_create@@KITH_COORD_1' hash='3721603204c4e795'>
+      <parameter type-id='type-id-74' name='params' filepath='././src/coord/coord.c' line='954' column='1'/>
+      <parameter type-id='type-id-31' name='alloc' filepath='././src/coord/coord.c' line='955' column='1'/>
+      <parameter type-id='type-id-88' name='out_bus' filepath='././src/coord/coord.c' line='956' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_destroy' mangled-name='kith_coord_bus_destroy' filepath='././src/coord/coord.c' line='1021' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_destroy@@KITH_COORD_1' hash='71d63b5cf6358cef'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1021' column='1'/>
+      <return type-id='type-id-97'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_instance_id' mangled-name='kith_coord_bus_instance_id' filepath='././src/coord/coord.c' line='1046' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_instance_id@@KITH_COORD_1' hash='34a2fbf795dc8e67'>
+      <parameter type-id='type-id-76' name='bus' filepath='././src/coord/coord.c' line='1046' column='1'/>
+      <return type-id='type-id-12'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_member_count' mangled-name='kith_coord_bus_member_count' filepath='././src/coord/coord.c' line='1055' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_member_count@@KITH_COORD_1' hash='34a2fbf795dc8e67'>
+      <parameter type-id='type-id-76' name='bus' filepath='././src/coord/coord.c' line='1046' column='1'/>
+      <return type-id='type-id-12'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_member_status' mangled-name='kith_coord_bus_member_status' filepath='././src/coord/coord.c' line='1064' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_member_status@@KITH_COORD_1' hash='efedbf8a4b6073c5'>
+      <parameter type-id='type-id-76' name='bus' filepath='././src/coord/coord.c' line='1064' column='1'/>
+      <parameter type-id='type-id-12' name='index' filepath='././src/coord/coord.c' line='1065' column='1'/>
+      <parameter type-id='type-id-87' name='out' filepath='././src/coord/coord.c' line='1066' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_add_member' mangled-name='kith_coord_bus_add_member' filepath='././src/coord/coord.c' line='1083' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_add_member@@KITH_COORD_1' hash='3c24e46c6ef10c51'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1083' column='1'/>
+      <parameter type-id='type-id-12' name='instance_id' filepath='././src/coord/coord.c' line='1083' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_tick' mangled-name='kith_coord_bus_tick' filepath='././src/coord/coord.c' line='1096' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_tick@@KITH_COORD_1' hash='ec0e3f4748eea8d4'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1096' column='1'/>
+      <parameter type-id='type-id-13' name='now_ms' filepath='././src/coord/coord.c' line='1096' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_subscribe' mangled-name='kith_coord_bus_subscribe' filepath='././src/coord/coord.c' line='1113' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_subscribe@@KITH_COORD_1' hash='3c24e46c6ef10c51'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1083' column='1'/>
+      <parameter type-id='type-id-12' name='instance_id' filepath='././src/coord/coord.c' line='1083' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_unsubscribe' mangled-name='kith_coord_bus_unsubscribe' filepath='././src/coord/coord.c' line='1139' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_unsubscribe@@KITH_COORD_1' hash='3c24e46c6ef10c51'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1083' column='1'/>
+      <parameter type-id='type-id-12' name='instance_id' filepath='././src/coord/coord.c' line='1083' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_publish' mangled-name='kith_coord_bus_publish' filepath='././src/coord/coord.c' line='1164' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_publish@@KITH_COORD_1' hash='cc697a16dfd79416'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1164' column='1'/>
+      <parameter type-id='type-id-11' name='event_type' filepath='././src/coord/coord.c' line='1165' column='1'/>
+      <parameter type-id='type-id-12' name='zone' filepath='././src/coord/coord.c' line='1166' column='1'/>
+      <parameter type-id='type-id-24' name='payload' filepath='././src/coord/coord.c' line='1167' column='1'/>
+      <parameter type-id='type-id-12' name='payload_len' filepath='././src/coord/coord.c' line='1168' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <function-decl name='kith_coord_bus_drain' mangled-name='kith_coord_bus_drain' filepath='././src/coord/coord.c' line='1206' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_coord_bus_drain@@KITH_COORD_1' hash='c6d46a0b0d5eef2c'>
+      <parameter type-id='type-id-32' name='bus' filepath='././src/coord/coord.c' line='1206' column='1'/>
+      <parameter type-id='type-id-86' name='out' filepath='././src/coord/coord.c' line='1207' column='1'/>
+      <parameter type-id='type-id-22' name='max' filepath='././src/coord/coord.c' line='1208' column='1'/>
+      <parameter type-id='type-id-92' name='out_count' filepath='././src/coord/coord.c' line='1209' column='1'/>
+      <return type-id='type-id-9'/>
+    </function-decl>
+    <type-decl name='void' id='type-id-97'/>
+    <pointer-type-def type-id='type-id-97' id='type-id-24'/>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-93'>
+      <parameter type-id='type-id-24'/>
+      <parameter type-id='type-id-24'/>
+      <return type-id='type-id-97'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-94'>
+      <parameter type-id='type-id-24'/>
+      <parameter type-id='type-id-22'/>
+      <return type-id='type-id-24'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-95'>
+      <parameter type-id='type-id-24'/>
+      <parameter type-id='type-id-22'/>
+      <parameter type-id='type-id-22'/>
+      <return type-id='type-id-24'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-96'>
+      <parameter type-id='type-id-24'/>
+      <parameter type-id='type-id-24'/>
+      <parameter type-id='type-id-22'/>
+      <return type-id='type-id-24'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>

@@ -314,3 +314,21 @@ target_link_libraries(test_gateway_totals PRIVATE kith_gateway kith_fabric kith_
 target_compile_definitions(test_gateway_totals PRIVATE _GNU_SOURCE)
 target_include_directories(test_gateway_totals PRIVATE ${PROJECT_SOURCE_DIR}/src)
 add_test(NAME test_gateway_totals COMMAND test_gateway_totals)
+
+
+
+add_executable(test_coord_create test_coord_create.c)
+target_link_libraries(test_coord_create PRIVATE kith_coord)
+add_test(NAME test_coord_create COMMAND test_coord_create)
+
+add_executable(test_coord_authority test_coord_authority.c)
+target_link_libraries(test_coord_authority PRIVATE kith_coord)
+add_test(NAME test_coord_authority COMMAND test_coord_authority)
+
+add_executable(test_coord_split test_coord_split.c)
+target_link_libraries(test_coord_split PRIVATE kith_coord)
+add_test(NAME test_coord_split COMMAND test_coord_split)
+
+add_executable(test_coord_bus test_coord_bus.c)
+target_link_libraries(test_coord_bus PRIVATE kith_coord)
+add_test(NAME test_coord_bus COMMAND test_coord_bus)
