@@ -19,6 +19,8 @@ from _build_gate import _BUILD_DEBUG, needs_build
 from kith import (
     Aoi,
     Config,
+    Coord,
+    CoordBus,
     Fabric,
     KithConfigError,
     KithError,
@@ -30,6 +32,7 @@ from kith import (
 from kith._bridge import reset
 from kith._generated import types as gen_types
 from kith.aoi import Box, Object, Sphere
+from kith.coord import RebalanceContract
 from kith.fabric import CellKey, FabricArtifact, ProductLevel
 from kith.proto import MsgFlag, Proto
 from kith.sim import ArtifactKey
@@ -305,3 +308,190 @@ class TestSimFabric:
             with pytest.raises(KithError) as exc_info:
                 fabric.publish(key, authority_epoch=1)  # stale epoch
             assert exc_info.value.code == gen_types.kith_error.KITH_EPERM
+
+
+# ---------------------------------------------------------------------------
+# coord + CoordBus
+# ---------------------------------------------------------------------------
+
+
+@needs_build
+class TestCoord:
+    def test_bus_publish_drain(self) -> None:
+        with CoordBus(instance_id=1) as bus:
+            assert bus.instance_id() == 1
+            bus.publish(event_type=0, zone=7, payload=b"hello")
+            events = bus.drain()
+            assert len(events) == 1
+            assert events[0].zone == 7
+            assert events[0].event_type == 0
+            assert events[0].payload == b"hello"
+            assert bus.drain() == []
+
+    def test_coord_authority_for_single_instance(self) -> None:
+        with CoordBus(instance_id=3) as bus, Coord(bus, instance_id=3) as coord:
+            auth = coord.authority(CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0))
+            assert auth.instance_id == 3
+            coord.set_authority(CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0), instance_id=9)
+            auth = coord.authority(CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0))
+            assert auth.instance_id == 9
+            assert auth.authority_epoch >= 1
+            coord.clear_authority(CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0))
+            auth = coord.authority(CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0))
+            assert auth.instance_id == 3
+
+    def test_coord_without_bus_uses_local_instance(self) -> None:
+        with Coord(instance_id=5) as coord:
+            auth = coord.authority(CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0))
+            assert auth.instance_id == 5
+            assert coord.cell_count() >= 0
+
+    def test_on_rebalance_applies_split_and_merge(self) -> None:
+        # Two coords borrowing one shared bus: a split contract published on
+        # the bus is drained and applied to the receiving coord, transferring
+        # cell authority to the target instance; a merge contract (target 0)
+        # clears the override. The contract round-trips through its byte
+        # layout, matching the wire form a real bus event carries.
+        key = CellKey(zone=1, cell_x=2, cell_y=3, cell_z=0, lod=0)
+        with CoordBus(instance_id=1) as bus, Coord(bus, instance_id=2) as dst:
+            bus.subscribe(1)  # zone 1
+
+            split = RebalanceContract(
+                key=key,
+                source_instance_id=1,
+                target_instance_id=2,
+                authority_epoch=7,
+            )
+            bus.publish(
+                event_type=0,  # KITH_COORD_BUS_EVENT_REBALANCE
+                zone=1,
+                payload=split.to_bytes(),
+            )
+            events = bus.drain()
+            assert len(events) == 1
+            applied = RebalanceContract.from_bytes(events[0].payload)
+            assert applied == split
+            dst.on_rebalance(applied)
+
+            auth = dst.authority(key)
+            assert auth.instance_id == 2
+            assert auth.authority_epoch == 7
+
+            merge = RebalanceContract(
+                key=key,
+                source_instance_id=2,
+                target_instance_id=0,
+                authority_epoch=8,
+            )
+            bus.publish(event_type=0, zone=1, payload=merge.to_bytes())
+            events = bus.drain()
+            assert len(events) == 1
+            dst.on_rebalance(RebalanceContract.from_bytes(events[0].payload))
+
+            auth = dst.authority(key)
+            # Merge clears the override; the hash-fallback for a single-member
+            # bus is the local instance (coord 2) with epoch 0.
+            assert auth.instance_id == 2
+            assert auth.authority_epoch == 0
+            assert dst.cell_count() == 0
+
+    def test_bus_add_member_validation(self) -> None:
+        # The bus is created with one member (the local instance); add_member
+        # extends the table. instance_id 0 is rejected (reserved for the
+        # embedded/unowned sentinel) and a duplicate is rejected with
+        # KithStateError, without growing the table.
+        with CoordBus(instance_id=1) as bus:
+            assert bus.member_count() == 1
+
+            with pytest.raises(KithError):
+                bus.add_member(0)
+
+            bus.add_member(2)
+            bus.add_member(7)
+            assert bus.member_count() == 3
+            assert bus.member_status(0).instance_id == 1
+            assert bus.member_status(1).instance_id == 2
+            assert bus.member_status(2).instance_id == 7
+
+            with pytest.raises(KithStateError):
+                bus.add_member(2)
+            assert bus.member_count() == 3
+
+    def test_density_driven_split_across_coords(self) -> None:
+        # Two coords borrowing one loopback bus form a real multi-member
+        # cluster once add_member extends the membership table. The
+        # density-driven evaluator fires on the overloaded coord, picks the
+        # least-loaded peer as the split target, and broadcasts a rebalance
+        # contract; the peer drains and applies it, so both coords converge
+        # on the new authority.
+        key = CellKey(zone=1, cell_x=0, cell_y=0, cell_z=0, lod=0)
+        with CoordBus(instance_id=2) as bus:
+            bus.add_member(1)
+            assert bus.member_count() == 2
+
+            with (
+                Coord(
+                    bus,
+                    instance_id=1,
+                    split_threshold=10,
+                    merge_threshold=5,
+                    split_min_dwell_ms=100,
+                    merge_min_dwell_ms=100,
+                    density_stride=1,
+                ) as a,
+                Coord(
+                    bus,
+                    instance_id=2,
+                    split_threshold=10,
+                    merge_threshold=5,
+                    split_min_dwell_ms=100,
+                    merge_min_dwell_ms=100,
+                    density_stride=1,
+                ) as b,
+            ):
+                # Hash-fallback for this cell with members [2, 1]:
+                # (0+0+1) % 2 = 1 -> members[1] = instance 1 (coord a).
+                assert a.authority(key).instance_id == 1
+
+                # Report density above the split threshold; advance past the
+                # dwell. The report timestamp must be non-zero: report_density
+                # arms split_since_ms only when it is zero, and tick treats a
+                # zero split_since_ms as "not armed."
+                a.report_density(key, actor_count=100, now_ms=1000)
+                a.tick(now_ms=2000)
+
+                # Coord a holds the split: the override points at instance 2.
+                auth = a.authority(key)
+                assert auth.instance_id == 2
+                assert auth.authority_epoch == 1
+
+                # Coord b drains the broadcast rebalance and applies it.
+                events = bus.drain()
+                assert len(events) == 1
+                assert events[0].event_type == 0  # KITH_COORD_BUS_EVENT_REBALANCE
+                contract = RebalanceContract.from_bytes(events[0].payload)
+                assert contract.target_instance_id == 2
+                assert contract.authority_epoch == 1
+                b.on_rebalance(contract)
+
+                assert b.authority(key).instance_id == 2
+                assert b.authority(key).authority_epoch == 1
+
+                # Density drops below the merge threshold; advance past the
+                # merge dwell. Coord a clears its override and broadcasts a
+                # target-0 contract; coord b applies it and reverts to
+                # hash-fallback.
+                a.report_density(key, actor_count=0, now_ms=3000)
+                a.tick(now_ms=4000)
+
+                assert a.authority(key).instance_id == 1
+                assert a.authority(key).authority_epoch == 0
+
+                events = bus.drain()
+                assert len(events) == 1
+                merge = RebalanceContract.from_bytes(events[0].payload)
+                assert merge.target_instance_id == 0
+                b.on_rebalance(merge)
+
+                assert b.authority(key).instance_id == 1
+                assert b.authority(key).authority_epoch == 0
