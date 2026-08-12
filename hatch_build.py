@@ -78,6 +78,7 @@ _REQUIRED_LIBS: tuple[str, ...] = (
     "sim",
     "fabric",
     "gateway",
+    "coord",
 )
 
 # Where the bundled libraries land inside the wheel archive (and thus under

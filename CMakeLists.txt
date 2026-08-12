@@ -46,6 +46,7 @@ include(cmake/lib_sim.cmake)
 include(cmake/lib_fabric.cmake)
 include(cmake/lib_aoi.cmake)
 include(cmake/lib_gateway.cmake)
+include(cmake/lib_coord.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the

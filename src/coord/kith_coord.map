@@ -1,0 +1,27 @@
+KITH_COORD_1 {
+    global:
+        kith_coord_create;
+        kith_coord_destroy;
+        kith_coord_authority;
+        kith_coord_set_authority;
+        kith_coord_clear_authority;
+        kith_coord_cell_count;
+        kith_coord_owned_cell_count;
+        kith_coord_snapshot_zone;
+        kith_coord_report_density;
+        kith_coord_tick;
+        kith_coord_on_rebalance;
+        kith_coord_bus_create;
+        kith_coord_bus_destroy;
+        kith_coord_bus_instance_id;
+        kith_coord_bus_member_count;
+        kith_coord_bus_member_status;
+        kith_coord_bus_add_member;
+        kith_coord_bus_tick;
+        kith_coord_bus_subscribe;
+        kith_coord_bus_unsubscribe;
+        kith_coord_bus_publish;
+        kith_coord_bus_drain;
+    local:
+        *;
+};
