@@ -149,6 +149,76 @@ target_link_libraries(test_db_session PRIVATE kith_db kith_reactor Threads::Thre
 target_compile_definitions(test_db_session PRIVATE _GNU_SOURCE)
 add_test(NAME test_db_session COMMAND test_db_session)
 
+# The control plane's sources compile directly into this test so the
+# listener's internal bind path is reachable: the shared library keeps
+# control_listener_create hidden, and keeping it unexported holds the public ABI stable.
+add_executable(test_control_create test_control_create.c
+    ${PROJECT_SOURCE_DIR}/src/control/control.c
+    ${PROJECT_SOURCE_DIR}/src/control/conn.c
+    ${PROJECT_SOURCE_DIR}/src/control/event_bus.c
+    ${PROJECT_SOURCE_DIR}/src/control/handlers.c
+    ${PROJECT_SOURCE_DIR}/src/control/http_parser.c
+    ${PROJECT_SOURCE_DIR}/src/control/router.c)
+target_link_libraries(test_control_create PRIVATE kith_util kith_reactor kith_worker kith_metrics)
+target_compile_definitions(test_control_create PRIVATE _GNU_SOURCE)
+target_include_directories(test_control_create PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_control_create COMMAND test_control_create)
+
+# The response builder test reuses the compile-the-plane shape: the builder
+# lives in control.c and the test exercises the exported API against it
+# directly.
+add_executable(test_control_response test_control_response.c
+    ${PROJECT_SOURCE_DIR}/src/control/control.c
+    ${PROJECT_SOURCE_DIR}/src/control/conn.c
+    ${PROJECT_SOURCE_DIR}/src/control/event_bus.c
+    ${PROJECT_SOURCE_DIR}/src/control/handlers.c
+    ${PROJECT_SOURCE_DIR}/src/control/http_parser.c
+    ${PROJECT_SOURCE_DIR}/src/control/router.c)
+target_link_libraries(test_control_response PRIVATE kith_util kith_reactor kith_worker kith_metrics)
+target_compile_definitions(test_control_response PRIVATE _GNU_SOURCE)
+target_include_directories(test_control_response PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_control_response COMMAND test_control_response)
+
+add_executable(test_control_http test_control_http.c
+    ${PROJECT_SOURCE_DIR}/src/control/http_parser.c)
+target_link_libraries(test_control_http PRIVATE kith_control kith_util)
+target_compile_definitions(test_control_http PRIVATE _GNU_SOURCE)
+target_include_directories(test_control_http PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_control_http COMMAND test_control_http)
+
+add_executable(test_control_bus test_control_bus.c
+    ${PROJECT_SOURCE_DIR}/src/control/event_bus.c)
+target_link_libraries(test_control_bus PRIVATE kith_control kith_util)
+target_compile_definitions(test_control_bus PRIVATE _GNU_SOURCE)
+target_include_directories(test_control_bus PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_control_bus COMMAND test_control_bus)
+
+add_executable(test_control_server test_control_server.c)
+target_link_libraries(test_control_server PRIVATE kith_control kith_reactor kith_metrics kith_worker Threads::Threads kith_util)
+target_compile_definitions(test_control_server PRIVATE _GNU_SOURCE)
+add_test(NAME test_control_server COMMAND test_control_server)
+
+# conn.c compiles once as a redirected object so its drain call reaches
+# the test's injection shim; the redirect macro lives only in that
+# one-object build, leaving the shared library build of conn.c untouched.
+add_library(test_control_conn_shim OBJECT ${PROJECT_SOURCE_DIR}/src/control/conn.c)
+target_compile_definitions(test_control_conn_shim PRIVATE _GNU_SOURCE write=kith_test_write)
+target_include_directories(test_control_conn_shim PRIVATE
+    ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
+set_target_properties(test_control_conn_shim PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_executable(test_control_conn test_control_conn.c
+    $<TARGET_OBJECTS:test_control_conn_shim>
+    ${PROJECT_SOURCE_DIR}/src/control/control.c
+    ${PROJECT_SOURCE_DIR}/src/control/router.c
+    ${PROJECT_SOURCE_DIR}/src/control/event_bus.c
+    ${PROJECT_SOURCE_DIR}/src/control/handlers.c
+    ${PROJECT_SOURCE_DIR}/src/control/http_parser.c)
+target_link_libraries(test_control_conn PRIVATE kith_util kith_reactor kith_worker kith_metrics Threads::Threads)
+target_compile_definitions(test_control_conn PRIVATE _GNU_SOURCE)
+target_include_directories(test_control_conn PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_control_conn COMMAND test_control_conn)
+
 add_executable(test_sim_registry test_sim_registry.c)
 target_link_libraries(test_sim_registry PRIVATE kith_sim)
 target_include_directories(test_sim_registry PRIVATE ${PROJECT_SOURCE_DIR}/src)
