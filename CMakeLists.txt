@@ -47,6 +47,14 @@ include(cmake/lib_fabric.cmake)
 include(cmake/lib_aoi.cmake)
 include(cmake/lib_gateway.cmake)
 include(cmake/lib_coord.cmake)
+# The control plane is an optional layer-2 library. When
+# CONTROL_PLANE_ENABLED is OFF the library is not built and contributes
+# zero code to the build (no source-level #ifdef guards; the library is
+# simply absent from the build).
+option(CONTROL_PLANE_ENABLED "Build the control plane library (HTTP/WS introspection)" ON)
+if(CONTROL_PLANE_ENABLED)
+    include(cmake/lib_control.cmake)
+endif()
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the

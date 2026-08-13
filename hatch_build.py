@@ -61,8 +61,9 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
 # The SONAME-form shared libraries the bridge expects to discover under
-# kith/_libs/. The bundle ships every library the framework builds, so the
-# tuple grows as each module's shared library lands.
+# kith/_libs/. The control plane is optional: when its library is absent from
+# the install tree (a build with CONTROL_PLANE_ENABLED=OFF) the hook skips it
+# rather than failing, mirroring the bridge's own optional-lib handling.
 _REQUIRED_LIBS: tuple[str, ...] = (
     "util",
     "config",
@@ -80,6 +81,8 @@ _REQUIRED_LIBS: tuple[str, ...] = (
     "gateway",
     "coord",
 )
+
+_OPTIONAL_LIBS: tuple[str, ...] = ("control",)
 
 # Where the bundled libraries land inside the wheel archive (and thus under
 # the installed package). The ctypes bridge searches this name among its
@@ -115,6 +118,15 @@ def _run(cmd: list[str], cwd: Path) -> None:
         raise RuntimeError(
             f"wheel build hook: command failed (exit {exc.returncode}): {' '.join(cmd)} (cwd={cwd})"
         ) from exc
+
+
+def _capture(cmd: list[str], cwd: Path) -> str:
+    """Invoke a command and return its stdout, or "" when it cannot run."""
+    try:
+        proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.SubprocessError) as _exc:
+        return ""
+    return proc.stdout if proc.returncode == 0 else ""
 
 
 def _resolve_wheel_dir(env_var: str, default: Path, root: Path) -> Path:
@@ -269,8 +281,13 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
 
         # Every library the bundle installs has an install(TARGETS) rule, so
         # the build must produce all of them: the bridge loads each library
-        # directly.
+        # directly and several sit outside kith_server's link closure, which
+        # left cmake --install referencing artifacts that were never built.
+        # The optional control plane is built only when configured.
         targets = [f"kith_{module}" for module in _REQUIRED_LIBS]
+        available = _capture(["cmake", "--build", str(build_dir), "--target", "help"], cwd=root)
+        if "kith_control" in available:
+            targets.append("kith_control")
         _run(["cmake", "--build", str(build_dir), "--target", *targets], cwd=root)
 
         self.app.display_info(f"kith wheel build hook: bundling C libraries from {build_dir}")
@@ -280,10 +297,12 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
         # exposes its SONAME-form name as a symlink here.
         force_include: dict[str, str] = build_data.setdefault("force_include", {})  # type: ignore[assignment]
         bundled: list[str] = []
-        for module in _REQUIRED_LIBS:
+        for module in (*_REQUIRED_LIBS, *_OPTIONAL_LIBS):
             soname = _soname_filename(module)
             src = build_dir / soname
             if not src.is_file():
+                if module in _OPTIONAL_LIBS:
+                    continue
                 raise RuntimeError(f"wheel build hook: required library not built at {src}")
             archive_path = f"{_BUNDLE_DIR}/{soname}"
             force_include[str(src)] = archive_path

@@ -1,0 +1,18 @@
+KITH_CONTROL_1 {
+    global:
+        kith_control_create;
+        kith_control_destroy;
+        kith_control_start;
+        kith_control_stop;
+        kith_control_listen_port;
+        kith_control_subscriber_count;
+        kith_control_attach_worker_pool;
+        kith_control_register_route;
+        kith_control_publish_event;
+        kith_control_response_status;
+        kith_control_response_header;
+        kith_control_response_body;
+        kith_control_reject_overflow;
+    local:
+        *;
+};
