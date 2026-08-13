@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import ctypes
 from typing import Protocol
 
 from . import (
     aoi,
     config,
+    control,
     coord,
     db,
     fabric,
@@ -43,5 +45,7 @@ def configure(bridge: _LibProvider) -> None:
     worker.configure(bridge.lib("worker"))
     state.configure(bridge.lib("state"))
     db.configure(bridge.lib("db"))
+    with contextlib.suppress(OSError):
+        control.configure(bridge.lib("control"))
     coord.configure(bridge.lib("coord"))
     gateway.configure(bridge.lib("gateway"))
