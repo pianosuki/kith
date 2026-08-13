@@ -7,12 +7,13 @@ every C error code crosses the boundary as one of these. The typed
 configuration source wrapper, the protocol wrapper, the reactor
 wrapper, the worker pool wrapper, the persistence wrapper, the
 area-of-interest wrapper, the simulation wrapper, the fabric
-wrapper, the gateway wrapper, and the coord wrapper are re-exported
-alongside them.
+wrapper, the gateway wrapper, the coord wrapper, and the control
+wrapper are re-exported alongside them.
 """
 
 from kith.aoi import Aoi
 from kith.config import Config
+from kith.control import Control, Method, Request, Response
 from kith.coord import Coord, CoordBus
 from kith.db import Database, Reply, Transaction
 from kith.exceptions import (
@@ -58,6 +59,7 @@ __all__ = [
     "BridgeLoadError",
     "CellKey",
     "Config",
+    "Control",
     "Coord",
     "CoordBus",
     "Database",
@@ -71,10 +73,13 @@ __all__ = [
     "KithProtocolError",
     "KithResponseOverflowError",
     "KithStateError",
+    "Method",
     "PinnedSession",
     "Proto",
     "Reactor",
     "Reply",
+    "Request",
+    "Response",
     "Session",
     "SessionInfo",
     "SessionType",
