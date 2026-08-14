@@ -8,6 +8,7 @@ from typing import Protocol
 
 from . import (
     aoi,
+    client,
     config,
     control,
     coord,
@@ -49,3 +50,4 @@ def configure(bridge: _LibProvider) -> None:
         control.configure(bridge.lib("control"))
     coord.configure(bridge.lib("coord"))
     gateway.configure(bridge.lib("gateway"))
+    client.configure(bridge.lib("client"))
