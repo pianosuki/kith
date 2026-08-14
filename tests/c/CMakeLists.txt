@@ -219,6 +219,43 @@ target_compile_definitions(test_control_conn PRIVATE _GNU_SOURCE)
 target_include_directories(test_control_conn PRIVATE ${PROJECT_SOURCE_DIR}/src)
 add_test(NAME test_control_conn COMMAND test_control_conn)
 
+add_executable(test_client_create test_client_create.c)
+target_link_libraries(test_client_create PRIVATE kith_client kith_proto)
+target_compile_definitions(test_client_create PRIVATE _GNU_SOURCE)
+add_test(NAME test_client_create COMMAND test_client_create)
+
+add_executable(test_client_bootstrap test_client_bootstrap.c
+    ${PROJECT_SOURCE_DIR}/src/client/bootstrap.c
+    ${PROJECT_SOURCE_DIR}/src/client/client.c
+    ${PROJECT_SOURCE_DIR}/src/client/queue.c)
+target_link_libraries(test_client_bootstrap PRIVATE kith_proto)
+target_compile_definitions(test_client_bootstrap PRIVATE _GNU_SOURCE)
+target_include_directories(test_client_bootstrap PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_client_bootstrap COMMAND test_client_bootstrap)
+
+# The tick test drives the keepalive schedule through the internal struct,
+# so the client sources compile directly into the binary.
+add_executable(test_client_tick test_client_tick.c
+    ${PROJECT_SOURCE_DIR}/src/client/bootstrap.c
+    ${PROJECT_SOURCE_DIR}/src/client/client.c
+    ${PROJECT_SOURCE_DIR}/src/client/queue.c)
+target_link_libraries(test_client_tick PRIVATE kith_proto)
+target_compile_definitions(test_client_tick PRIVATE _GNU_SOURCE)
+target_include_directories(test_client_tick PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_client_tick COMMAND test_client_tick)
+
+add_executable(test_client_events test_client_events.c)
+target_link_libraries(test_client_events PRIVATE kith_client kith_proto)
+target_compile_definitions(test_client_events PRIVATE _GNU_SOURCE)
+add_test(NAME test_client_events COMMAND test_client_events)
+
+add_executable(test_client_queue test_client_queue.c
+    ${PROJECT_SOURCE_DIR}/src/client/queue.c)
+target_link_libraries(test_client_queue PRIVATE kith_client kith_proto)
+target_compile_definitions(test_client_queue PRIVATE _GNU_SOURCE)
+target_include_directories(test_client_queue PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_client_queue COMMAND test_client_queue)
+
 add_executable(test_sim_registry test_sim_registry.c)
 target_link_libraries(test_sim_registry PRIVATE kith_sim)
 target_include_directories(test_sim_registry PRIVATE ${PROJECT_SOURCE_DIR}/src)

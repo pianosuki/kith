@@ -1,0 +1,623 @@
+<abi-corpus version='2.4' architecture='elf-amd-x86_64' soname='libkith_client.so.1'>
+  <elf-needed>
+    <dependency name='libkith_proto.so.1'/>
+    <dependency name='libkith_logger.so.1'/>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <elf-symbol name='kith_client_bootstrap_status' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_configure_bootstrap' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_create' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_destroy' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_drain_events' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_feed_frame' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_on_connect_failed' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_on_connected' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_on_disconnected' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_pop_outbound' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_publish_event' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_runtime_status' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_set_frame_handler' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_submit_interactive' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <elf-symbol name='kith_client_tick' version='KITH_CLIENT_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <undefined-elf-function-symbols>
+    <elf-symbol name='__cxa_finalize' type='func-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__stack_chk_fail' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='calloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='free' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='kith_proto_encode' version='KITH_PROTO_1' is-default-version='yes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='malloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memcpy' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='memset' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='realloc' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-function-symbols>
+  <undefined-elf-variable-symbols>
+    <elf-symbol name='_ITM_deregisterTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='_ITM_registerTMCloneTable' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+    <elf-symbol name='__gmon_start__' type='no-type' binding='weak-binding' visibility='default-visibility' is-defined='no'/>
+  </undefined-elf-variable-symbols>
+  <abi-instr address-size='64' path='./src/client/client.c' comp-dir-path='.' language='LANG_C11'>
+    <type-decl name='__ARRAY_SIZE_TYPE__' size-in-bits='64' hash='4ee7381753f6ca11' id='type-id-1'/>
+    <type-decl name='bool' size-in-bits='8' hash='5ba96bb22f4237fb' id='type-id-2'/>
+    <enum-decl name='kith_client_bootstrap_state' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/client/client.h' line='91' column='1' hash='d1557aaa92f0d6e8' id='type-id-3'>
+      <underlying-type type-id='type-id-4'/>
+      <enumerator name='KITH_CLIENT_BOOTSTRAP_IDLE' value='0'/>
+      <enumerator name='KITH_CLIENT_BOOTSTRAP_RUNNING' value='1'/>
+      <enumerator name='KITH_CLIENT_BOOTSTRAP_READY' value='2'/>
+      <enumerator name='KITH_CLIENT_BOOTSTRAP_FAILED' value='3'/>
+    </enum-decl>
+    <type-decl name='int' size-in-bits='32' hash='09d17c08f594edc7' id='type-id-5'/>
+    <class-decl name='client_outq' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/client/client_internal.h' line='26' column='1' hash='2503453ff052569b' id='type-id-6'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='slots' type-id='type-id-7' visibility='default' filepath='./src/client/client_internal.h' line='28' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='cap' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='29' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='head' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='30' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='tail' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='31' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='count' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='32' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_allocator' is-struct='yes' visibility='default' size-in-bits='896' filepath='./include/kith/types.h' line='99' column='1' hash='9ba503ed4df460cc' id='type-id-9'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/types.h' line='102' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/types.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='user_data' type-id='type-id-10' visibility='default' filepath='./include/kith/types.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='alloc' type-id='type-id-11' visibility='default' filepath='./include/kith/types.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='alloc_zero' type-id='type-id-12' visibility='default' filepath='./include/kith/types.h' line='114' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='realloc' type-id='type-id-13' visibility='default' filepath='./include/kith/types.h' line='117' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='free' type-id='type-id-14' visibility='default' filepath='./include/kith/types.h' line='120' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='reserved' type-id='type-id-15' visibility='default' filepath='./include/kith/types.h' line='122' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client' is-struct='yes' visibility='default' size-in-bits='1792' filepath='./src/client/client_internal.h' line='61' column='1' hash='cb777dd1c98ab039' id='type-id-16'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='allocator' type-id='type-id-17' visibility='default' filepath='./src/client/client_internal.h' line='63' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='proto' type-id='type-id-18' visibility='default' filepath='./src/client/client_internal.h' line='65' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='logger' type-id='type-id-19' visibility='default' filepath='./src/client/client_internal.h' line='66' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='event_cap' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='69' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='ping_type_id' type-id='type-id-20' visibility='default' filepath='./src/client/client_internal.h' line='70' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='240'>
+        <var-decl name='pong_type_id' type-id='type-id-20' visibility='default' filepath='./src/client/client_internal.h' line='71' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='ping_interval_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='72' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='288'>
+        <var-decl name='reconnect_base_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='73' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='reconnect_max_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='74' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='352'>
+        <var-decl name='reconnect_max_attempts' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='75' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='outq' type-id='type-id-6' visibility='default' filepath='./src/client/client_internal.h' line='78' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='events' type-id='type-id-21' visibility='default' filepath='./src/client/client_internal.h' line='81' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='640'>
+        <var-decl name='event_head' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='82' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='672'>
+        <var-decl name='event_tail' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='83' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='704'>
+        <var-decl name='event_count' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='84' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='768'>
+        <var-decl name='bootstrap' type-id='type-id-22' visibility='default' filepath='./src/client/client_internal.h' line='87' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='960'>
+        <var-decl name='on_frame' type-id='type-id-23' visibility='default' filepath='./src/client/client_internal.h' line='90' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1024'>
+        <var-decl name='frame_ctx' type-id='type-id-10' visibility='default' filepath='./src/client/client_internal.h' line='91' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1088'>
+        <var-decl name='connected' type-id='type-id-2' visibility='default' filepath='./src/client/client_internal.h' line='94' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1096'>
+        <var-decl name='awaiting_pong' type-id='type-id-2' visibility='default' filepath='./src/client/client_internal.h' line='95' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1104'>
+        <var-decl name='reconnect_due' type-id='type-id-2' visibility='default' filepath='./src/client/client_internal.h' line='96' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1120'>
+        <var-decl name='reconnect_attempts' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='97' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1152'>
+        <var-decl name='last_reconnect_delay_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='98' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1216'>
+        <var-decl name='next_ping_due_ms' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='99' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1280'>
+        <var-decl name='last_ping_sent_ms' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='100' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1344'>
+        <var-decl name='next_reconnect_due_ms' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='101' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1408'>
+        <var-decl name='rtt_last_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='104' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1440'>
+        <var-decl name='rtt_min_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='105' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1472'>
+        <var-decl name='rtt_max_ms' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='106' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1536'>
+        <var-decl name='rtt_sum_ms' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='107' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1600'>
+        <var-decl name='rtt_samples' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='108' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1664'>
+        <var-decl name='next_cmd_id' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='111' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='1728'>
+        <var-decl name='commands_submitted' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='112' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_bootstrap' is-struct='yes' visibility='default' size-in-bits='192' filepath='./src/client/client_internal.h' line='49' column='1' hash='a65c75e5c5d19f4d' id='type-id-22'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='steps' type-id='type-id-25' visibility='default' filepath='./src/client/client_internal.h' line='51' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='step_count' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='52' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='current_step' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='53' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='state' type-id='type-id-26' visibility='default' filepath='./src/client/client_internal.h' line='54' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='configured' type-id='type-id-2' visibility='default' filepath='./src/client/client_internal.h' line='55' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_bootstrap_status' is-struct='yes' visibility='default' size-in-bits='704' filepath='./include/kith/client/client.h' line='301' column='1' hash='b9eb86dd7f53a550' id='type-id-27'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='304' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='306' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='state' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='308' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='current_step' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='310' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='step_count' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='312' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='reserved' type-id='type-id-15' visibility='default' filepath='./include/kith/client/client.h' line='314' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_bootstrap_step' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/client/client.h' line='158' column='1' hash='edad5079b400ddbd' id='type-id-28'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='await_type_id' type-id='type-id-20' visibility='default' filepath='./include/kith/client/client.h' line='164' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='on_enter' type-id='type-id-29' visibility='default' filepath='./include/kith/client/client.h' line='167' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='on_reply' type-id='type-id-30' visibility='default' filepath='./include/kith/client/client.h' line='170' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='ctx' type-id='type-id-10' visibility='default' filepath='./include/kith/client/client.h' line='173' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_command' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/client/client.h' line='199' column='1' hash='ee8ff44758c6d96f' id='type-id-31'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='type_id' type-id='type-id-20' visibility='default' filepath='./include/kith/client/client.h' line='202' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='16'>
+        <var-decl name='flags' type-id='type-id-32' visibility='default' filepath='./include/kith/client/client.h' line='204' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='correlation_id' type-id='type-id-24' visibility='default' filepath='./include/kith/client/client.h' line='207' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='payload' type-id='type-id-10' visibility='default' filepath='./include/kith/client/client.h' line='210' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload_len' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='212' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_event' is-struct='yes' visibility='default' size-in-bits='8896' filepath='./include/kith/client/client.h' line='228' column='1' hash='cc434b52b3edd87e' id='type-id-33'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='231' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='233' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='ts_mono_ns' type-id='type-id-24' visibility='default' filepath='./include/kith/client/client.h' line='235' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='type_id' type-id='type-id-20' visibility='default' filepath='./include/kith/client/client.h' line='238' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='payload_len' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='240' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload' type-id='type-id-34' visibility='default' filepath='./include/kith/client/client.h' line='243' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='8384'>
+        <var-decl name='reserved' type-id='type-id-15' visibility='default' filepath='./include/kith/client/client.h' line='245' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_event_record' is-struct='yes' visibility='default' size-in-bits='8320' filepath='./src/client/client_internal.h' line='38' column='1' hash='0ac1776f5724cefc' id='type-id-35'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='ts_mono_ns' type-id='type-id-24' visibility='default' filepath='./src/client/client_internal.h' line='40' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='type_id' type-id='type-id-20' visibility='default' filepath='./src/client/client_internal.h' line='41' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='payload_len' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='42' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='payload' type-id='type-id-34' visibility='default' filepath='./src/client/client_internal.h' line='43' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_outbound_slot' is-struct='yes' visibility='default' size-in-bits='128' filepath='./src/client/client_internal.h' line='17' column='1' hash='0609b4ee1a80d964' id='type-id-36'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='data' type-id='type-id-37' visibility='default' filepath='./src/client/client_internal.h' line='19' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='len' type-id='type-id-8' visibility='default' filepath='./src/client/client_internal.h' line='20' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_params' is-struct='yes' visibility='default' size-in-bits='832' filepath='./include/kith/client/client.h' line='257' column='1' hash='1155c664a6e3b27f' id='type-id-38'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='260' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='262' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='outbound_cap' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='265' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='event_cap' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='267' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='ping_type_id' type-id='type-id-20' visibility='default' filepath='./include/kith/client/client.h' line='274' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='144'>
+        <var-decl name='pong_type_id' type-id='type-id-20' visibility='default' filepath='./include/kith/client/client.h' line='280' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='ping_interval_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='283' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='reconnect_base_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='286' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='224'>
+        <var-decl name='reconnect_max_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='288' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='reconnect_max_attempts' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='290' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='reserved' type-id='type-id-15' visibility='default' filepath='./include/kith/client/client.h' line='293' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_client_runtime_status' is-struct='yes' visibility='default' size-in-bits='1088' filepath='./include/kith/client/client.h' line='323' column='1' hash='974314fc6d4191ef' id='type-id-39'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='size' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='326' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='32'>
+        <var-decl name='abi_version' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='328' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='connected' type-id='type-id-32' visibility='default' filepath='./include/kith/client/client.h' line='330' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='72'>
+        <var-decl name='awaiting_pong' type-id='type-id-32' visibility='default' filepath='./include/kith/client/client.h' line='332' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='80'>
+        <var-decl name='reconnect_due' type-id='type-id-32' visibility='default' filepath='./include/kith/client/client.h' line='335' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='88'>
+        <var-decl name='reserved_u8' type-id='type-id-32' visibility='default' filepath='./include/kith/client/client.h' line='338' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='96'>
+        <var-decl name='reconnect_attempts' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='340' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='rtt_last_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='342' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='160'>
+        <var-decl name='rtt_min_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='344' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='rtt_max_ms' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='346' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='256'>
+        <var-decl name='rtt_sum_ms' type-id='type-id-24' visibility='default' filepath='./include/kith/client/client.h' line='348' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='320'>
+        <var-decl name='rtt_samples' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='350' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='352'>
+        <var-decl name='reserved_u32' type-id='type-id-8' visibility='default' filepath='./include/kith/client/client.h' line='353' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='384'>
+        <var-decl name='last_ping_sent_ms' type-id='type-id-24' visibility='default' filepath='./include/kith/client/client.h' line='355' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='448'>
+        <var-decl name='next_ping_due_ms' type-id='type-id-24' visibility='default' filepath='./include/kith/client/client.h' line='357' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='512'>
+        <var-decl name='next_reconnect_due_ms' type-id='type-id-24' visibility='default' filepath='./include/kith/client/client.h' line='359' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='576'>
+        <var-decl name='reserved' type-id='type-id-15' visibility='default' filepath='./include/kith/client/client.h' line='361' column='1'/>
+      </data-member>
+    </class-decl>
+    <class-decl name='kith_proto_frame' is-struct='yes' visibility='default' size-in-bits='256' filepath='./include/kith/proto/proto.h' line='145' column='1' hash='bb337662c9578eca' id='type-id-40'>
+      <data-member access='public' layout-offset-in-bits='0'>
+        <var-decl name='type_id' type-id='type-id-20' visibility='default' filepath='./include/kith/proto/proto.h' line='148' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='16'>
+        <var-decl name='flags' type-id='type-id-32' visibility='default' filepath='./include/kith/proto/proto.h' line='150' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='24'>
+        <var-decl name='has_correlation' type-id='type-id-2' visibility='default' filepath='./include/kith/proto/proto.h' line='152' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='64'>
+        <var-decl name='correlation_id' type-id='type-id-24' visibility='default' filepath='./include/kith/proto/proto.h' line='154' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='128'>
+        <var-decl name='payload' type-id='type-id-10' visibility='default' filepath='./include/kith/proto/proto.h' line='156' column='1'/>
+      </data-member>
+      <data-member access='public' layout-offset-in-bits='192'>
+        <var-decl name='payload_len' type-id='type-id-8' visibility='default' filepath='./include/kith/proto/proto.h' line='158' column='1'/>
+      </data-member>
+    </class-decl>
+    <typedef-decl name='__uint16_t' type-id='type-id-41' size-in-bits='16' filepath='/usr/include/bits/types.h' line='40' column='1' hash='d7723bb93a30b11d' id='type-id-42'/>
+    <typedef-decl name='__uint32_t' type-id='type-id-43' size-in-bits='32' filepath='/usr/include/bits/types.h' line='42' column='1' hash='e66b43f97c38e87a' id='type-id-44'/>
+    <typedef-decl name='__uint64_t' type-id='type-id-45' size-in-bits='64' filepath='/usr/include/bits/types.h' line='45' column='1' hash='8fdc5eea2983a729' id='type-id-46'/>
+    <typedef-decl name='__uint8_t' type-id='type-id-47' size-in-bits='8' filepath='/usr/include/bits/types.h' line='38' column='1' hash='6ebac62b3366db68' id='type-id-48'/>
+    <typedef-decl name='kith_alloc_fn' type-id='type-id-49' size-in-bits='64' filepath='./include/kith/types.h' line='65' column='1' hash='fd7a63c0c6c822c4' id='type-id-11'/>
+    <typedef-decl name='kith_alloc_zero_fn' type-id='type-id-50' size-in-bits='64' filepath='./include/kith/types.h' line='68' column='1' hash='fd7a63c0c6c822c4' id='type-id-12'/>
+    <typedef-decl name='kith_allocator_t' type-id='type-id-9' size-in-bits='896' filepath='./include/kith/types.h' line='125' column='1' id='type-id-51'/>
+    <typedef-decl name='kith_client_bootstrap_state_t' type-id='type-id-3' size-in-bits='32' alignment-in-bits='32' filepath='./include/kith/client/client.h' line='103' column='1' hash='d1557aaa92f0d6e8' id='type-id-26'/>
+    <typedef-decl name='kith_client_bootstrap_status_t' type-id='type-id-27' size-in-bits='704' filepath='./include/kith/client/client.h' line='317' column='1' id='type-id-52'/>
+    <typedef-decl name='kith_client_bootstrap_step_t' type-id='type-id-28' size-in-bits='256' filepath='./include/kith/client/client.h' line='176' column='1' id='type-id-53'/>
+    <typedef-decl name='kith_client_command_t' type-id='type-id-31' size-in-bits='256' filepath='./include/kith/client/client.h' line='215' column='1' id='type-id-54'/>
+    <typedef-decl name='kith_client_event_t' type-id='type-id-33' size-in-bits='8896' filepath='./include/kith/client/client.h' line='248' column='1' id='type-id-55'/>
+    <typedef-decl name='kith_client_frame_fn' type-id='type-id-56' size-in-bits='64' filepath='./include/kith/client/client.h' line='189' column='1' hash='fd7a63c0c6c822c4' id='type-id-23'/>
+    <typedef-decl name='kith_client_params_t' type-id='type-id-38' size-in-bits='832' filepath='./include/kith/client/client.h' line='296' column='1' id='type-id-57'/>
+    <typedef-decl name='kith_client_runtime_status_t' type-id='type-id-39' size-in-bits='1088' filepath='./include/kith/client/client.h' line='364' column='1' id='type-id-58'/>
+    <typedef-decl name='kith_client_step_enter_fn' type-id='type-id-59' size-in-bits='64' filepath='./include/kith/client/client.h' line='122' column='1' hash='fd7a63c0c6c822c4' id='type-id-29'/>
+    <typedef-decl name='kith_client_step_reply_fn' type-id='type-id-60' size-in-bits='64' filepath='./include/kith/client/client.h' line='148' column='1' hash='fd7a63c0c6c822c4' id='type-id-30'/>
+    <typedef-decl name='kith_client_t' type-id='type-id-16' size-in-bits='1792' filepath='./include/kith/client/client.h' line='54' column='1' id='type-id-61'/>
+    <typedef-decl name='kith_free_fn' type-id='type-id-62' size-in-bits='64' filepath='./include/kith/types.h' line='74' column='1' hash='fd7a63c0c6c822c4' id='type-id-14'/>
+    <typedef-decl name='kith_proto_frame_t' type-id='type-id-40' size-in-bits='256' filepath='./include/kith/proto/proto.h' line='161' column='1' id='type-id-63'/>
+    <typedef-decl name='kith_realloc_fn' type-id='type-id-64' size-in-bits='64' filepath='./include/kith/types.h' line='71' column='1' hash='fd7a63c0c6c822c4' id='type-id-13'/>
+    <typedef-decl name='size_t' type-id='type-id-45' size-in-bits='64' filepath='/usr/lib/clang/22/include/__stddef_size_t.h' line='18' column='1' hash='8fdc5eea2983a729' id='type-id-65'/>
+    <typedef-decl name='uint16_t' type-id='type-id-42' size-in-bits='16' filepath='/usr/include/bits/stdint-uintn.h' line='25' column='1' hash='d7723bb93a30b11d' id='type-id-20'/>
+    <typedef-decl name='uint32_t' type-id='type-id-44' size-in-bits='32' filepath='/usr/include/bits/stdint-uintn.h' line='26' column='1' hash='e66b43f97c38e87a' id='type-id-8'/>
+    <typedef-decl name='uint64_t' type-id='type-id-46' size-in-bits='64' filepath='/usr/include/bits/stdint-uintn.h' line='27' column='1' hash='8fdc5eea2983a729' id='type-id-24'/>
+    <typedef-decl name='uint8_t' type-id='type-id-48' size-in-bits='8' filepath='/usr/include/bits/stdint-uintn.h' line='24' column='1' hash='6ebac62b3366db68' id='type-id-32'/>
+    <array-type-def dimensions='1' type-id='type-id-32' size-in-bits='8192' hash='56b33b5cd7037af7' id='type-id-34'>
+      <subrange length='1024' lower-bound='0' upper-bound='1023' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='3d55c71eae25bbb8' id='type-id-66'/>
+    </array-type-def>
+    <type-decl name='unnamed-enum-underlying-type-32' size-in-bits='32' alignment-in-bits='32' is-anonymous='yes' hash='5181a58e665b3619' id='type-id-4'/>
+    <type-decl name='unsigned char' size-in-bits='8' hash='6ebac62b3366db68' id='type-id-47'/>
+    <type-decl name='unsigned int' size-in-bits='32' hash='e66b43f97c38e87a' id='type-id-43'/>
+    <type-decl name='unsigned long int' size-in-bits='64' hash='8fdc5eea2983a729#2' id='type-id-45'/>
+    <type-decl name='unsigned short int' size-in-bits='16' hash='d7723bb93a30b11d#3' id='type-id-41'/>
+    <array-type-def dimensions='1' type-id='type-id-10' hash='8d913e14a8a96b62' id='type-id-15'>
+      <subrange length='8' lower-bound='0' upper-bound='7' type-id='type-id-1' size-in-bits='64' is-anonymous='yes' hash='6e87a8ff484907ad' id='type-id-67'/>
+    </array-type-def>
+    <qualified-type-def type-id='type-id-51' const='yes' hash='07c74f5fb4899ef5' id='type-id-68'/>
+    <pointer-type-def type-id='type-id-68' size-in-bits='64' hash='b2b28d685a4f1e13' id='type-id-17'/>
+    <qualified-type-def type-id='type-id-53' const='yes' hash='9b5e6a5a87286df7' id='type-id-69'/>
+    <pointer-type-def type-id='type-id-69' size-in-bits='64' hash='3278fc1a95d2f3d7' id='type-id-70'/>
+    <qualified-type-def type-id='type-id-54' const='yes' hash='4f8d16c007665e02' id='type-id-71'/>
+    <pointer-type-def type-id='type-id-71' size-in-bits='64' hash='c56649398b50f667' id='type-id-72'/>
+    <qualified-type-def type-id='type-id-55' const='yes' hash='121c312c59e6447e' id='type-id-73'/>
+    <pointer-type-def type-id='type-id-73' size-in-bits='64' hash='a05ad3f2fbd0df39' id='type-id-74'/>
+    <qualified-type-def type-id='type-id-57' const='yes' hash='2884d515df3917b7' id='type-id-75'/>
+    <pointer-type-def type-id='type-id-75' size-in-bits='64' hash='dc183ef27b2b582e' id='type-id-76'/>
+    <qualified-type-def type-id='type-id-63' const='yes' hash='1337b887667616c1' id='type-id-77'/>
+    <pointer-type-def type-id='type-id-77' size-in-bits='64' hash='a2ed33ecce5ff5e8' id='type-id-78'/>
+    <pointer-type-def type-id='type-id-79' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-60'/>
+    <pointer-type-def type-id='type-id-80' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-59'/>
+    <pointer-type-def type-id='type-id-52' size-in-bits='64' hash='07ed8dded2ada731' id='type-id-81'/>
+    <pointer-type-def type-id='type-id-53' size-in-bits='64' hash='a8f3c56dbb63d6a1' id='type-id-25'/>
+    <pointer-type-def type-id='type-id-35' size-in-bits='64' hash='a3046bc057d47ea2' id='type-id-21'/>
+    <pointer-type-def type-id='type-id-55' size-in-bits='64' hash='aac3d0549ddd6700' id='type-id-82'/>
+    <pointer-type-def type-id='type-id-36' size-in-bits='64' hash='b13773d33a45f293' id='type-id-7'/>
+    <pointer-type-def type-id='type-id-58' size-in-bits='64' hash='f746867f94ccdb95' id='type-id-83'/>
+    <pointer-type-def type-id='type-id-61' size-in-bits='64' hash='e2de62cc973dfc66' id='type-id-84'/>
+    <pointer-type-def type-id='type-id-84' size-in-bits='64' hash='02814af07b2cb1d9' id='type-id-85'/>
+    <pointer-type-def type-id='type-id-65' size-in-bits='64' hash='54c1e9f81ec7a1db' id='type-id-86'/>
+    <pointer-type-def type-id='type-id-20' size-in-bits='64' hash='bd1d889facccead8' id='type-id-87'/>
+    <pointer-type-def type-id='type-id-8' size-in-bits='64' hash='a285db8f38e4ea02' id='type-id-88'/>
+    <pointer-type-def type-id='type-id-24' size-in-bits='64' hash='a7b536d51360d693' id='type-id-89'/>
+    <pointer-type-def type-id='type-id-32' size-in-bits='64' hash='24d8cca8965ce13e' id='type-id-37'/>
+    <pointer-type-def type-id='type-id-90' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-56'/>
+    <pointer-type-def type-id='type-id-91' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-62'/>
+    <pointer-type-def type-id='type-id-92' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-49'/>
+    <pointer-type-def type-id='type-id-93' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-50'/>
+    <pointer-type-def type-id='type-id-94' size-in-bits='64' hash='fd7a63c0c6c822c4' id='type-id-64'/>
+    <pointer-type-def type-id='type-id-95' size-in-bits='64' id='type-id-19'/>
+    <pointer-type-def type-id='type-id-96' size-in-bits='64' id='type-id-18'/>
+    <class-decl name='kith_logger' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-97'/>
+    <class-decl name='kith_proto' is-struct='yes' visibility='default' is-declaration-only='yes' id='type-id-98'/>
+    <typedef-decl name='kith_logger_t' type-id='type-id-97' filepath='./include/kith/logger/logger.h' line='71' column='1' id='type-id-95'/>
+    <typedef-decl name='kith_proto_t' type-id='type-id-98' filepath='./include/kith/proto/proto.h' line='111' column='1' id='type-id-96'/>
+    <type-decl name='void' id='type-id-99'/>
+    <pointer-type-def type-id='type-id-99' id='type-id-10'/>
+    <function-decl name='kith_client_create' mangled-name='kith_client_create' filepath='././src/client/client.c' line='170' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_create@@KITH_CLIENT_1' hash='2a6519e66d05c3a6'>
+      <parameter type-id='type-id-76' name='params' filepath='././src/client/client.c' line='170' column='1'/>
+      <parameter type-id='type-id-18' name='proto' filepath='././src/client/client.c' line='171' column='1'/>
+      <parameter type-id='type-id-19' name='logger' filepath='././src/client/client.c' line='172' column='1'/>
+      <parameter type-id='type-id-17' name='alloc' filepath='././src/client/client.c' line='173' column='1'/>
+      <parameter type-id='type-id-85' name='out_client' filepath='././src/client/client.c' line='174' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_destroy' mangled-name='kith_client_destroy' filepath='././src/client/client.c' line='247' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_destroy@@KITH_CLIENT_1' hash='ce216f293ba44a3e'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='247' column='1'/>
+      <return type-id='type-id-99'/>
+    </function-decl>
+    <function-decl name='kith_client_configure_bootstrap' mangled-name='kith_client_configure_bootstrap' filepath='././src/client/client.c' line='264' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_configure_bootstrap@@KITH_CLIENT_1' hash='2b4829d9ae1b238a'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='265' column='1'/>
+      <parameter type-id='type-id-70' name='steps' filepath='././src/client/client.c' line='265' column='1'/>
+      <parameter type-id='type-id-8' name='count' filepath='././src/client/client.c' line='265' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_set_frame_handler' mangled-name='kith_client_set_frame_handler' filepath='././src/client/client.c' line='275' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_set_frame_handler@@KITH_CLIENT_1' hash='4cc33b8cd59316c7'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='275' column='1'/>
+      <parameter type-id='type-id-23' name='on_frame' filepath='././src/client/client.c' line='275' column='1'/>
+      <parameter type-id='type-id-10' name='ctx' filepath='././src/client/client.c' line='275' column='1'/>
+      <return type-id='type-id-99'/>
+    </function-decl>
+    <function-decl name='kith_client_on_connected' mangled-name='kith_client_on_connected' filepath='././src/client/client.c' line='306' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_on_connected@@KITH_CLIENT_1' hash='d60335c8ba50110b'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='306' column='1'/>
+      <parameter type-id='type-id-24' name='now_ms' filepath='././src/client/client.c' line='306' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_on_disconnected' mangled-name='kith_client_on_disconnected' filepath='././src/client/client.c' line='340' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_on_disconnected@@KITH_CLIENT_1' hash='d60335c8ba50110b'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='306' column='1'/>
+      <parameter type-id='type-id-24' name='now_ms' filepath='././src/client/client.c' line='306' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_on_connect_failed' mangled-name='kith_client_on_connect_failed' filepath='././src/client/client.c' line='355' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_on_connect_failed@@KITH_CLIENT_1' hash='d60335c8ba50110b'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='306' column='1'/>
+      <parameter type-id='type-id-24' name='now_ms' filepath='././src/client/client.c' line='306' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_feed_frame' mangled-name='kith_client_feed_frame' filepath='././src/client/client.c' line='387' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_feed_frame@@KITH_CLIENT_1' hash='48c10e0901f1ea11'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='387' column='1'/>
+      <parameter type-id='type-id-78' name='frame' filepath='././src/client/client.c' line='387' column='1'/>
+      <parameter type-id='type-id-24' name='now_ms' filepath='././src/client/client.c' line='387' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_pop_outbound' mangled-name='kith_client_pop_outbound' filepath='././src/client/client.c' line='413' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_pop_outbound@@KITH_CLIENT_1' hash='2494c8f4c191df14'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='413' column='1'/>
+      <parameter type-id='type-id-37' name='out_buf' filepath='././src/client/client.c' line='413' column='1'/>
+      <parameter type-id='type-id-8' name='cap' filepath='././src/client/client.c' line='413' column='1'/>
+      <parameter type-id='type-id-88' name='out_len' filepath='././src/client/client.c' line='413' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_submit_interactive' mangled-name='kith_client_submit_interactive' filepath='././src/client/client.c' line='426' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_submit_interactive@@KITH_CLIENT_1' hash='fd085f67f103a3d9'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='426' column='1'/>
+      <parameter type-id='type-id-72' name='command' filepath='././src/client/client.c' line='427' column='1'/>
+      <parameter type-id='type-id-89' name='out_cmd_id' filepath='././src/client/client.c' line='428' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_publish_event' mangled-name='kith_client_publish_event' filepath='././src/client/client.c' line='457' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_publish_event@@KITH_CLIENT_1' hash='fcf69f4cc36d6d10'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='457' column='1'/>
+      <parameter type-id='type-id-74' name='event' filepath='././src/client/client.c' line='458' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_drain_events' mangled-name='kith_client_drain_events' filepath='././src/client/client.c' line='480' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_drain_events@@KITH_CLIENT_1' hash='4272736c84ffe4ff'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='480' column='1'/>
+      <parameter type-id='type-id-82' name='out_events' filepath='././src/client/client.c' line='481' column='1'/>
+      <parameter type-id='type-id-65' name='out_cap' filepath='././src/client/client.c' line='482' column='1'/>
+      <parameter type-id='type-id-86' name='out_count' filepath='././src/client/client.c' line='483' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_tick' mangled-name='kith_client_tick' filepath='././src/client/client.c' line='503' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_tick@@KITH_CLIENT_1' hash='d60335c8ba50110b'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='306' column='1'/>
+      <parameter type-id='type-id-24' name='now_ms' filepath='././src/client/client.c' line='306' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_bootstrap_status' mangled-name='kith_client_bootstrap_status' filepath='././src/client/client.c' line='537' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_bootstrap_status@@KITH_CLIENT_1' hash='229493ed50640b3f'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='537' column='1'/>
+      <parameter type-id='type-id-81' name='out_status' filepath='././src/client/client.c' line='538' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-decl name='kith_client_runtime_status' mangled-name='kith_client_runtime_status' filepath='././src/client/client.c' line='558' column='1' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='kith_client_runtime_status@@KITH_CLIENT_1' hash='3f9445d821a0c3c3'>
+      <parameter type-id='type-id-84' name='client' filepath='././src/client/client.c' line='558' column='1'/>
+      <parameter type-id='type-id-83' name='out_status' filepath='././src/client/client.c' line='559' column='1'/>
+      <return type-id='type-id-5'/>
+    </function-decl>
+    <function-type size-in-bits='64' hash='ba00fb5611deb904' id='type-id-79'>
+      <parameter type-id='type-id-84'/>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-78'/>
+      <parameter type-id='type-id-88'/>
+      <return type-id='type-id-5'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7ab6f4bf89e4c270' id='type-id-80'>
+      <parameter type-id='type-id-84'/>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-87'/>
+      <parameter type-id='type-id-37'/>
+      <parameter type-id='type-id-8'/>
+      <parameter type-id='type-id-88'/>
+      <return type-id='type-id-5'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='47065139be763f86' id='type-id-90'>
+      <parameter type-id='type-id-84'/>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-78'/>
+      <return type-id='type-id-99'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='7f32ffea222edbe7' id='type-id-91'>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-10'/>
+      <return type-id='type-id-99'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-92'>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-65'/>
+      <return type-id='type-id-10'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='91495cdf6321a116' id='type-id-93'>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-65'/>
+      <parameter type-id='type-id-65'/>
+      <return type-id='type-id-10'/>
+    </function-type>
+    <function-type size-in-bits='64' hash='e0055d99adb0e173' id='type-id-94'>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-10'/>
+      <parameter type-id='type-id-65'/>
+      <return type-id='type-id-10'/>
+    </function-type>
+  </abi-instr>
+</abi-corpus>
