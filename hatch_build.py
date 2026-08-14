@@ -80,6 +80,7 @@ _REQUIRED_LIBS: tuple[str, ...] = (
     "fabric",
     "gateway",
     "coord",
+    "client",
 )
 
 _OPTIONAL_LIBS: tuple[str, ...] = ("control",)

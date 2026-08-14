@@ -1,0 +1,20 @@
+KITH_CLIENT_1 {
+    global:
+        kith_client_create;
+        kith_client_destroy;
+        kith_client_configure_bootstrap;
+        kith_client_set_frame_handler;
+        kith_client_on_connected;
+        kith_client_on_disconnected;
+        kith_client_on_connect_failed;
+        kith_client_feed_frame;
+        kith_client_pop_outbound;
+        kith_client_submit_interactive;
+        kith_client_publish_event;
+        kith_client_drain_events;
+        kith_client_tick;
+        kith_client_bootstrap_status;
+        kith_client_runtime_status;
+    local:
+        *;
+};
