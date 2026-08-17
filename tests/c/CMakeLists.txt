@@ -22,6 +22,13 @@ add_executable(test_error_return test_error_return.c)
 target_link_libraries(test_error_return PRIVATE kith_util)
 add_test(NAME test_error_return COMMAND test_error_return)
 
+add_executable(test_allocator_failure test_allocator_failure.c)
+target_link_libraries(test_allocator_failure PRIVATE kith_util kith_config kith_logger kith_metrics kith_proto kith_net kith_reactor kith_worker kith_state kith_db kith_aoi kith_sim kith_fabric kith_gateway kith_coord kith_control kith_client kith_server)
+# setenv and unsetenv are POSIX.1-2008; glibc hides them under strict C23
+# without a feature-test macro.
+target_compile_definitions(test_allocator_failure PRIVATE _POSIX_C_SOURCE=200809L)
+add_test(NAME test_allocator_failure COMMAND test_allocator_failure)
+
 add_executable(test_config_source test_config_source.c)
 target_link_libraries(test_config_source PRIVATE kith_config)
 # _XOPEN_SOURCE=700 implies POSIX.1-2008 and additionally exposes putenv,
@@ -439,3 +446,98 @@ add_test(NAME test_coord_split COMMAND test_coord_split)
 add_executable(test_coord_bus test_coord_bus.c)
 target_link_libraries(test_coord_bus PRIVATE kith_coord)
 add_test(NAME test_coord_bus COMMAND test_coord_bus)
+
+add_executable(test_server_create test_server_create.c
+    ${PROJECT_SOURCE_DIR}/src/server/server.c
+    ${PROJECT_SOURCE_DIR}/src/server/wire.c
+    ${PROJECT_SOURCE_DIR}/src/server/wiring.c)
+target_link_libraries(test_server_create PRIVATE
+    kith_sim
+    kith_fabric
+    kith_gateway
+    kith_coord
+    kith_reactor
+    kith_worker
+    kith_net
+    kith_proto
+    kith_config
+    kith_logger
+    kith_metrics)
+if(TARGET kith_control)
+    target_link_libraries(test_server_create PRIVATE kith_control kith_util)
+    target_compile_definitions(test_server_create PRIVATE KITH_CONTROL_PLANE_ENABLED=1)
+endif()
+target_compile_definitions(test_server_create PRIVATE _GNU_SOURCE)
+target_include_directories(test_server_create PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_server_create COMMAND test_server_create)
+
+add_executable(test_server_accessors test_server_accessors.c)
+target_link_libraries(test_server_accessors PRIVATE kith_server kith_proto kith_util)
+add_test(NAME test_server_accessors COMMAND test_server_accessors)
+
+add_executable(test_server_run test_server_run.c)
+target_link_libraries(test_server_run PRIVATE kith_server Threads::Threads kith_util)
+target_compile_definitions(test_server_run PRIVATE _GNU_SOURCE)
+add_test(NAME test_server_run COMMAND test_server_run)
+
+add_executable(test_server_tick_hook test_server_tick_hook.c)
+target_link_libraries(test_server_tick_hook PRIVATE kith_server Threads::Threads kith_util)
+target_compile_definitions(test_server_tick_hook PRIVATE _GNU_SOURCE)
+add_test(NAME test_server_tick_hook COMMAND test_server_tick_hook)
+
+add_executable(test_server_poll_observer test_server_poll_observer.c)
+target_link_libraries(test_server_poll_observer PRIVATE kith_server Threads::Threads kith_util)
+target_compile_definitions(test_server_poll_observer PRIVATE _GNU_SOURCE)
+add_test(NAME test_server_poll_observer COMMAND test_server_poll_observer)
+
+add_executable(test_server_wire_write test_server_wire_write.c
+    ${PROJECT_SOURCE_DIR}/src/server/wire.c)
+target_link_libraries(test_server_wire_write PRIVATE kith_gateway kith_net kith_proto kith_reactor
+    kith_fabric kith_sim kith_util Threads::Threads)
+target_compile_definitions(test_server_wire_write PRIVATE _GNU_SOURCE)
+target_include_directories(test_server_wire_write PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_server_wire_write COMMAND test_server_wire_write)
+
+add_executable(test_server_wire_churn test_server_wire_churn.c
+    ${PROJECT_SOURCE_DIR}/src/server/wire.c)
+target_link_libraries(test_server_wire_churn PRIVATE kith_gateway kith_net kith_proto kith_reactor
+    kith_fabric kith_sim kith_util Threads::Threads)
+target_compile_definitions(test_server_wire_churn PRIVATE _GNU_SOURCE)
+target_include_directories(test_server_wire_churn PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_server_wire_churn COMMAND test_server_wire_churn)
+
+add_executable(test_server_wiring test_server_wiring.c
+    ${PROJECT_SOURCE_DIR}/src/server/wiring.c
+    ${PROJECT_SOURCE_DIR}/src/server/wire.c)
+target_link_libraries(test_server_wiring PRIVATE kith_gateway kith_config kith_logger
+    kith_metrics kith_proto kith_net kith_reactor kith_worker kith_state kith_db
+    kith_aoi kith_sim kith_fabric kith_coord kith_control kith_util Threads::Threads)
+target_compile_definitions(test_server_wiring PRIVATE _GNU_SOURCE)
+target_include_directories(test_server_wiring PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_server_wiring COMMAND test_server_wiring)
+
+add_executable(test_python_handler_exceptions test_python_handler_exceptions.c
+    ${PROJECT_SOURCE_DIR}/src/server/wiring.c
+    ${PROJECT_SOURCE_DIR}/src/server/wire.c)
+target_link_libraries(test_python_handler_exceptions PRIVATE kith_gateway kith_config
+    kith_logger kith_metrics kith_proto kith_net kith_reactor kith_worker kith_state
+    kith_db kith_aoi kith_sim kith_fabric kith_coord kith_control kith_util
+    Threads::Threads)
+target_compile_definitions(test_python_handler_exceptions PRIVATE _GNU_SOURCE)
+target_include_directories(test_python_handler_exceptions PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_python_handler_exceptions COMMAND test_python_handler_exceptions)
+
+add_executable(test_python_exit_gate test_python_exit_gate.c)
+target_link_libraries(test_python_exit_gate PRIVATE kith_server kith_gateway kith_fabric kith_net
+    kith_proto kith_sim kith_worker kith_util Threads::Threads)
+target_compile_definitions(test_python_exit_gate PRIVATE _GNU_SOURCE)
+add_test(NAME test_python_exit_gate COMMAND test_python_exit_gate)
+
+# One uniform ceiling for every test in the directory: a wedged test costs
+# the gate minutes rather than ctest's default 1500 s, and the threaded
+# server/gateway tests keep headroom on a loaded host where their wall
+# time stretches.
+get_property(_kith_c_tests DIRECTORY PROPERTY TESTS)
+if(_kith_c_tests)
+    set_tests_properties(${_kith_c_tests} PROPERTIES TIMEOUT 300)
+endif()
