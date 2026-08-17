@@ -20,6 +20,7 @@ from . import (
     net,
     proto,
     reactor,
+    server,
     sim,
     state,
     util,
@@ -51,3 +52,4 @@ def configure(bridge: _LibProvider) -> None:
     coord.configure(bridge.lib("coord"))
     gateway.configure(bridge.lib("gateway"))
     client.configure(bridge.lib("client"))
+    server.configure(bridge.lib("server"))
