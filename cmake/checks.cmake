@@ -32,11 +32,12 @@ add_custom_target(check-clang-format
 # --- clang-tidy over the compilation database ----------------------------
 # The file list is the tracked .c set minus the trees that compile outside
 # the library targets' compilation database (tools/ probes and fixtures,
-# third-party sources, the fuzz harnesses): clang-tidy -p fails closed on a
-# file the database has no entry for.
+# third-party sources, the fuzz harnesses, and the downstream consumer
+# probes): clang-tidy -p fails closed on a file the database has no entry
+# for.
 add_custom_target(check-clang-tidy
     COMMAND bash -c
-        "[ -x '${KITH_CLANG_TIDY_EXECUTABLE}' ] || { echo 'error: clang-tidy not found; install the pinned clang tools' >&2; exit 2; }; git ls-files \"*.c\" | grep -v \"^tools/\" | grep -v \"^third_party/\" | grep -v \"^tests/fuzz/\" | xargs -r '${KITH_CLANG_TIDY_EXECUTABLE}' -p ${CMAKE_BINARY_DIR} --quiet --warnings-as-errors='*'"
+        "[ -x '${KITH_CLANG_TIDY_EXECUTABLE}' ] || { echo 'error: clang-tidy not found; install the pinned clang tools' >&2; exit 2; }; git ls-files \"*.c\" | grep -v \"^tools/\" | grep -v \"^third_party/\" | grep -v \"^tests/fuzz/\" | grep -v \"^tests/consumer/\" | xargs -r '${KITH_CLANG_TIDY_EXECUTABLE}' -p ${CMAKE_BINARY_DIR} --quiet --warnings-as-errors='*'"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running clang-tidy over the compilation database"
     VERBATIM

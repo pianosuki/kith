@@ -11,7 +11,6 @@ import urllib.request
 from collections.abc import Generator
 
 import pytest
-from _build_gate import needs_build
 
 from kith._generated import types as gen_types
 from kith.control import Control, Request, Response
@@ -39,7 +38,6 @@ def control_stack() -> Generator[Control]:
     reactor.close()
 
 
-@needs_build
 def test_owned_pool_dispatches_routes(control_stack: Control) -> None:
     """A route registered on the wrapper runs on the wrapper-owned pool and
     answers over real HTTP; the handler observes the request view."""
@@ -58,7 +56,6 @@ def test_owned_pool_dispatches_routes(control_stack: Control) -> None:
     assert seen["path"] == "/hello"
 
 
-@needs_build
 def test_no_pool_answers_503() -> None:
     """With no pool (worker_count=0), a Python-bound route answers 503 and
     the handler never runs: the reactor never enters the interpreter."""
@@ -92,7 +89,6 @@ def test_no_pool_answers_503() -> None:
         reactor.close()
 
 
-@needs_build
 def test_explicit_pool_replaces_owned() -> None:
     """Attaching a caller-owned pool replaces the wrapper-owned default: the
     route dispatches through the attached pool, detaching answers 503, and
@@ -130,7 +126,6 @@ def test_explicit_pool_replaces_owned() -> None:
         reactor.close()
 
 
-@needs_build
 def test_start_twice_raises_state_error() -> None:
     """A second start answers the C contract's ESTATE as KithStateError."""
     reactor = Reactor()
@@ -144,7 +139,6 @@ def test_start_twice_raises_state_error() -> None:
         reactor.close()
 
 
-@needs_build
 def test_bind_failure_raises_kith_error() -> None:
     """A bind failure answers KithError, not KithStateError: a caller that
     treats KithStateError as a recoverable lifecycle state must not
@@ -167,7 +161,6 @@ def test_bind_failure_raises_kith_error() -> None:
         holder.close()
 
 
-@needs_build
 def test_failed_handler_500_names_the_cause(control_stack: Control) -> None:
     """A handler exception answers 500 with the cause named in the body, so
     the operator reading the response sees which field broke."""

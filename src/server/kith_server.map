@@ -1,0 +1,22 @@
+KITH_SERVER_1 {
+    global:
+        kith_server_create;
+        kith_server_destroy;
+        kith_server_run;
+        kith_server_shutdown;
+        kith_server_status;
+        kith_server_listen_port;
+        kith_server_control_port;
+        kith_server_gateway;
+        kith_server_sim;
+        kith_server_fabric;
+        kith_server_proto;
+        kith_server_control;
+        kith_server_db;
+        kith_server_register_tick_handler;
+        kith_server_unregister_tick_handler;
+        kith_server_register_poll_observer;
+        kith_server_tick_drops;
+    local:
+        *;
+};

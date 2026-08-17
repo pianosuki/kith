@@ -56,6 +56,10 @@ option(CONTROL_PLANE_ENABLED "Build the control plane library (HTTP/WS introspec
 if(CONTROL_PLANE_ENABLED)
     include(cmake/lib_control.cmake)
 endif()
+# Composition root. The server is the single layer-3 library a game links
+# against; it wires every plane library above and must be included after
+# them (and after the optional control block) so their targets exist.
+include(cmake/lib_server.cmake)
 
 # Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
 # pair from format.cmake, and check-all). Each runs its tool over the
@@ -86,14 +90,14 @@ if(KITH_ENABLE_FUZZ)
 endif()
 
 # --- Downstream consumer story: find_package(kith) + pkg-config -----------
-# Every layer-2 library above is installed with `EXPORT kithTargets`; this
-# block assembles that export set into a CMake package a downstream finds
-# with `find_package(kith 1.0.0 REQUIRED)`, and a pkg-config .pc file a
-# hand-written Makefile or autotools consumer queries with
-# `pkg-config --cflags --libs kith`. The version flowing into both channels
-# is PROJECT_VERSION (set above), so the SONAME, the pkg-config Version, the
-# find_package version check, and the kith_apply_abi SOVERSION all read from
-# one source.
+# Every layer-2 (and the layer-3 composition root) library above installed
+# with `EXPORT kithTargets`; this block assembles that export set into a
+# CMake package a downstream finds with `find_package(kith 1.0.0 REQUIRED)`,
+# and a pkg-config .pc file a hand-written Makefile or autotools consumer
+# queries with `pkg-config --cflags --libs kith`. The version flowing into
+# both channels is PROJECT_VERSION (set above), so the SONAME, the pkg-config
+# Version, the find_package version check, and the kith_apply_abi SOVERSION
+# all read from one source.
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 

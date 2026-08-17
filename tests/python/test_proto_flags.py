@@ -16,7 +16,7 @@ import struct
 from collections.abc import Iterator
 
 import pytest
-from _build_gate import _BUILD_DEBUG, needs_build
+from _build_gate import _BUILD_DEBUG
 
 from kith import KithProtocolError
 from kith._bridge import reset
@@ -50,7 +50,6 @@ def _frame(flags: int, payload: bytes, version: int | None = None) -> bytes:
     return header + payload
 
 
-@needs_build
 class TestUnknownFlagBits:
     def test_unknown_bit_passes_through_alongside_correlation(self) -> None:
         with Proto() as proto:
@@ -73,7 +72,6 @@ class TestUnknownFlagBits:
         assert frame.payload == b"hello"
 
 
-@needs_build
 class TestVersionBoundary:
     def test_unimplemented_version_rejects(self) -> None:
         wire = _frame(0, b"hello", version=int(gen_proto.kith_proto_format.KITH_PROTO_VERSION) + 1)

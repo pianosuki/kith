@@ -276,6 +276,119 @@ if [ "$stage_build" -eq 1 ]; then
     else
         fail "build (checksec not found; install 'checksec' to verify hardening)"
     fi
+
+    # --- out-of-tree downstream consumer (find_package + pkg-config) -----
+    # A real downstream CMake project consumes an installed kith via
+    # find_package(kith) and links the imported targets the export set
+    # generates. This step installs the in-tree build to a throwaway prefix,
+    # configures tests/consumer/ against it, builds the consumer, and runs
+    # the resulting executable so the find_package story is exercised in CI
+    # rather than only claimed. The pkg-config channel gets the same
+    # treatment further down: the installed .pc file is queried, its link
+    # line is checked against the installed library set, and a probe
+    # consumer is compiled, linked, and run with exactly the reported flags.
+    echo "==> verify.sh: build (out-of-tree consumer: find_package + pkg-config)"
+    consumer_prefix="$(mktemp -d -t kith-consumer-XXXXXX)"
+    consumer_build="$(mktemp -d -t kith-consumer-build-XXXXXX)"
+    # shellcheck disable=SC2064
+    trap "rm -rf '$consumer_prefix' '$consumer_build'" EXIT
+    if ! cmake --install "$build_dir" --prefix "$consumer_prefix" \
+            >"$consumer_prefix/install.log" 2>&1; then
+        echo "verify.sh: cmake --install failed (see $consumer_prefix/install.log)" >&2
+        fail "build (consumer install)"
+    fi
+    if ! cmake -B "$consumer_build" -S tests/consumer \
+            -Dkith_DIR="$consumer_prefix/lib/cmake/kith" \
+            >"$consumer_prefix/configure.log" 2>&1; then
+        echo "verify.sh: consumer configure failed (see $consumer_prefix/configure.log)" >&2
+        fail "build (consumer configure)"
+    fi
+    if ! cmake --build "$consumer_build" >"$consumer_prefix/build.log" 2>&1; then
+        echo "verify.sh: consumer build failed (see $consumer_prefix/build.log)" >&2
+        fail "build (consumer build)"
+    fi
+    if ! "$consumer_build/kith_consumer" >"$consumer_prefix/run.log" 2>&1; then
+        echo "verify.sh: consumer executable failed (see $consumer_prefix/run.log)" >&2
+        fail "build (consumer run)"
+    fi
+    # pkg-config .pc file: --modversion reports the Version field, proving
+    # the installed pkg-config entry point is queryable. The .pc file's
+    # Version is generated from @PROJECT_VERSION@ by configure_file(@ONLY),
+    # so it cannot diverge from the project version by construction; the
+    # gate verifies the file parses and reports a valid dotted triple.
+    #
+    # The link story is exercised, not just queried: every installed kith
+    # shared library must be named on `pkg-config --libs kith` (the .pc is
+    # the one place a pkg-config consumer gets the full set), and a probe
+    # consumer must compile, link, and run against exactly the reported
+    # flags. The leg assumes the default CONTROL_PLANE_ENABLED=ON
+    # configuration the .pc template enumerates. libdir is read back from
+    # the installed .pc itself, so multiarch layouts (lib/<triplet>) are
+    # discovered rather than assumed. pkg-config is optional (some minimal
+    # CI images omit it), so a missing binary skips rather than failing; a
+    # present-but-broken one fails.
+    if command -v pkg-config >/dev/null 2>&1; then
+        pc_modversion="$(PKG_CONFIG_PATH="$consumer_prefix/lib/pkgconfig" \
+            pkg-config --modversion kith 2>&1)"
+        if ! printf '%s' "$pc_modversion" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "verify.sh: pkg-config --modversion kith = '$pc_modversion', expected a dotted triple" >&2
+            fail "build (consumer pkg-config modversion)"
+        fi
+
+        pc_libdir="$(PKG_CONFIG_PATH="$consumer_prefix/lib/pkgconfig" \
+            pkg-config --variable=libdir kith 2>&1)"
+        # shellcheck disable=SC2086
+        pc_libs="$(PKG_CONFIG_PATH="$consumer_prefix/lib/pkgconfig" \
+            pkg-config --libs kith 2>&1)"
+        for pc_so in "$pc_libdir"/libkith_*.so; do
+            if [ ! -e "$pc_so" ]; then
+                echo "verify.sh: pkg-config libdir '$pc_libdir' installs no libkith_*.so" >&2
+                fail "build (consumer pkg-config lib enumeration)"
+            fi
+            pc_lflag="-l$(basename "$pc_so" | sed 's/^lib//; s/\.so$//')"
+            case " $pc_libs " in
+                *" $pc_lflag "*) ;;
+                *)
+                    echo "verify.sh: pkg-config --libs kith omits $pc_lflag (installed: $pc_so)" >&2
+                    fail "build (consumer pkg-config lib enumeration)"
+                    ;;
+            esac
+        done
+
+        pc_cc="${CC:-}"
+        if [ -z "$pc_cc" ]; then
+            for pc_candidate in cc clang gcc; do
+                if command -v "$pc_candidate" >/dev/null 2>&1; then
+                    pc_cc="$pc_candidate"
+                    break
+                fi
+            done
+        fi
+        if [ -z "$pc_cc" ]; then
+            fail "build (consumer pkg-config probe: no C compiler found)"
+        fi
+        # The pkg-config output is a flag list meant to be word-split; the
+        # probe links with exactly the reported flags, nothing added.
+        # shellcheck disable=SC2046,SC2086
+        if ! "$pc_cc" \
+                $(PKG_CONFIG_PATH="$consumer_prefix/lib/pkgconfig" \
+                    pkg-config --cflags kith) \
+                -o "$consumer_build/pkgconfig_probe" \
+                tests/consumer/pkgconfig_probe.c \
+                $pc_libs >"$consumer_prefix/probe-build.log" 2>&1; then
+            echo "verify.sh: pkg-config probe compile/link failed (see $consumer_prefix/probe-build.log)" >&2
+            fail "build (consumer pkg-config probe link)"
+        fi
+        # The .pc carries no runtime search path (that is the deploying
+        # consumer's concern), so the run resolves the framework's own
+        # libraries through LD_LIBRARY_PATH pointed at the install.
+        if ! LD_LIBRARY_PATH="$pc_libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+                "$consumer_build/pkgconfig_probe" >"$consumer_prefix/probe-run.log" 2>&1 \
+                || ! grep -q . "$consumer_prefix/probe-run.log"; then
+            echo "verify.sh: pkg-config probe run failed (see $consumer_prefix/probe-run.log)" >&2
+            fail "build (consumer pkg-config probe run)"
+        fi
+    fi
 fi
 
 printf 'verify.sh: all requested stages passed.\n'

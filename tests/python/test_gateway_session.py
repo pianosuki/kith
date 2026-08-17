@@ -332,7 +332,6 @@ class TestSessionDeliveryTotals:
             proto.close()
 
 
-@needs_build
 class TestSessionSend:
     # The gateway wrapper's send is the composition-root mirror of the
     # session dispatch view's send; these pins drive it against a real
