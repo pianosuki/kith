@@ -22,6 +22,7 @@ Real flexibility (embedded for small games, distributed for MMO) without the
 risk of silently reintroducing the reactor-centric AOI model. Negative — each
 pluggable plane carries a registry surface and a plugin contract that must
 track the plane's invariants as they evolve. Registries shipped: sim models,
-database queries, protocol message types, and control-plane routes.
-Composer-policy and fabric-storage swaps remain within-plane
-extension points.
+database queries, protocol message types, and control-plane routes; the
+delivery-semantics preset registry is specified in ADR-0021. Composer-policy
+and fabric-storage swaps remain within-plane extension points governed by
+ADR-0032.

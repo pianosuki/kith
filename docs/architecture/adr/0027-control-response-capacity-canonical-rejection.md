@@ -37,7 +37,7 @@ rejection.
 
 The sizing parameter is reachable from the embedded facade: server creation
 parameters forward the control plane's response capacity, alongside the
-facade's other tuning knobs.
+facade's other tuning knobs (ADR-0030).
 
 ## Consequences
 

@@ -29,7 +29,7 @@ events — and no game-built roster forms.
 
 The broadcast queue is distinct from its two neighboring shapes: it is not
 the discrete send's deferred queue (that surface is conn-targeted,
-reference-required, and ships no deferred queue), and it is not
+reference-required, and ships no deferred queue — ADR-0025), and it is not
 a delivery strategy's per-connection frame buffer (the delivery contract is
 state, never frames — ADR-0021; the broadcast queue is gateway-wide,
 buffers caller bytes, and encodes at drain time). The drain is not subject

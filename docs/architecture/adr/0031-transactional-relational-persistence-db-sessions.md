@@ -46,8 +46,8 @@ handle that owns the pool lifecycle — its own reactor thread and the
 recurring keepalive the out-of-band composition needs — an async query that
 returns result rows as values, and a transaction context that opens a
 session, issues BEGIN, and on a clean exit resolves COMMIT before the
-context exits: the commit-before-acknowledge ordering for acknowledged
-delivery. An
+context exits: the commit-before-acknowledge ordering, which pairs with the
+facade send's live-reference contract (ADR-0025) for acknowledged delivery. An
 exception rolls back and re-raises. Facade handlers stay synchronous; async
 game code drives the surface on its own event loop. The byte-key/value store
 stays in the examples as the zero-dependency default; the relational surface

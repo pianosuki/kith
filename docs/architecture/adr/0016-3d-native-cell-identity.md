@@ -26,7 +26,8 @@ server's overloaded field to remove the z-conflation. 2D simulation models
 project onto this key by setting the vertical coordinate to zero; 3D models
 use a non-zero vertical coordinate natively. The spatial query library ships
 sphere and box (AABB) queries over that key; a planar population selects
-circularly under the sphere query at the zero vertical coordinate. The subscription window is an explicit set of 3D-native cell
+circularly under the sphere query at the zero vertical coordinate. Additional query shapes
+follow ADR-0032. The subscription window is an explicit set of 3D-native cell
 keys, so its geometry belongs to the caller: a 2D wiring populates it with
 cells at the zero vertical coordinate, a 3D wiring with a slab of cells — the window mechanism itself
 is coordinate-agnostic.

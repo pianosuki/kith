@@ -102,7 +102,8 @@ reactor advances a monotonic 64-bit tick counter — the substrate the tick
 clock tracks (mechanism 3) — and dispatches the registered callback. A
 Python-bound callback is submitted to the worker pool as one task; a C
 callback runs inline on the reactor: tick work is ordered simulation work
-on the critical path, and the reactor never runs a Python-bound
+on the critical path, not the parallelizable handler work whose pool-bound
+dispatch ADR-0004 governs, and the reactor never runs a Python-bound
 callback inline. An exhausted pool queue drops the callback and counts it
 under the observability contract (ADR-0019) — honest backpressure: a
 skipped per-tick flush rather than a reactor stalled in Python. The drain
@@ -111,7 +112,9 @@ boundary is a normal-tick event, not a teardown event. The counter advances
 once per normal tick whether or not a callback is registered, so game code
 that reads it sees a stable, monotonic, replay-deterministic tick index.
 
-The tick substrate conforms to the founding set: the error and
+The tick substrate conforms to the founding set, including the
+additive-components rule (ADR-0032): composition-root dispatch adds no
+plane (ADR-0001), Python callbacks are pool-bound (ADR-0004), the error and
 allocation contract is the standard one (ADR-0018), and the new symbols
 live under the existing versioned server symbol node and the ABI gate
 (ADR-0008, ADR-0017). The determinism guarantee is scoped to the model

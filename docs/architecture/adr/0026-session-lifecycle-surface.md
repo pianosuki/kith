@@ -14,7 +14,7 @@ never changes, so uncleaned per-session state grows under churn. Sessions
 are also unholdable: the dispatch reference a handler runs under dies when
 the handler returns, and no primitive exists to keep a session alive past
 it, so a game-built recipient set — a roster the game addresses later —
-cannot be constructed. The send record anticipated this gap and
+cannot be constructed. The send record (ADR-0025) anticipated this gap and
 named the acquisition and enumeration surface as its own decision.
 
 ## Decision
