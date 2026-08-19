@@ -153,7 +153,7 @@ warn_unused_ignores = true
 # with the deps.
 files = ["tools", "python", "tests"]
 exclude = ["tools/fixtures", "build/", "\\.venv/", "\\.ruff_cache/"]
-mypy_path = ["python", "tests/python"]
+mypy_path = ["python", "tests/integration", "tests/python"]
 namespace_packages = true
 explicit_package_bases = true
 
@@ -178,7 +178,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "8.4"
 testpaths = ["tests"]
-pythonpath = [".", "python", "tests/python"]
+pythonpath = [".", "python", "tests/integration", "tests/python"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
