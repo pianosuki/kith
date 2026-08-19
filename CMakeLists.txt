@@ -89,6 +89,13 @@ if(KITH_ENABLE_FUZZ)
     add_subdirectory(tests/fuzz)
 endif()
 
+# Examples. The C boots link against the composition root (kith_server) so
+# the example executables exercise the public server surface end-to-end; the
+# Python examples are plain modules run by pytest or `python -m`.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
+    add_subdirectory(examples)
+endif()
+
 # --- Downstream consumer story: find_package(kith) + pkg-config -----------
 # Every layer-2 (and the layer-3 composition root) library above installed
 # with `EXPORT kithTargets`; this block assembles that export set into a
