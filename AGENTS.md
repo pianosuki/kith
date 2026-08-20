@@ -438,7 +438,7 @@ missing `@ownership` or `@thread_safety`.
 
 ### 3.2 Module Structure
 - The `kith` package is the public API. Internal modules are prefixed with `_`
-  (`kith._bridge`, `kith._generated`).
+  (`kith._agent`, `kith._bridge`, `kith._generated`).
 - Public API functions never expose ctypes types directly. They wrap them in
   Python types and convert at the boundary.
 - Every public Python function has a docstring (Google style).
