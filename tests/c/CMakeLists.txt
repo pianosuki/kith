@@ -307,6 +307,7 @@ add_test(NAME test_fabric_subscription COMMAND test_fabric_subscription)
 
 add_executable(test_fabric_concurrent_subscription test_fabric_concurrent_subscription.c)
 target_link_libraries(test_fabric_concurrent_subscription PRIVATE kith_fabric kith_sim Threads::Threads)
+add_test(NAME test_fabric_concurrent_subscription COMMAND test_fabric_concurrent_subscription)
 
 add_executable(test_aoi_create test_aoi_create.c)
 target_link_libraries(test_aoi_create PRIVATE kith_aoi)

@@ -7,3 +7,16 @@ add_executable(minimal_c_boot minimal/main.c)
 target_link_libraries(minimal_c_boot PRIVATE kith_server Threads::Threads)
 target_compile_definitions(minimal_c_boot PRIVATE _GNU_SOURCE)
 set_target_properties(minimal_c_boot PROPERTIES OUTPUT_NAME minimal_c_boot)
+
+# The spatial game library's native movement-apply core: a shared module the
+# ctypes loader (examples/spatial/native.py) opens inside the server process
+# so the pool-dispatched movement handler runs the whole
+# per-input sequence in C. It consumes the framework's public C surface
+# (sim, fabric, gateway) and is loaded at the composition root's option.
+add_library(spatial_native_core SHARED spatial/native_core.c)
+target_include_directories(spatial_native_core PRIVATE ${PROJECT_SOURCE_DIR}/examples)
+# The global default hides symbols; this module's surface is its own game
+# ABI consumed by ctypes (examples/spatial/native.py), so it exports it.
+set_target_properties(spatial_native_core PROPERTIES C_VISIBILITY_PRESET default)
+target_link_libraries(spatial_native_core PRIVATE kith_sim kith_fabric kith_gateway Threads::Threads)
+set_target_properties(spatial_native_core PROPERTIES OUTPUT_NAME spatial_native_core)

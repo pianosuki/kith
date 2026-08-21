@@ -1,0 +1,14 @@
+# Deterministic replay fixture for the tile2d model (default physics).
+# Two actors spawn at rest, then receive opposing move inputs at tick 1.
+# The pending input persists (latest-move-wins), so both actors keep
+# moving along the X axis for the rest of the run. No behavior grid is
+# loaded, so tile2d collision never blocks either actor.
+#
+# Positions and velocities are raw Q16.16 int64 values (1.0 == 65536).
+# Drive with: tools/replay.py --input <this file> --model tile2d \
+#                --ticks 20 --hash-every 5
+
+0 SPAWN 1 0 0 0 0 0 0 0
+0 SPAWN 2 65536 0 0 0 0 0 0
+1 MOVE 1 1 32767 0 0 0
+1 MOVE 2 1 -32767 0 0 0
