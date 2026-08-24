@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" orientation="orthogonal" width="8" height="8" tilewidth="16" tileheight="16">
+  <tileset firstgid="1" name="behavior" tilewidth="16" tileheight="16">
+    <tile id="0">
+      <properties>
+        <property name="solid" type="bool" value="true"/>
+      </properties>
+    </tile>
+  </tileset>
+  <layer id="1" name="behavior" width="8" height="8">
+    <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,1,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+  </layer>
+</map>
