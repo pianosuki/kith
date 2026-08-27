@@ -145,11 +145,17 @@ if [ "$stage_build" -eq 1 ]; then
         echo "verify.sh: 'pytest' not found; run 'uv sync' or install it" >&2
         fail "build (pytest missing)"
     fi
-    # Parallel only when xdist is importable; the default worker count is
-    # bounded well below the logical CPU count.
+    # Parallel only when xdist is importable; --dist loadgroup honors the
+    # postgres cohort's xdist_group marks, and a crashed worker fails the
+    # run instead of restarting behind xdist's default retry budget. The
+    # default worker count is bounded well below the logical CPU count:
+    # the integration suite boots real servers, and each worker's resident
+    # footprint must fit the machine's free memory alongside them — a
+    # worker count near the CPU count drives the kernel-backed reactor
+    # resources into transient allocation failures on a loaded dev box.
     pytest_args=()
     if "$pytest_python" -c "import xdist" >/dev/null 2>&1; then
-        pytest_args+=(-n "${KITH_PYTEST_JOBS:-4}")
+        pytest_args+=(-n "${KITH_PYTEST_JOBS:-4}" --dist loadgroup --max-worker-restart 0)
     else
         echo "verify.sh: pytest-xdist not importable; running the suite serially" >&2
     fi

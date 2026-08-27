@@ -182,6 +182,12 @@ pythonpath = [".", "python", "tests/integration", "tests/python"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# Registered so --strict-markers stays green in environments without
+# pytest-xdist installed: the postgres integration modules carry the mark
+# to serialize their shared live table, and it is inert without xdist.
+markers = [
+    "xdist_group(name): keep all tests marked with one name in the same xdist worker (--dist loadgroup)",
+]
 addopts = [
     "-ra",
     "--strict-markers",
