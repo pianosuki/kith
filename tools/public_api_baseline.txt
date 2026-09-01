@@ -1,0 +1,9 @@
+# Known public-API contract deviations tracked for retirement.
+# One signature per line: <header_rel>|<rule_id>|<symbol>.
+# A deviation listed here is reported as tracked debt and does not
+# fail the gate; a deviation absent from this file fails. Regenerate
+# with `python3 tools/check_public_api.py --update-baseline` only when
+# deliberately retiring a known deviation — the list shrinks over
+# time, never grows. Stale entries (no matching current deviation)
+# are reported by the checker as a prompt to remove them.
+

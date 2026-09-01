@@ -55,6 +55,15 @@ foreach(_entry IN LISTS _kith_root_checkers)
     )
 endforeach()
 
+add_custom_target(check-public-api
+    COMMAND ${KITH_PYTHON3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tools/check_public_api.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running public-API contract checker"
+    VERBATIM
+    USES_TERMINAL
+)
+
 # --- clang-tidy over the compilation database ----------------------------
 # The file list is the tracked .c set minus the trees that compile outside
 # the library targets' compilation database (tools/ probes and fixtures,
@@ -75,6 +84,7 @@ add_custom_target(check-all
     DEPENDS
         check-layout-consistency
         check-module-layers
+        check-public-api
         check-public-api-includes
         check-internal-includes
         check-clang-tidy

@@ -48,6 +48,14 @@ repos:
         pass_filenames: false
         files: '\.(c|h)$'
 
+      - id: check-public-api
+        name: public API contract enforcement
+        entry: python tools/check_public_api.py
+        language: python
+        additional_dependencies: [clang2==22.1.8.post0]
+        pass_filenames: false
+        files: '\.(c|h)$'
+
       - id: check-layout-consistency
         name: layout consistency
         entry: python tools/check_layout_consistency.py include src
