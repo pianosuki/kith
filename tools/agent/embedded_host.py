@@ -27,11 +27,11 @@ from collections.abc import Callable, Sequence
 
 from examples.embedded.server import EmbeddedServer
 from examples.spatial.client import make_ahc, replication_direct_types
+
+from kith import ServerStatus
 from tools.agent.ahc import AgenticHeadlessClient
 from tools.agent.orchestrator import Orchestrator
 from tools.agent.server_control import ServerControlClient
-
-from kith import ServerStatus
 
 
 __all__ = [

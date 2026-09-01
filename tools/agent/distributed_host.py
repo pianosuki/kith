@@ -35,13 +35,13 @@ from collections.abc import Callable, Mapping, Sequence
 from examples._common.query_state import QUERY_STATE_DEFAULT_PAGE_SIZE as _QUERY_STATE_PAGE_SIZE
 from examples.embedded.server import EmbeddedServer
 from examples.spatial.client import make_ahc, replication_direct_types
+
+from kith import Server, ServerStatus
+from kith.coord import Coord, CoordBus
 from tools.agent.ahc import AgenticHeadlessClient
 from tools.agent.embedded_host import _history_size_for, _summary_retention_for
 from tools.agent.orchestrator import Orchestrator
 from tools.agent.server_control import ServerControlClient
-
-from kith import Server, ServerStatus
-from kith.coord import Coord, CoordBus
 
 
 __all__ = [

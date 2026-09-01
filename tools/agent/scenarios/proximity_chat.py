@@ -30,6 +30,7 @@ from collections.abc import Callable
 
 from examples.spatial import handlers, messages
 from examples.spatial.client import actor_state_for
+
 from tools.agent.ahc import ClientEvent
 from tools.agent.assertions import assert_new_event, assert_state_predicate
 from tools.agent.scenario import Scenario, ScenarioContext, step

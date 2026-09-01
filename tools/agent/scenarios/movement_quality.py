@@ -29,11 +29,11 @@ import time
 
 from examples.spatial import handlers, messages
 from examples.spatial.client import decode_actor_state, is_membership_record
+
+from kith import SimInput
 from tools.agent.assertions import ScenarioAssertionError, assert_state_predicate
 from tools.agent.scenario import Scenario, ScenarioContext, step
 from tools.agent.scenarios._support import assert_bound_actor
-
-from kith import SimInput
 
 
 __all__ = ["MovementQuality"]

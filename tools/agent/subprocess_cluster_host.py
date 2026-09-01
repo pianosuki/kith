@@ -51,6 +51,7 @@ import time
 from collections.abc import Callable, Sequence
 
 from examples.spatial.client import make_ahc, replication_direct_types
+
 from tools.agent.ahc import AgenticHeadlessClient
 from tools.agent.distributed_host import DistributedControl
 from tools.agent.embedded_host import _history_size_for, _summary_retention_for

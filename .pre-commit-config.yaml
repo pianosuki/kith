@@ -1,9 +1,8 @@
 minimum_pre_commit_version: '3.0.0'
 default_install_hook_types: [pre-commit, pre-push, commit-msg]
 
-# Remote hooks only: every checker here is a pinned third-party repo, so the
-# manifest is reproducible from a bare checkout. The hook environments are
-# owned by pre-commit: each repo installs its declared dependencies into an
+# Local python hooks run under language: python so pre-commit owns their
+# environment: each hook installs its declared additional_dependencies into an
 # isolated, version-pinned virtualenv, independent of the developer's project
 # venv or system python.
 repos:
@@ -39,6 +38,36 @@ repos:
       # so the hook's environment needs no runtime download.
       - id: shellcheck
         args: [--severity=warning]
+
+  - repo: local
+    hooks:
+      - id: check-module-layers
+        name: dependency-layer enforcement
+        entry: python tools/check_module_layers.py include src
+        language: python
+        pass_filenames: false
+        files: '\.(c|h)$'
+
+      - id: check-layout-consistency
+        name: layout consistency
+        entry: python tools/check_layout_consistency.py include src
+        language: python
+        pass_filenames: false
+        files: '\.(c|h)$'
+
+      - id: check-public-api-includes
+        name: cross-module deep-include enforcement
+        entry: python tools/check_public_api_includes.py include src
+        language: python
+        pass_filenames: false
+        files: '\.(c|h)$'
+
+      - id: check-internal-includes
+        name: cross-module internal-header include enforcement
+        entry: python tools/check_internal_includes.py include src
+        language: python
+        pass_filenames: false
+        files: '\.(c|h)$'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0

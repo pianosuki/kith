@@ -23,6 +23,7 @@ import asyncio
 
 from examples.spatial import messages
 from examples.spatial.client import actor_state_for
+
 from tools.agent.ahc import ClientEvent
 from tools.agent.assertions import (
     assert_new_event,

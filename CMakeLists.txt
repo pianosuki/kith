@@ -61,12 +61,16 @@ endif()
 # them (and after the optional control block) so their targets exist.
 include(cmake/lib_server.cmake)
 
-# Per-tool build targets (check-clang-tidy, check-clang-format, the ruff
-# pair from format.cmake, and check-all). Each runs its tool over the
-# tracked files and fails the build on a violation; both fragments drive the
-# tools/ helpers and git ls-files, and both fail at use when one of their
-# tools is missing. A source distribution carries only the build inputs, so
-# the fragments are included only when tools/ is present.
+# Per-checker build targets (check-layout-consistency, check-clang-tidy, ...,
+# check-all). Each runs the corresponding tools/*.py checker (or clang-tidy /
+# clang-format) and fails the build on a violation. The format/verify split
+# targets (`format`, the single fix entry point, plus the verify-only
+# check-ruff-format / check-ruff / check-trivial-fixers targets that check-all
+# depends on) come from the same dev toolchain: both fragments drive the
+# tools/*.py checkers, the scripts/ helpers, and git ls-files, and both
+# fail at use when one of their tools is missing. The full checkout ships
+# tools/ and scripts/ together; a source distribution carries only the
+# build inputs, so the fragments are included only when tools/ is present.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools")
     include(cmake/checks.cmake)
     include(cmake/format.cmake)
