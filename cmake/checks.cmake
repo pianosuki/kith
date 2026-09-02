@@ -17,10 +17,26 @@ find_program(KITH_PYTHON3_EXECUTABLE NAMES python3 REQUIRED)
 find_program(KITH_CLANG_FORMAT_EXECUTABLE NAMES clang-format-22)
 find_program(KITH_CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
 
-# Tracked-file producer used by the format check. git ls-files keeps the
-# list current without a reconfigure.
+# Tracked-file producers used by the file-list checkers. git ls-files keeps
+# the list current without a reconfigure; tools/fixtures/ holds checker test
+# inputs that the comment and forbidden-pattern checkers exclude, matching the
+# .pre-commit-config.yaml exclude rules.
+set(_kith_tracked_src_py
+    "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.yml\" \"*.yaml\" \"*.cmake\" \"CMakeLists.txt\" | grep -v \"^tools/fixtures/\"")
+set(_kith_tracked_src_py_md
+    "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.md\" | grep -v \"^tools/fixtures/\"")
 set(_kith_tracked_c_h
     "git ls-files \"*.c\" \"*.h\" | grep -v \"^third_party/\"")
+
+# --- file-list checkers ---------------------------------------------------
+add_custom_target(check-comments
+    COMMAND bash -c
+        "${_kith_tracked_src_py} | xargs -r ${KITH_PYTHON3_EXECUTABLE} tools/check_comments.py"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running comment-philosophy checker"
+    VERBATIM
+    USES_TERMINAL
+)
 
 add_custom_target(check-clang-format
     COMMAND bash -c
@@ -64,6 +80,16 @@ add_custom_target(check-public-api
     USES_TERMINAL
 )
 
+# --- generated-bindings drift --------------------------------------------
+add_custom_target(check-ctypes-drift
+    COMMAND ${KITH_PYTHON3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tools/check_ctypes_drift.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Checking ctypes bindings for drift"
+    VERBATIM
+    USES_TERMINAL
+)
+
 # --- clang-tidy over the compilation database ----------------------------
 # The file list is the tracked .c set minus the trees that compile outside
 # the library targets' compilation database (tools/ probes and fixtures,
@@ -87,9 +113,12 @@ add_custom_target(check-all
         check-public-api
         check-public-api-includes
         check-internal-includes
+        check-comments
+        check-ctypes-drift
         check-clang-tidy
         check-clang-format
         check-ruff-format
         check-ruff
+        check-trivial-fixers
     COMMENT "Running all check-* targets"
 )

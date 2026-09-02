@@ -114,14 +114,18 @@ ignore = [
     "D",
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# Test files may use assertions and long literals freely.
+"tests/**" = ["E501"]
+# The comment enforcer intentionally matches both straight and curly
+# apostrophes in its forbidden-token regexes; RUF001 flags the curly quotes
+# as ambiguous, which is the point here.
+"tools/check_comments.py" = ["RUF001"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["kith"]
 force-single-line = false
 lines-after-imports = 2
-
-[tool.ruff.lint.per-file-ignores]
-# Test files may use assertions and long literals freely.
-"tests/**" = ["E501"]
 
 [tool.ruff.format]
 # Mirrors .editorconfig: 4-space indent, UTF-8, LF, trailing newline.

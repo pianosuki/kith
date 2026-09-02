@@ -4,7 +4,10 @@ default_install_hook_types: [pre-commit, pre-push, commit-msg]
 # Local python hooks run under language: python so pre-commit owns their
 # environment: each hook installs its declared additional_dependencies into an
 # isolated, version-pinned virtualenv, independent of the developer's project
-# venv or system python.
+# venv or system python. The ctypes drift hook runs under language: python
+# with the clang2 pip wheel (LLVM 22 python bindings) but still loads the
+# system libclang1-22 C library and invokes the clang-22 driver for
+# system-include discovery.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -76,6 +79,46 @@ repos:
         language: python
         pass_filenames: false
         files: '\.(c|h)$'
+
+      - id: check-comments
+        name: comment philosophy enforcement
+        entry: python tools/check_comments.py
+        language: python
+        pass_filenames: true
+        files: '\.(c|h|py|ya?ml|cmake)$|(^|/)CMakeLists\.txt$'
+        exclude: '^tools/fixtures/'
+
+      - id: check-trivial-fixers
+        name: trivial whitespace/line-ending/BOM compliance
+        entry: python tools/check_trivial_fixers.py
+        language: python
+        pass_filenames: true
+        files: '\.(c|h|py)$'
+        exclude: '^third_party/|^tools/fixtures/'
+
+      - id: check-ctypes-drift
+        name: ctypes binding drift
+        entry: python tools/check_ctypes_drift.py
+        language: python
+        # clang2 ships the LLVM 22 python bindings (clang.cindex) as a
+        # pure-Python wheel; libclang1-22 (the C library) and the clang-22
+        # driver are still required from the system, but the python bindings
+        # are owned by this hook's isolated env, not the system python.
+        # ruff is required because the generator formats its output with
+        # `ruff format` and `ruff check --fix` before comparing against the
+        # checked-in bindings; without it the generated files are unformatted
+        # and every header change looks like a spurious drift.
+        additional_dependencies: [clang2==22.1.8.post0, ruff==0.16.0]
+        pass_filenames: false
+        files: 'include/kith/.*\.(h)$'
+
+      - id: vermin
+        name: vermin (minimum python version)
+        entry: vermin --target=3.14- --no-tips .
+        language: python
+        additional_dependencies: [vermin]
+        pass_filenames: false
+        types_or: [python]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.0
