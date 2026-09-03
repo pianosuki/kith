@@ -51,6 +51,14 @@ repos:
         pass_filenames: false
         files: '\.(c|h)$'
 
+      - id: check-runtime-planes
+        name: runtime-plane invariant enforcement
+        entry: python tools/check_runtime_planes.py
+        language: python
+        additional_dependencies: [pyyaml, clang2==22.1.8.post0]
+        pass_filenames: false
+        files: '\.(c|h)$'
+
       - id: check-public-api
         name: public API contract enforcement
         entry: python tools/check_public_api.py
@@ -111,6 +119,14 @@ repos:
         additional_dependencies: [clang2==22.1.8.post0, ruff==0.16.0]
         pass_filenames: false
         files: 'include/kith/.*\.(h)$'
+
+      - id: check-forbidden-patterns
+        name: forbidden patterns and anti-patterns
+        entry: python tools/check_forbidden_patterns.py
+        language: python
+        pass_filenames: true
+        files: '\.(c|h|py|md)$'
+        exclude: '^tools/fixtures/'
 
       - id: vermin
         name: vermin (minimum python version)

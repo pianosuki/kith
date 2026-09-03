@@ -25,6 +25,8 @@ set(_kith_tracked_src_py
     "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.yml\" \"*.yaml\" \"*.cmake\" \"CMakeLists.txt\" | grep -v \"^tools/fixtures/\"")
 set(_kith_tracked_src_py_md
     "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.md\" | grep -v \"^tools/fixtures/\"")
+set(_kith_tracked_src_py_md
+    "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.md\" | grep -v \"^tools/fixtures/\"")
 set(_kith_tracked_c_h
     "git ls-files \"*.c\" \"*.h\" | grep -v \"^third_party/\"")
 
@@ -34,6 +36,15 @@ add_custom_target(check-comments
         "${_kith_tracked_src_py} | xargs -r ${KITH_PYTHON3_EXECUTABLE} tools/check_comments.py"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running comment-philosophy checker"
+    VERBATIM
+    USES_TERMINAL
+)
+
+add_custom_target(check-forbidden-patterns
+    COMMAND bash -c
+        "${_kith_tracked_src_py_md} | xargs -r ${KITH_PYTHON3_EXECUTABLE} tools/check_forbidden_patterns.py"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running forbidden-patterns checker"
     VERBATIM
     USES_TERMINAL
 )
@@ -70,6 +81,15 @@ foreach(_entry IN LISTS _kith_root_checkers)
         USES_TERMINAL
     )
 endforeach()
+
+add_custom_target(check-runtime-planes
+    COMMAND ${KITH_PYTHON3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tools/check_runtime_planes.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running runtime-plane invariant checker"
+    VERBATIM
+    USES_TERMINAL
+)
 
 add_custom_target(check-public-api
     COMMAND ${KITH_PYTHON3_EXECUTABLE}
@@ -110,10 +130,12 @@ add_custom_target(check-all
     DEPENDS
         check-layout-consistency
         check-module-layers
+        check-runtime-planes
         check-public-api
         check-public-api-includes
         check-internal-includes
         check-comments
+        check-forbidden-patterns
         check-ctypes-drift
         check-clang-tidy
         check-clang-format

@@ -1,0 +1,50 @@
+# Game-specific terms for the comment philosophy enforcer.
+# One term per line. Lines starting with # are comments.
+# Enforced only in src/ and include/ (not in examples/).
+# Extended via this file, not code changes.
+#
+# Terms are narrowly game-specific: a term that has a common meaning in
+# systems programming or C code (e.g. "cast", "unit", "spawn", "level",
+# "status", "critical", "kill") is excluded to avoid false positives in
+# comment-scoped word-boundary matching.
+
+# Game entities / roles
+player
+hero
+enemy
+monster
+mob
+npc
+creature
+avatar
+
+# Game progression
+quest
+xp
+achievement
+skill
+ability
+
+# Game economy / possessions
+loot
+inventory
+currency
+gold
+equipment
+weapon
+armor
+rarity
+
+# Combat
+aggro
+attack
+damage
+heal
+buff
+debuff
+stun
+respawn
+revive
+
+# Game actions / mechanics
+cooldown

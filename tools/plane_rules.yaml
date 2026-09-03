@@ -1,0 +1,70 @@
+# Runtime plane rules for check_runtime_planes.py.
+#
+# Maps modules to runtime planes and defines forbidden cross-plane
+# includes and data-flow ownership rules. The checker loads this file
+# and enforces the include-based rules; the data-flow (writes) rules
+# are documented for future AST-based implementation.
+
+# Module-to-plane mapping. "shared" modules have no plane and may be
+# included by any plane. "client" and "composition" are not planes
+# (they are consumers/wirers, not data-flow owners).
+planes:
+  sim: Sim
+  fabric: Fabric
+  gateway: Gateway
+  net: Gateway      # transport lives in the Gateway plane
+  aoi: shared       # spatial query library owns no plane-specific data
+  coord: Coord
+  control: Control
+  proto: shared
+  state: shared
+  db: shared
+  reactor: shared
+  util: shared
+  config: shared
+  logger: shared
+  metrics: shared
+  client: client
+  server: composition
+
+# Forbidden cross-plane includes.
+# Key: source module. Value: list of target modules whose headers the
+# source module may not include. This enforces the plane contracts:
+#
+#   sim -> must not include gateway/* or fabric/* (sim must not know
+#          about sockets or delivery)
+#   fabric -> must not include gateway/* or net/* (fabric must not
+#             mutate authoritative state or talk directly to sockets)
+#
+# A "shared" module has no forbidden targets (it is a dependency, not
+# a data-flow owner). The dependency-layer checker (check_module_layers)
+# governs include direction; this checker governs plane data-flow
+# ownership expressed through includes.
+forbidden_includes:
+  sim:
+    - gateway
+    - fabric
+  fabric:
+    - gateway
+    - net
+
+# Data-flow ownership rules (implemented by check_runtime_planes.py via a
+# libclang AST pass over src/ translation units). Each key is a source path
+# pattern relative to src/; each value is a list of target modules whose
+# mutators the source translation unit must not call. A translation unit under
+# src/<pattern>/ that calls `kith_<target>_set_*` is flagged.
+#
+#   gateway/view -> must not mutate authoritative actor state
+#                   (no calls to kith_sim_set_* mutators)
+#   coord -> must not emit per-actor state frames
+#            (no calls to kith_sim_set_* mutators)
+#
+# The include-based rules above are the first guardrail; the data-flow rules
+# below are the AST-based second guardrail that catches a cross-plane write
+# the include graph permits (e.g. a gateway/view TU that reaches a sim
+# mutator through a chain of static helpers).
+forbidden_writes:
+  gateway/view:
+    - sim
+  coord:
+    - sim
