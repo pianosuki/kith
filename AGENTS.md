@@ -579,15 +579,16 @@ leave the local repo. The human owns the decision to publish.
 ### 5.0a The verification gate (single source of truth)
 
 `scripts/verify.sh` is the single gate: it runs lint (pre-commit, license
-compliance, mypy) and build (configure, compile, ctest, pytest, check-all,
-the ABI diff, checksec) in one invocation, so a change cannot pass one
-check and fail another. The gate is verify-only: it never rewrites files.
+compliance, mypy), commits (conventional + DCO + signing), and build
+(configure, compile, ctest, pytest, check-all, the ABI diff, checksec) in
+one invocation, so a change cannot pass one check and fail another. The
+gate is verify-only: it never rewrites files.
 Run `scripts/verify.sh` (or `scripts/verify.sh <stage>`) and get all-green
 before **every** commit. When a gate reports a formatting violation, fix
 it with `cmake --build --target format` (or `scripts/format.sh`), then
 re-run the gate. `pre-commit` alone is insufficient (it omits clang-tidy,
-mypy-on-push, license compliance, the build, and the ABI/hardening
-checks).
+mypy-on-push, license compliance, the commits stage, the build, and the
+ABI/hardening checks).
 
 ### 5.1 Branch Strategy
 - `main` is always releasable. The maintainer commits directly to
@@ -708,9 +709,9 @@ body must contain a clear reason for the revert.
 Every commit is signed off (DCO) and cryptographically signed (SSH, not
 GPG). The sign-off certifies the Developer Certificate of Origin
 (https://developercertificate.org), including the right to submit the
-work under the project's Apache-2.0 license. Sign-off is passed
-explicitly on every commit (`git commit -s`): git has no setting that
-enables `--signoff` by default (gitfaq(7)). The signing configuration (`gpg.format ssh`, the
+work under the project's Apache-2.0 license. The `dco-signoff` commit-msg
+hook appends the sign-off when the message lacks one; git has no setting
+that enables `--signoff` by default (gitfaq(7)). The signing configuration (`gpg.format ssh`, the
 Ed25519 signing key, `commit.gpgsign true`) is required of every clone. An
 unsigned commit does not land; GitHub verifies SSH-signed commits
 against the key registered to the author's account.
@@ -849,8 +850,8 @@ who knew what to build and why, in order.
 
 ## 8. Review Checklist
 Before requesting review, verify:
-- [ ] `scripts/verify.sh` is all-green (the single gate: lint + build +
-      ABI diff + checksec; see §5.0a). This subsumes the items
+- [ ] `scripts/verify.sh` is all-green (the single gate: lint + commits +
+      build + ABI diff + checksec; see §5.0a). This subsumes the items
       below, which are listed for traceability.
 - [ ] Formatters and linters pass: clang-format, clang-tidy, ruff check
       and format, mypy --strict.

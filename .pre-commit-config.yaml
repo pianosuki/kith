@@ -128,6 +128,20 @@ repos:
         files: '\.(c|h|py|md)$'
         exclude: '^tools/fixtures/'
 
+      - id: check-adr-style
+        name: architecture-record house style
+        entry: python tools/check_adr_style.py
+        language: python
+        pass_filenames: true
+        files: '^docs/architecture/adr/.*\.md$'
+
+      - id: check-markdown-links
+        name: markdown link checker
+        entry: python tools/check_markdown_links.py
+        language: python
+        pass_filenames: false
+        files: '\.md$'
+
       - id: vermin
         name: vermin (minimum python version)
         entry: vermin --target=3.14- --no-tips .
@@ -180,6 +194,22 @@ repos:
           - ci
           - chore
           - revert
+
+  - repo: local
+    hooks:
+      - id: dco-signoff
+        name: DCO sign-off auto-append
+        description: Appends the missing Signed-off-by trailer to the commit message being created.
+        entry: python tools/dco_signoff.py
+        language: python
+        stages: [commit-msg]
+
+      - id: check-commit-messages
+        name: commit message and DCO conformance
+        description: Validates conventional header, DCO sign-off, and signing over the commit being created.
+        entry: python tools/check_commit_messages.py --message
+        language: python
+        stages: [commit-msg]
 
   - repo: https://github.com/fsfe/reuse-tool
     rev: v6.2.0

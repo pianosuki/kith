@@ -11,17 +11,22 @@
 #   scripts/verify.sh [stages...]
 #
 # Stages (run in order when listed):
-#   lint          pre-commit (verify-only: format compliance, lint) + mypy.
-#                 Hooks never mutate the working tree; the fix path is
-#                 `cmake --build --target format` or `scripts/format.sh`.
-#   build         configure, build, ctest, pytest, the ABI diff against the
-#                 committed snapshots, and the aggregated check-* targets
-#   all           lint + build  (default when no stages given)
+#   lint          pre-commit (verify-only: format compliance, lint,
+#                 architectural checkers) + mypy. Hooks never mutate the
+#                 working tree; the fix path is `cmake --build --target
+#                 format` or `scripts/format.sh`.
+#   build         configure, build, ctest, pytest, and the aggregated check-* targets
+#   commits       conventional-commits header + DCO + signing over
+#                 a commit range; when KITH_ALLOWED_SIGNERS points at a
+#                 git allowedSignersFile, signatures are cryptographically
+#                 verified via git verify-commit (otherwise presence-only)
+#   all           lint + commits + build  (default when no stages given)
 #
 # Examples:
 #   scripts/verify.sh                       # everything (default: all)
-#   scripts/verify.sh lint                  # only the lint/pre-commit stage
-#   scripts/verify.sh build                 # only build + tests + check-*
+#   scripts/verify.sh lint                   # only the lint/pre-commit stage
+#   scripts/verify.sh build                  # only build + tests + check-*
+#   scripts/verify.sh --base <sha> commits   # validate a specific range
 #
 # Environment:
 #   KITH_BUILD_DIR    build output directory for the build stage
@@ -40,6 +45,9 @@ set -euo pipefail
 
 stage_lint=0
 stage_build=0
+stage_commits=0
+base=""
+range_head="HEAD"
 
 usage() {
     sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'
@@ -49,7 +57,12 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
         lint)      stage_lint=1; shift ;;
         build)     stage_build=1; shift ;;
-        all)       stage_lint=1; stage_build=1; shift ;;
+        commits)   stage_commits=1; shift ;;
+        all)       stage_lint=1; stage_commits=1; stage_build=1; shift ;;
+        --base)
+            base="$2"; shift 2 ;;
+        --head)
+            range_head="$2"; shift 2 ;;
         -h|--help)
             usage; exit 0 ;;
         *)
@@ -59,8 +72,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$stage_lint" -eq 0 ] && [ "$stage_build" -eq 0 ]; then
-    stage_lint=1; stage_build=1
+if [ "$stage_lint" -eq 0 ] && [ "$stage_build" -eq 0 ] && [ "$stage_commits" -eq 0 ]; then
+    stage_lint=1; stage_commits=1; stage_build=1
 fi
 
 cd "$(dirname "$0")/.."
@@ -98,6 +111,57 @@ if [ "$stage_lint" -eq 1 ]; then
 
     echo "==> verify.sh: lint (mypy, pre-push stage)"
     pre-commit run mypy --all-files --hook-stage pre-push || fail "lint (mypy)"
+fi
+
+# --- commits ------------------------------------------------------------
+
+if [ "$stage_commits" -eq 1 ]; then
+    echo "==> verify.sh: commits (conventional, DCO, signing)"
+    # The commits checker confirms each commit carries a signature. When
+    # KITH_ALLOWED_SIGNERS points at a git allowedSignersFile (set in CI
+    # from a secret, never committed), signatures are cryptographically
+    # verified via git verify-commit. Otherwise the check is presence-only
+    # (the gpgsig header exists), relying on the hosting platform's own
+    # verification. No per-repo signing keyring is tracked (AGENTS.md §5.2.8).
+
+    range_args=(--head "$range_head")
+    base_sha="$(git rev-parse --verify --quiet origin/main || true)"
+    head_sha="$(git rev-parse --verify --quiet "$range_head" || true)"
+    if [ -n "$base" ]; then
+        range_args+=(--base "$base")
+    elif [ -n "$base_sha" ] && [ -n "$head_sha" ] \
+            && fork_point="$(git merge-base "$base_sha" "$head_sha" 2>/dev/null)"; then
+        # Validate exactly the commits not yet on the shared ref:
+        # origin/main..head for linear work, and fork-point..head once
+        # a rebase diverges local history from the fetched ref. A
+        # depth-1 shallow clone whose fork point falls below the
+        # boundary is a CI shape; CI passes an explicit --base. When head
+        # equals the fetched ref the range is empty and the checker
+        # validates nothing — each pushed commit was already validated
+        # over its push range.
+        range_args+=(--base "$fork_point")
+        if [ "$fork_point" = "$head_sha" ]; then
+            # No unpushed commits exist (head equals origin/main, or head
+            # is behind the fetched ref). Passing here depends on the
+            # printed reason staying explicit — do not soften it to a
+            # bare success line.
+            echo "verify.sh: commits: no unpushed commits to validate (origin/main == ${fork_point})"
+        fi
+    fi
+    # With origin/main unresolved the checker applies its documented
+    # fallback: scan recent history reachable from head, capped at
+    # --max-commits (default 256). Deriving --base main instead would
+    # make direct-to-main a no-op: HEAD equals main, the range is empty,
+    # and the stage passes without inspecting anything.
+
+    signers_args=()
+    if [ -n "${KITH_ALLOWED_SIGNERS:-}" ] && [ -f "${KITH_ALLOWED_SIGNERS}" ]; then
+        signers_args+=(--allowed-signers "${KITH_ALLOWED_SIGNERS}")
+    fi
+
+    python3 tools/check_commit_messages.py "${range_args[@]}" "${signers_args[@]}" \
+        || fail "commits (${range_args[*]})"
+
 fi
 
 # --- build --------------------------------------------------------------
