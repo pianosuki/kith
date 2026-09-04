@@ -91,6 +91,15 @@ add_custom_target(check-runtime-planes
     USES_TERMINAL
 )
 
+add_custom_target(check-replay-codec-imports
+    COMMAND ${KITH_PYTHON3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tools/check_replay_codec_imports.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running replay codec stdlib-only checker"
+    VERBATIM
+    USES_TERMINAL
+)
+
 add_custom_target(check-public-api
     COMMAND ${KITH_PYTHON3_EXECUTABLE}
             ${CMAKE_SOURCE_DIR}/tools/check_public_api.py
@@ -136,6 +145,7 @@ add_custom_target(check-all
         check-internal-includes
         check-comments
         check-forbidden-patterns
+        check-replay-codec-imports
         check-ctypes-drift
         check-clang-tidy
         check-clang-format
