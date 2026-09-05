@@ -6,7 +6,7 @@
 # release assets only, where the binary wheel bundles the libkith_* shared
 # libraries and leaves the system libraries above dynamically linked, while
 # the sdist carries the source tree to build them.
-requires = ["hatchling>=1.31.0", "cmake>=4.4.0", "ninja>=1.13.0"]
+requires = ["hatchling>=1.32.0", "cmake>=4.4.3", "ninja>=1.13.2"]
 build-backend = "hatchling.build"
 
 [project]
@@ -72,11 +72,20 @@ dev = [
 # generated. Keeps CI and local installs bit-identical for a given lock.
 # Pinned in UTC so the cutoff is independent of the local machine timezone;
 # bump deliberately when pulling in newer dependency releases.
-exclude-newer = "2026-08-01T17:00:00Z"
+exclude-newer = "2026-08-09T17:00:00Z"
 # Require a uv version that understands exclude-newer and PEP 735 groups.
 required-version = ">=0.12.0"
 # Managed venv targets the project's requires-python.
 python-preference = "managed"
+
+# Per-package windows for releases that published after the global cutoff:
+# the isolated build environment (hatchling, cmake, ninja). Every other
+# dependency stays frozen at the global cutoff. This sub-table must stay
+# last: a table header claims every key that follows it.
+[tool.uv.exclude-newer-package]
+hatchling = "2026-08-12T00:00:00Z"
+cmake = "2026-08-31T00:00:00Z"
+ninja = "2026-08-31T00:00:00Z"
 
 # ---------------------------------------------------------------------------
 # Ruff: formatter + linter
@@ -94,7 +103,7 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-# Conservative baseline suitable for tooling scripts and the framework
+# Conservative baseline suitable for tooling scripts and the future framework
 # package. Add rules by name here; never widen with noqa-suppressed silences.
 select = [
     "E",      # pycodestyle errors
@@ -153,8 +162,7 @@ disallow_untyped_decorators = true
 no_implicit_optional = true
 # Fail loudly on missing stubs rather than silently inferring Any.
 warn_unused_ignores = true
-# tooling scripts, the framework package, and the tests; type stubs ship
-# with the deps.
+# tooling scripts and the framework package; type stubs ship with the deps.
 files = ["tools", "python", "tests"]
 exclude = ["tools/fixtures", "build/", "\\.venv/", "\\.ruff_cache/"]
 mypy_path = ["python", "tests/integration", "tests/python"]
