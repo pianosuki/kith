@@ -20,12 +20,16 @@
 #                 a commit range; when KITH_ALLOWED_SIGNERS points at a
 #                 git allowedSignersFile, signatures are cryptographically
 #                 verified via git verify-commit (otherwise presence-only)
-#   all           lint + commits + build  (default when no stages given)
+#   free-threaded run the Python suite under the free-threaded interpreter
+#                 (python3.14t, GIL disabled); self-installs the interpreter
+#                 via uv when absent, and fails if it cannot be obtained
+#   all           lint + commits + build + free-threaded  (default when no stages given)
 #
 # Examples:
 #   scripts/verify.sh                       # everything (default: all)
 #   scripts/verify.sh lint                   # only the lint/pre-commit stage
 #   scripts/verify.sh build                  # only build + tests + check-*
+#   scripts/verify.sh free-threaded          # only the python3.14t suite
 #   scripts/verify.sh --base <sha> commits   # validate a specific range
 #
 # Environment:
@@ -46,6 +50,7 @@ set -euo pipefail
 stage_lint=0
 stage_build=0
 stage_commits=0
+stage_ft=0
 base=""
 range_head="HEAD"
 
@@ -58,7 +63,8 @@ while [ "$#" -gt 0 ]; do
         lint)      stage_lint=1; shift ;;
         build)     stage_build=1; shift ;;
         commits)   stage_commits=1; shift ;;
-        all)       stage_lint=1; stage_commits=1; stage_build=1; shift ;;
+        free-threaded) stage_ft=1; shift ;;
+        all)       stage_lint=1; stage_commits=1; stage_build=1; stage_ft=1; shift ;;
         --base)
             base="$2"; shift 2 ;;
         --head)
@@ -72,8 +78,8 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [ "$stage_lint" -eq 0 ] && [ "$stage_build" -eq 0 ] && [ "$stage_commits" -eq 0 ]; then
-    stage_lint=1; stage_commits=1; stage_build=1
+if [ "$stage_lint" -eq 0 ] && [ "$stage_build" -eq 0 ] && [ "$stage_commits" -eq 0 ] && [ "$stage_ft" -eq 0 ]; then
+    stage_lint=1; stage_commits=1; stage_build=1; stage_ft=1
 fi
 
 cd "$(dirname "$0")/.."
@@ -84,7 +90,11 @@ fail() {
 }
 
 # Redirect python bytecode caches out of the source tree so the working tree
-# stays clean.
+# stays clean and the free-threaded and standard interpreters never share a
+# .pyc cache. A shared cache compiles co_filename against one absolute path
+# and then fails inspect.getsourcelines under another (a different CWD),
+# which surfaces as spurious test errors.
+# Each stage that drives a different interpreter overrides the prefix below.
 export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/kith-pycache}"
 # Clear any pre-existing source-tree __pycache__ left by older runs that wrote
 # bytecode in place; the prefix above keeps new caches out of the tree.
@@ -258,8 +268,8 @@ if [ "$stage_build" -eq 1 ]; then
     if command -v checksec >/dev/null 2>&1; then
         # The hardening contract mandates PIE, full RELRO, NX, stack
         # canary, and CFI (Intel CET on x86-64, BTI on aarch64) on every
-        # artifact: the test executables and the shipped libkith_*.so.*
-        # libraries.
+        # artifact: the test executables, the shipped libkith_*.so.*
+        # libraries, and the example DSOs.
         # checksec ships two incompatible CLIs: the classic bash script
         # ('checksec --file=<bin>') and the Go tool ('checksec file <bin>').
         # The Go tool gates all five features via --fail-if; the classic
@@ -273,6 +283,7 @@ if [ "$stage_build" -eq 1 ]; then
             artifacts="$(
                 find "$build_dir/tests/c" -maxdepth 1 -type f -executable 2>/dev/null
                 find "$build_dir" -maxdepth 1 -name 'libkith_*.so.*' -type f -executable 2>/dev/null
+                find "$build_dir/examples" -maxdepth 1 -name '*.so' -type f -executable 2>/dev/null
             )"
             # An empty scan set greens the loop below without inspecting
             # anything — a build whose artifact layout broke must fail the
@@ -458,6 +469,106 @@ if [ "$stage_build" -eq 1 ]; then
             echo "verify.sh: pkg-config probe run failed (see $consumer_prefix/probe-run.log)" >&2
             fail "build (consumer pkg-config probe run)"
         fi
+    fi
+fi
+
+# --- free-threaded ------------------------------------------------------
+
+if [ "$stage_ft" -eq 1 ]; then
+    echo "==> verify.sh: free-threaded (python3.14t, GIL disabled)"
+
+    # Resolve the free-threaded interpreter. uv manages a standalone
+    # cpython-3.14.x+freethreaded build; fall back to a python3.14t on PATH.
+    ft_python=""
+    if command -v python3.14t >/dev/null 2>&1; then
+        ft_python="$(command -v python3.14t)"
+    elif command -v uv >/dev/null 2>&1; then
+        ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+    fi
+    # Self-bootstrap: if no interpreter is available, ask uv to fetch one so
+    # the stage runs instead of failing. A green gate that skipped the
+    # free-threaded suite would hide a concurrency regression until a user
+    # ran python3.14t, so the stage fails rather than skipping when the
+    # interpreter cannot be obtained.
+    if { [ -z "$ft_python" ] || [ ! -x "$ft_python" ]; } && command -v uv >/dev/null 2>&1; then
+        if uv python install 3.14t >/dev/null 2>&1; then
+            ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+        fi
+    fi
+    if [ -z "$ft_python" ] || [ ! -x "$ft_python" ]; then
+        fail "free-threaded (python3.14t unavailable and uv could not fetch it)"
+    else
+        # Provision a dedicated venv for the free-threaded interpreter so the
+        # standard project .venv is never replaced. pytest and ruff run the
+        # suite; clang2 supplies the LLVM 22 python bindings the drift tests
+        # regenerate with, matching the checked-in bindings byte for byte.
+        # libclang1-22 (the C library) and clang-22 (the driver) come from the
+        # system.
+        ft_venv="$(pwd)/.venv-ft"
+        need_venv=0
+        if [ ! -x "$ft_venv/bin/python3.14t" ]; then
+            need_venv=1
+        elif ! "$ft_venv/bin/python3.14t" -c "import pytest" >/dev/null 2>&1 \
+             || ! "$ft_venv/bin/python3.14t" -c "import xdist" >/dev/null 2>&1 \
+             || ! "$ft_venv/bin/python3.14t" -c "import clang.cindex" >/dev/null 2>&1 \
+             || ! "$ft_venv/bin/python3.14t" -c "import yaml" >/dev/null 2>&1 \
+             || [ ! -x "$ft_venv/bin/ruff" ]; then
+            need_venv=1
+        fi
+        if [ "$need_venv" -eq 1 ]; then
+            if ! command -v uv >/dev/null 2>&1; then
+                echo "verify.sh: 'uv' not found; cannot provision free-threaded venv" >&2
+                fail "free-threaded (uv missing)"
+            fi
+            uv venv --python "$ft_python" --clear "$ft_venv" >/dev/null 2>&1 \
+                || fail "free-threaded (venv create)"
+            # ruff is pinned so regenerated bindings are formatted
+            # byte-identical to the checked-in set; an unpinned/latest ruff
+            # could reformat output and make every drift check spuriously
+            # fail. The pin matches the pre-commit ruff hook rev, so one
+            # ruff version formats the corpus on every gate path. clang2 is
+            # the LLVM 22 python bindings (same version the drift hook uses).
+            # pytest and pytest-xdist are pinned for the same reason: this
+            # venv installs outside uv.lock, and an unpinned latest would
+            # drift from the standard leg's runner.
+            uv pip install --python "$ft_venv" \
+                pytest==9.1.1 pytest-xdist==3.8.0 ruff==0.16.0 clang2==22.1.8.post0 pyyaml==6.0.3 >/dev/null 2>&1 \
+                || fail "free-threaded (pytest+xdist+ruff+clang2+pyyaml install)"
+        fi
+
+        # Confirm the interpreter really runs GIL-free before driving the suite.
+        if ! "$ft_venv/bin/python3.14t" -c "import sys; sys.exit(0 if not sys._is_gil_enabled() else 1)"; then
+            echo "verify.sh: $ft_python is not a free-threaded build (GIL enabled)" >&2
+            fail "free-threaded (interpreter is not GIL-free)"
+        fi
+
+        # Use a per-interpreter pycache prefix so the free-threaded run never
+        # shares .pyc files with the standard interpreter's cache. The
+        # separation is load-bearing, not redundant: both interpreters are
+        # 3.14.7 and share the identical cache tag and bytecode magic number.
+        # This leg runs serial by default: its teardown-sensitive tests
+        # (finalizers, asyncio loop shutdown) are load-timing sensitive, and
+        # parallel workers surface that sensitivity on a loaded host.
+        # KITH_FT_JOBS>1 opts into parallel workers under the same shape as
+        # the standard leg; that mode assumes a quiet host. pytest-xdist
+        # stays installed in the venv so the leg's runner dependencies match
+        # the standard leg's whether or not it runs parallel.
+        ft_pycache="${TMPDIR:-/tmp}/kith-pycache-ft"
+        ft_jobs="${KITH_FT_JOBS:-0}"
+        case "$ft_jobs" in (*[!0-9]*|'') ft_jobs=0 ;; esac
+        ft_args=()
+        if [ "$ft_jobs" -gt 1 ]; then
+            if "$ft_venv/bin/python3.14t" -c "import xdist" >/dev/null 2>&1; then
+                ft_args+=(-n "$ft_jobs" --dist loadgroup --max-worker-restart 0)
+            else
+                echo "verify.sh: pytest-xdist not importable; running the free-threaded suite serially" >&2
+            fi
+        fi
+        env PATH="$ft_venv/bin:$PATH" \
+            PYTHONPYCACHEPREFIX="$ft_pycache" \
+            "$ft_venv/bin/python3.14t" -m pytest -q "${ft_args[@]}" \
+            || fail "free-threaded (pytest)"
+        echo "verify.sh: free-threaded Python suite passed (GIL disabled)."
     fi
 fi
 

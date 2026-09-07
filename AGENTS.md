@@ -455,6 +455,11 @@ missing `@ownership` or `@thread_safety`.
 - Public Python API is thread-safe by default; documented exceptions carry
   `@thread_safety unsafe`.
 - The handler worker pool size is a config tunable (`python_worker_count`).
+  The embedded-server entry point resolves it through one ladder: the
+  `--python-workers` command-line flag, else the `KITH_PYTHON_WORKERS`
+  environment variable, else the server default (one worker under the
+  standard interpreter; scaling profiles raise it explicitly under
+  free-threaded Python).
 
 ### 3.5 File Structure
 Every Python module follows the same top-to-bottom shape. The order is
@@ -579,16 +584,17 @@ leave the local repo. The human owns the decision to publish.
 ### 5.0a The verification gate (single source of truth)
 
 `scripts/verify.sh` is the single gate: it runs lint (pre-commit, license
-compliance, mypy), commits (conventional + DCO + signing), and build
-(configure, compile, ctest, pytest, check-all, the ABI diff, checksec) in
+compliance, mypy), commits (conventional + DCO + signing), build
+(configure, compile, ctest, pytest, check-all, the ABI diff, checksec),
+and free-threaded (the Python suite under python3.14t, GIL disabled) in
 one invocation, so a change cannot pass one check and fail another. The
 gate is verify-only: it never rewrites files.
 Run `scripts/verify.sh` (or `scripts/verify.sh <stage>`) and get all-green
 before **every** commit. When a gate reports a formatting violation, fix
 it with `cmake --build --target format` (or `scripts/format.sh`), then
 re-run the gate. `pre-commit` alone is insufficient (it omits clang-tidy,
-mypy-on-push, license compliance, the commits stage, the build, and the
-ABI/hardening checks).
+mypy-on-push, license compliance, the commits stage, the build, the
+free-threaded leg, and the ABI/hardening checks).
 
 ### 5.1 Branch Strategy
 - `main` is always releasable. The maintainer commits directly to

@@ -5,7 +5,7 @@
 ## Context
 
 The distributed fidelity gate bounds the certified move-missing ratio per
-instance. At the gate operating point the harness measures that
+instance (ADR-0020). At the gate operating point the harness measures that
 ratio by counting self-echo events: replication frames a client receives
 describing its own actor, compared against the movement inputs it
 submitted. Two measured facts make event counting dishonest at the

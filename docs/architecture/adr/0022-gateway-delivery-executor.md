@@ -5,7 +5,7 @@
 ## Context
 
 The gateway tick composes and delivers every session's view inline on the
-reactor thread. At the fidelity gate's operating point the
+reactor thread. At the fidelity gate's operating point (ADR-0020) the
 measured per-session demand — compose plus deliver plus the cache refresh —
 exceeds the compose budget, the budget defers recompositions wholesale, and
 the gate fails on delivery throughput: a measured capacity boundary, not a
