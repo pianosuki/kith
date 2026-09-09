@@ -61,6 +61,7 @@ endif()
 # them (and after the optional control block) so their targets exist.
 include(cmake/lib_server.cmake)
 
+
 # Per-checker build targets (check-layout-consistency, check-clang-tidy, ...,
 # check-all). Each runs the corresponding tools/*.py checker (or clang-tidy /
 # clang-format) and fails the build on a violation. The format/verify split
@@ -99,6 +100,14 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
     add_subdirectory(examples)
 endif()
+
+# Perf tooling: the C-native bench driver links the layer-2 sim + fabric
+# libraries directly (no composition root; the bench measures the raw
+# publish path, not the server wiring).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/CMakeLists.txt")
+    add_subdirectory(tools)
+endif()
+
 
 # --- Downstream consumer story: find_package(kith) + pkg-config -----------
 # Every layer-2 (and the layer-3 composition root) library above installed
