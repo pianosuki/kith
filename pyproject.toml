@@ -43,9 +43,24 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-# The pure-Python package wraps ctypes bindings to the C shared libraries
-# and depends only on the standard library.
+# Runtime dependencies of the kith Python package. The pure-Python
+# package wraps ctypes bindings to the C shared libraries and depends
+# only on the standard library. The visual example's window renderer is
+# the one user-facing dependency and it rides the opt-in extra below;
+# the example's server, drivers, and console entry point run on the
+# standard library alone.
 dependencies = []
+
+[project.optional-dependencies]
+# The visual example's window renderer, pinned to the exact prerelease
+# the example is verified against. Only the graphical client imports
+# it; installing the base distribution never pulls it.
+visual = ["arcade==4.0.0.dev7"]
+
+[project.scripts]
+# The visual example's launcher: lists and launches the out-of-box
+# scenarios (python/kith/examples/visual/README.md).
+kith-visual = "kith.examples.visual.__main__:main"
 
 [project.urls]
 Documentation = "https://github.com/pianosuki/kith/tree/main/docs"
@@ -66,6 +81,11 @@ dev = [
     "pyyaml>=6.0",
     "vermin>=1.6.0",
 ]
+# Dev opt-in for the visual example's integration surface (the same pin
+# as the runtime extra): `uv sync --group visual` makes the client
+# importable for headless checks without touching the default toolchain
+# installs.
+visual = ["arcade==4.0.0.dev7"]
 
 [tool.uv]
 # Reproducible installs: refuse any release published after the lockfile was
@@ -86,6 +106,11 @@ python-preference = "managed"
 hatchling = "2026-08-12T00:00:00Z"
 cmake = "2026-08-31T00:00:00Z"
 ninja = "2026-08-31T00:00:00Z"
+# The visual example's window stack, published after the global
+# cutoff; arcade pins its pyglet build exactly, and the pair is what
+# the example verifies against.
+arcade = "2026-08-22T00:00:00Z"
+pyglet = "2026-08-21T00:00:00Z"
 
 # ---------------------------------------------------------------------------
 # Ruff: formatter + linter
@@ -182,6 +207,20 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["clang.cindex", "gen_ctypes"]
 ignore_missing_imports = true
+
+# The visual example's window stack ships typed but may be absent from
+# the type-checking environment (it rides the opt-in visual extra); the
+# client module is still checked, with the renderer treated as Any.
+[[tool.mypy.overrides]]
+module = ["arcade", "arcade.*", "pyglet", "pyglet.*"]
+ignore_missing_imports = true
+
+# Where the extra is absent, the client's window base class resolves to
+# Any; relax the subclassing flag for that one module so the same
+# config passes with and without the extra installed.
+[[tool.mypy.overrides]]
+module = "kith.examples.visual.client"
+disallow_subclassing_any = false
 
 # ---------------------------------------------------------------------------
 # pytest: test runner
