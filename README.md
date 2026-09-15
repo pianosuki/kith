@@ -10,7 +10,8 @@ A C23 core owns the performance-critical systems: transport, the reactor,
 spatial indexing, the world stream fabric, and the simulation. Game logic
 extends the core in Python. Simulation models that need more than Python
 speed ship as C shared libraries against the same ABI. The core also stands
-alone: it installs headers and CMake targets with no Python at all.
+alone: it installs headers and CMake targets, and examples/minimal boots a
+server with no Python at all.
 
 The world is divided into cells that publish state once; gateways
 subscribe to cells and compose a per-player view. The fabric carries that
@@ -50,13 +51,57 @@ git clone https://github.com/pianosuki/kith kith && cd kith
 uv sync
 source .venv/bin/activate
 cmake --preset release && cmake --build build/release
+python -m examples.free_movement.server  # prints: free_movement: gateway=… control=…
 ```
+
+In a second terminal, drive the running server over its control plane:
+
+```sh
+curl -X POST http://127.0.0.1:<control>/spawn  # {"actor_id": 1}
+curl http://127.0.0.1:<control>/query_state  # the actor's live state
+```
+
+`./scripts/verify.sh` is the same gate CI runs: lint, commits, build,
+free-threaded. From a verified tree, [CONTRIBUTING.md](CONTRIBUTING.md)
+is the contributor workflow.
+
+## C consumers
+
+From a built tree, install the headers and libraries:
+
+```sh
+cmake --install build/release --prefix /opt/kith
+```
+
+A downstream CMake project configures with the prefix on its search path
+(`-DCMAKE_PREFIX_PATH=/opt/kith`) and links the imported targets —
+`kith::server` is the composition root a game links against, and every plane
+library is an imported target beside it:
+
+```cmake
+find_package(kith 1.0.0 REQUIRED)
+target_link_libraries(my_game PRIVATE kith::server)
+```
+
+Hand-written Makefiles and autotools consume the pkg-config entry point:
+
+```sh
+PKG_CONFIG_PATH=/opt/kith/lib/pkgconfig pkg-config --cflags --libs kith
+```
+
+`tests/consumer/` is a minimal downstream project that exercises both
+channels in CI.
 
 ## Requirements
 
-- Linux, x86-64.
+## Requirements
+
+- Linux, x86-64, glibc 2.38 or newer. `import kith` raises a load error on
+  any other platform.
 - Python 3.14+, standard or free-threaded builds.
-- Clang 22+ (or GCC 14+), clang-format-22 (the pinned formatter —
+- Wheel path: the bundled libraries link `liburing`, `libpq`, `libhiredis`
+  at runtime; install them from the system package manager.
+- Source path: Clang 22+ (or GCC 14+), clang-format-22 (the pinned formatter —
   `uv tool install clang-format==22.1.8`, then symlink `~/.local/bin/clang-format`
   as `clang-format-22`), CMake 4.4+, Ninja 1.13+, `uv`, `pre-commit`.
 
@@ -78,7 +123,12 @@ or explicit amendment, not by external contribution.
 
 ## Contributing
 
-[AGENTS.md](AGENTS.md) is the coding standard and review checklist.
+[CONTRIBUTING.md](CONTRIBUTING.md) is the workflow; [AGENTS.md](AGENTS.md)
+is the coding standard and review checklist. [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+governs participation; [SECURITY.md](SECURITY.md) takes private
+vulnerability reports. General issues and questions are answered best-effort
+by the single maintainer, with no response-time guarantee; vulnerability
+reports carry their own channel and expectations in [SECURITY.md](SECURITY.md).
 
 ## License
 
