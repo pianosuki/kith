@@ -4,3 +4,23 @@ version = 1
 path = ["**"]
 SPDX-FileCopyrightText = "2026 Scott Weer <pianosuki@protonmail.com>"
 SPDX-License-Identifier = "Apache-2.0"
+
+# Third-party license texts, declared under their own terms, not framework
+# authorship. LICENSES/ is the canonical corpus reuse resolves identifiers
+# against; docs/third-party/ carries the referenced copies
+# THIRD-PARTY-NOTICES.md points at. The framework links these libraries from
+# the host system.
+[[annotations]]
+path = ["LICENSES/MIT.txt", "docs/third-party/MIT.txt"]
+SPDX-FileCopyrightText = "2019 Jens Axboe"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["LICENSES/PostgreSQL.txt", "docs/third-party/PostgreSQL.txt"]
+SPDX-FileCopyrightText = "1996-2026, PostgreSQL Global Development Group"
+SPDX-License-Identifier = "PostgreSQL"
+
+[[annotations]]
+path = ["LICENSES/BSD-3-Clause.txt", "docs/third-party/BSD-3-Clause.txt"]
+SPDX-FileCopyrightText = ["2009-2011, Salvatore Sanfilippo", "2010-2011, Pieter Noordhuis"]
+SPDX-License-Identifier = "BSD-3-Clause"
