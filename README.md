@@ -44,7 +44,40 @@ belong to the game.
 - Agentic testing: headless clients drive setup, act, assert, diagnose.
 - One observability contract: structured logging, metrics, tracing.
 
-## Building from source
+## Quickstart: run the release
+
+Tagged releases ship a binary wheel, the sdist, and SHA256 checksums on the
+[releases page](https://github.com/pianosuki/kith/releases/latest). The
+wheel bundles the compiled core; boot an embedded server:
+
+```sh
+python3 -m venv .venv && source .venv/bin/activate
+pip install kith_fw-1.0.0-py3-none-manylinux_2_38_x86_64.whl
+```
+
+The PyPI distribution is `kith-fw`; the module you import is `kith`.
+
+```python
+from kith import Server
+
+with Server(topology="embedded") as server:
+    print(f"kith: gateway={server.listen_port}")
+    server.serve()  # blocks; Ctrl-C stops it cleanly
+```
+
+The [getting started guide](docs/guides/getting_started.md) continues from
+that boot: handlers, control routes, persistence, the two-instance cluster.
+
+Prefer to see it move first? The released wheel ships an out-of-box visual
+example — a living world with ambient actors, a graphical client, and one
+command to play:
+
+```sh
+pip install "kith-fw[visual]"
+kith-visual play crowd-in   # bots converge on your cell; watch the HUD
+```
+
+## Quickstart: build from source
 
 ```sh
 git clone https://github.com/pianosuki/kith kith && cd kith
@@ -120,6 +153,28 @@ Within 1.x nothing is deprecated: evolution is additive, and breaking
 changes wait for the next major version. The decision records under
 `docs/architecture/adr/` are frozen at 1.0.0 and evolve only by supersession
 or explicit amendment, not by external contribution.
+
+## Documentation
+
+- API reference, by symbol: the
+  [Doxygen reference](https://pianosuki.github.io/kith/) rendered from the
+  public headers.
+- Guides, by task: [getting started](docs/guides/getting_started.md),
+  [Python extensions](docs/guides/writing_extensions.md),
+  [C simulation models](docs/guides/writing_c_sim_models.md),
+  [scaling gates](docs/guides/scaling_checklist.md),
+  [agentic headless clients](docs/guides/agentic_headless_client.md),
+  [the wire protocol](docs/guides/wire_protocol.md),
+  [the publish choreography](docs/guides/publish_choreography.md),
+  [operations](docs/guides/operations.md),
+  [replay format](docs/guides/replay_format.md).
+- Architecture, by contract: [planes](docs/architecture/planes.md),
+  [layers](docs/architecture/layers.md),
+  [topologies](docs/architecture/topologies.md),
+  [tracing](docs/architecture/tracing.md),
+  [performance budgets](docs/architecture/performance_budgets.md),
+  [event schema](docs/event_schema.md), and the
+  [decision records](docs/architecture/adr/).
 
 ## Contributing
 
