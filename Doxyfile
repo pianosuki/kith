@@ -1,0 +1,126 @@
+# Doxygen configuration for the kith public C API reference.
+#
+# The public headers under include/kith/ carry the Doxygen doc comments
+# (AGENTS.md §2.9); this file renders them as the browsable HTML
+# reference published to GitHub Pages by .github/workflows/pages.yml.
+#
+# The file sets only the options that matter for this project; every
+# unset option falls back to Doxygen's default. Settings are grouped by
+# concern so the file stays navigable as the headers evolve.
+
+# --- project identity ---------------------------------------------------------
+
+PROJECT_NAME           = kith
+PROJECT_BRIEF          = "Scalable server framework for real-time, stateful multiplayer worlds"
+# PROJECT_NUMBER is left empty: the version lives in include/kith/version.h
+# and changes per release; pinning it here would drift from the headers.
+
+# --- input --------------------------------------------------------------------
+# Only the installed public headers are documented: the reference is the
+# public API surface, not the private implementation under src/.
+
+INPUT                  = include
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h
+INPUT_ENCODING         = UTF-8
+
+# Resolve the project's own include paths so #include "kith/foo.h" within a
+# header is followed by Doxygen, not reported as an unresolved reference.
+INCLUDE_PATH           = include
+
+# --- preprocessing -----------------------------------------------------------
+# Strip the visibility macros so __attribute__((visibility(...))) does not
+# clutter the rendered declarations. Defining __GNUC__ and __clang__ makes
+# the attribute branches in include/kith/api.h expand to their real bodies,
+# which the predefined blanks then remove.
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = __GNUC__ \
+                         __clang__ \
+                         KITH_API= \
+                         KITH_LOCAL= \
+                         KITH_DEPRECATED=
+
+# --- output -------------------------------------------------------------------
+# build/ is gitignored, so generated HTML never dirties the working tree.
+
+OUTPUT_DIRECTORY       = build/doxygen
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+
+# Keep the HTML deterministic: no timestamp stamps every page (which would
+# make the published site churn on every rebuild regardless of content).
+# (TIMESTAMP replaced the obsolete HTML_TIMESTAMP tag.)
+TIMESTAMP              = NO
+CREATE_SUBDIRS         = NO
+
+# Side navigation tree + client-side search over the generated reference.
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+
+# --- language / rendering ----------------------------------------------------
+# Optimize the layout for C: groups entries under "Data Structures" /
+# "Functions" rather than the C++ class hierarchy.
+OPTIMIZE_OUTPUT_FOR_C  = YES
+
+# No class diagrams: the public surface is C, and HAVE_DOT would add a
+# graphviz dependency the Pages job does not need. (CLASS_GRAPH replaced
+# the obsolete CLASS_DIAGRAMS tag.)
+HAVE_DOT               = NO
+CLASS_GRAPH            = NO
+
+# Preserve the declaration order from the headers (AGENTS.md §2.8
+# orders symbols by narrative: create/destroy/lifecycle, then accessors,
+# then operations). Sorting alphabetically would scramble that contract.
+SORT_MEMBER_DOCS       = NO
+SORT_BRIEF_DOCS        = NO
+
+# EXTRACT_ALL is NO: only documented entities enter the reference. The
+# doc-comment checker (check_public_api.py) enforces the function-level
+# @param/@return/@thread_safety/@ownership contract; with extraction
+# limited to documented entities, WARN_IF_UNDOCUMENTED below extends
+# coverage enforcement to struct fields, typedef briefs, and macros, so
+# a header that loses a doc comment fails the Pages build instead of
+# silently dropping out of the reference.
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+
+# Surface undocumented public symbols as warnings so a header that loses
+# its doc comment is visible in the Pages build log. Fail the build on any
+# warning: the Pages job has no other validation, and a warning here is a
+# rendered defect the public would see.
+WARN_IF_UNDOCUMENTED   = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = FAIL_ON_WARNINGS_PRINT
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LOGFILE           = build/doxygen/doxygen-warn.log
+
+# --- source browser -----------------------------------------------------------
+# Do not publish the raw header source in the reference; the headers are
+# browsable in the repository. The reference is the rendered contract.
+SOURCE_BROWSER         = NO
+INLINE_SOURCES         = NO
+
+# --- doc-comment tag aliases ---------------------------------------------------
+# The contract tags every public function and handle carries (@thread_safety,
+# @ownership per AGENTS.md §2.9) are not native Doxygen commands:
+# undefined, each is a warning and the reference loses the label. The aliases
+# render each tag as a bold lead-in.
+
+ALIASES                = "thread_safety=<b>Thread safety:</b>" \
+                         "ownership=<b>Ownership:</b>"
+
+# --- cross-references ---------------------------------------------------------
+REFERENCED_BY_RELATION  = YES
+REFERENCES_RELATION    = YES
+HIDE_UNDOC_RELATIONS   = NO
+
+# Quiet cuts the per-file "generating page" spam from CI logs; warnings
+# above are the signal, not the per-file progress.
+QUIET                  = YES
