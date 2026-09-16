@@ -1,0 +1,205 @@
+# Continuous integration for the kith framework.
+#
+# All verification logic lives in scripts/verify.sh; this workflow installs
+# the toolchain and then invokes that script's stages so CI and local
+# development enforce exactly the same checks and cannot drift apart.
+#
+# All provisioning (apt, pip, clang tool symlinks) lives in
+# scripts/provision-ci.sh, which both this workflow and the local Docker CI
+# image (ci/ubuntu-24.04/Dockerfile) call, so the two environments cannot
+# drift apart either. scripts/ci-local.sh builds and runs the Docker image
+# against scripts/verify.sh, reproducing this workflow locally.
+#
+# Jobs:
+#   lint           scripts/provision-ci.sh lint  + scripts/verify.sh lint
+#                  pre-commit (verify-only) + license compliance (manual
+#                  stage) + mypy (pre-push stage)
+#   build          scripts/provision-ci.sh build + scripts/verify.sh build
+#                  (clang 22, the toolchain every gate targets): configure,
+#                  build, ctest, pytest, check-all, ABI diff, checksec
+#                  hardening. GCC 14 portability gates the weekly sanitizer
+#                  lane (sanitizers.yml) and the release pipeline's inspection
+#                  wheel instead of every push
+#   free-threaded  scripts/provision-ci.sh free-threaded + cmake build +
+#                  scripts/verify.sh free-threaded
+#   commits        scripts/verify.sh commits  - conventional commits + DCO +
+#                  signing over the pushed/pull-request range
+#
+# workflow_dispatch lets a developer validate an in-progress branch before
+# it becomes the new main.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (pre-commit + mypy)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pre-commit hook environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: precommit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            precommit-${{ runner.os }}-
+      - name: Provision (clang 22, python bindings, pre-commit, ruff)
+        run: ./scripts/provision-ci.sh lint
+      - name: Run lint stage (verify-only format compliance, lints, checkers, mypy)
+        run: ./scripts/verify.sh lint
+
+  build:
+    name: Build, test, and verification gates (${{ matrix.compiler }}, Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # A postgres service container backs the tests/integration/test_postgres_store
+    # integration test (KITH_PG_* env points the db pool at it). The health
+    # check blocks the job until postgres accepts connections, so the test
+    # runs rather than skipping on an unreachable service.
+    services: &pg_service
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kith
+          POSTGRES_PASSWORD: kith
+          POSTGRES_DB: kith_example
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kith -d kith_example"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env: &pg_env
+      KITH_PG_HOST: 127.0.0.1
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # clang is the toolchain every gate targets; GCC 14 portability
+          # runs weekly (sanitizers.yml). noble's default gcc 13 sits below
+          # the framework floor in cmake/framework.cmake, hence the pinned
+          # gcc-14 there.
+          - python: "3.14"
+            compiler: clang
+            cc: clang
+            provision: build
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-${{ matrix.python }}-
+      - name: Provision (${{ matrix.compiler }} toolchain, dev libs, cmake, pytest, abi/checksec)
+        run: ./scripts/provision-ci.sh ${{ matrix.provision }}
+      - name: Run build stage (configure, build, ctest, check-all, ABI, checksec)
+        env:
+          # A cache variable beats the debug preset's pinned CC=clang preset
+          # environment entry, which an exported CC alone cannot override.
+          KITH_C_COMPILER: ${{ matrix.cc }}
+        run: ./scripts/verify.sh build
+
+  free-threaded:
+    name: Build and test (python3.14t, GIL disabled)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services: *pg_service
+    env: *pg_env
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache uv downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv/python
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock', 'scripts/provision-ci.sh') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+      - name: Provision (clang 22 toolchain, liburing + dev libs, cmake, ninja, uv, free-threaded interpreter)
+        run: ./scripts/provision-ci.sh free-threaded
+      - name: Configure and build (debug preset)
+        run: |
+          cmake --preset debug
+          cmake --build build/debug
+      - name: Run free-threaded stage (pytest, GIL disabled)
+        run: ./scripts/verify.sh free-threaded
+
+  commits:
+    name: Commit messages and DCO
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history so the push-range base is present for range mode.
+          fetch-depth: 0
+      - name: Resolve commit range
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.event.after }}"
+          fi
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ] || [ -z "$BASE" ]; then
+            BASE=""
+          fi
+          {
+            echo "base=$BASE"
+            echo "head=$HEAD"
+          } >> "$GITHUB_OUTPUT"
+      - name: Configure SSH commit signature verification
+        env:
+          ALLOWED_SIGNERS: ${{ secrets.KITH_SSH_ALLOWED_SIGNERS }}
+        run: |
+          # When the KITH_SSH_ALLOWED_SIGNERS secret is set (the content of
+          # a git allowedSignersFile mapping author emails to SSH public
+          # keys), write it to a temporary file and point verify.sh at it so the
+          # commits stage cryptographically verifies each signature via git
+          # verify-commit. When the secret is absent, verify.sh falls back to
+          # the presence-only gpgsig header check. The repo tracks no
+          # keyring (AGENTS.md §5.2.8): the allowedSignersFile is built in
+          # CI from the secret and never committed.
+          if [ -n "$ALLOWED_SIGNERS" ]; then
+            signers_file="$(mktemp)"
+            printf '%s\n' "$ALLOWED_SIGNERS" > "$signers_file"
+            echo "KITH_ALLOWED_SIGNERS=$signers_file" >> "$GITHUB_ENV"
+          fi
+      - name: Run commits stage (conventional, DCO, signing)
+        run: |
+          BASE="${{ steps.range.outputs.base }}"
+          HEAD="${{ steps.range.outputs.head }}"
+          if [ -n "$BASE" ]; then
+            ./scripts/verify.sh --base "$BASE" --head "$HEAD" commits
+          else
+            ./scripts/verify.sh --head "$HEAD" commits
+          fi

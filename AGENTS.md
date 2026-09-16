@@ -47,14 +47,14 @@ not appear in `src/` or `include/`. Game-specific vocabulary lives only in
 
 ### 1.5 Tooling over convention
 If a rule can be enforced by a tool, it is enforced by a tool. Conventions that
-require human memory will be violated. The pre-commit hooks are the source of
-truth. If a rule is not enforced, it does not exist.
+require human memory will be violated. The pre-commit hooks and CI pipeline are
+the source of truth. If a rule is not enforced, it does not exist.
 
 ### 1.6 Plane invariants are non-negotiable
 The runtime is organized into planes (Sim, Fabric, Gateway, Coord, Control),
 each with a data-flow ownership contract in `docs/architecture/planes.md`. The
 plane checker enforces these. A change that violates a plane invariant is
-rejected regardless of whether it makes a local test pass. The plane
+rejected by CI regardless of whether it makes a local test pass. The plane
 boundaries are what keeps the framework at MMO scale; weakening them
 reintroduces the N² ceiling.
 
@@ -526,7 +526,7 @@ Section order: summary → body → `Args:` → `Returns:` → `Raises:` →
 ### 4.2 Coverage
 - C core: ≥ 85% line coverage (lcov / llvm-cov).
 - Python framework: ≥ 90% line coverage (coverage.py).
-- Coverage is reported but not gated (gating encourages gaming the
+- Coverage is reported in CI but not gated (gating encourages gaming the
   metric). Critical paths have explicit tests.
 
 ### 4.3 Test Naming
@@ -583,17 +583,18 @@ leave the local repo. The human owns the decision to publish.
 
 ### 5.0a The verification gate (single source of truth)
 
-`scripts/verify.sh` is the single gate: it runs lint (pre-commit, license
-compliance, mypy), commits (conventional + DCO + signing), build
-(configure, compile, ctest, pytest, check-all, the ABI diff, checksec),
-and free-threaded (the Python suite under python3.14t, GIL disabled) in
-one invocation, so a change cannot pass one check and fail another. The
-gate is verify-only: it never rewrites files.
-Run `scripts/verify.sh` (or `scripts/verify.sh <stage>`) and get all-green
-before **every** commit. When a gate reports a formatting violation, fix
-it with `cmake --build --target format` (or `scripts/format.sh`), then
-re-run the gate. `pre-commit` alone is insufficient (it omits clang-tidy,
-mypy-on-push, license compliance, the commits stage, the build, the
+`scripts/verify.sh` is the single gate: it runs exactly what CI runs — lint
+(pre-commit, license compliance, mypy), commits (conventional + DCO +
+signing), build (configure, compile, ctest, check-all, ABI diff, checksec),
+and free-threaded (the Python suite under python3.14t, GIL disabled) — so
+local and CI cannot drift apart. The gate is verify-only: it never rewrites
+files. Run `scripts/verify.sh` (or `scripts/verify.sh <stage>`) and get
+all-green before **every** commit. When a gate reports a formatting
+violation, fix it with `cmake --build --target format` (or
+`scripts/format.sh`), then re-run the gate. Before a human pushes, run it
+again on the exact range being pushed; if it passes locally it passes CI,
+because both invoke the same script. `pre-commit` alone is insufficient (it
+omits clang-tidy, mypy-on-push, license compliance, the build, the
 free-threaded leg, and the ABI/hardening checks).
 
 ### 5.1 Branch Strategy
@@ -764,7 +765,7 @@ who knew what to build and why, in order.
 - Maintainer commits: direct to `main` per §5.1. External contributions:
   one PR per feature or fix, atomic.
 - PR description template: what changed, why, how to test, breaking changes.
-- Review required.
+- All CI checks must pass. Review required.
 - Squash-merge to `main`.
 
 ## 6. Dependencies

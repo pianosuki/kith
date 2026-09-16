@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 #
-# Run every verification gate the repository enforces in one invocation, so
-# a change cannot pass one check and fail another.
+# Run every verification gate the repository enforces, mirroring the CI
+# workflow one-for-one so local development and CI cannot drift apart.
 #
-# This script is the single source of truth for "what must pass".
-# Contributing developers run the same commands through this script before
-# every commit and before every push.
+# This script is the single source of truth for "what must pass". Both the
+# GitHub Actions workflow (.github/workflows/ci.yml) and contributing
+# developers run the same commands through this script, guarding against the
+# environment differences that let a change pass locally and fail in CI (or
+# vice versa). Run it before every commit and before every push.
 #
 # Usage:
 #   scripts/verify.sh [stages...]
@@ -40,7 +42,9 @@
 #                     override; pair with KITH_BUILD_DIR when switching
 #                     compilers on an existing checkout)
 #   KITH_PYTEST_JOBS  worker count for the parallel pytest leg (xdist -n;
-#                     default 4; serial when xdist is not importable)
+#                     default 4; "auto" is one worker per logical CPU,
+#                     which can exhaust reactor resources on a loaded
+#                     host; serial when xdist is not importable)
 #
 # Every stage exits non-zero on failure and prints the failing step. Run from
 # the repository root.
@@ -92,8 +96,8 @@ fail() {
 # Redirect python bytecode caches out of the source tree so the working tree
 # stays clean and the free-threaded and standard interpreters never share a
 # .pyc cache. A shared cache compiles co_filename against one absolute path
-# and then fails inspect.getsourcelines under another (a different CWD),
-# which surfaces as spurious test errors.
+# and then fails inspect.getsourcelines under another (a different CWD, or
+# /work inside the Docker image), which surfaces as spurious test errors.
 # Each stage that drives a different interpreter overrides the prefix below.
 export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${TMPDIR:-/tmp}/kith-pycache}"
 # Clear any pre-existing source-tree __pycache__ left by older runs that wrote
@@ -179,14 +183,17 @@ fi
 if [ "$stage_build" -eq 1 ]; then
     # The build output directory. Defaults to the preset's build/debug; an
     # overriding KITH_BUILD_DIR lets a second build context whose source root
-    # differs keep its build tree separate so the two caches do not clobber
+    # differs (a bind-mounted container records /work paths in the CMake
+    # cache) keep its build tree separate so the two caches do not clobber
     # each other.
     build_dir="${KITH_BUILD_DIR:-build/debug}"
 
     echo "==> verify.sh: build (configure)"
-    # KITH_C_COMPILER retargets the configure: a cache variable beats the
-    # debug preset's pinned CC=clang environment entry, which an exported CC
-    # alone cannot override. It scopes to this preset line only.
+    # KITH_C_COMPILER retargets the configure (the CI matrix's gcc leg): a
+    # cache variable beats the debug preset's pinned CC=clang environment
+    # entry, which an exported CC alone cannot override. Unset, the configure
+    # is unchanged. It scopes to this preset line only; the out-of-tree
+    # consumer step below keeps its own compiler probe.
     cc_args=()
     if [ -n "${KITH_C_COMPILER:-}" ]; then
         cc_args+=("-DCMAKE_C_COMPILER=${KITH_C_COMPILER}")
@@ -207,8 +214,9 @@ if [ "$stage_build" -eq 1 ]; then
 
     echo "==> verify.sh: build (pytest)"
     # Prefer the project venv (uv sync) so the suite runs under the same
-    # pinned interpreter and dependencies the developers share; fall back
-    # to the system python3 where no venv is provisioned.
+    # pinned interpreter and dependencies the developer and CI share; fall back
+    # to the system python3 where no venv is provisioned (a fresh CI runner
+    # drives pytest via the system interpreter provision-ci installs).
     pytest_python=""
     if [ -x ".venv/bin/python" ] && ".venv/bin/python" -c "import pytest" >/dev/null 2>&1; then
         pytest_python=".venv/bin/python"
@@ -235,7 +243,7 @@ if [ "$stage_build" -eq 1 ]; then
     fi
     "$pytest_python" -m pytest -q "${pytest_args[@]}" || fail "build (pytest)"
 
-    echo "==> verify.sh: build (check-all: clang-tidy, clang-format, ruff)"
+    echo "==> verify.sh: build (check-all: clang-tidy, clang-format, ruff, trivial fixers, checkers)"
     cmake --build "$build_dir" --target check-all || fail "build (check-all)"
 
     echo "==> verify.sh: build (ABI diff vs committed snapshots)"
@@ -503,7 +511,7 @@ if [ "$stage_ft" -eq 1 ]; then
         # suite; clang2 supplies the LLVM 22 python bindings the drift tests
         # regenerate with, matching the checked-in bindings byte for byte.
         # libclang1-22 (the C library) and clang-22 (the driver) come from the
-        # system.
+        # system, installed by provision-ci.sh.
         ft_venv="$(pwd)/.venv-ft"
         need_venv=0
         if [ ! -x "$ft_venv/bin/python3.14t" ]; then
