@@ -1,0 +1,91 @@
+# Dependabot version-update configuration.
+#
+# Four ecosystems, each on a weekly Monday cadence so dependency updates
+# land as a single batchable stream of PRs rather than scattered across the
+# week. Commit messages are prefixed with the conventional "chore(deps)"
+# scope so merged dependency updates read as atomic maintenance commits in
+# the project history. The Python ecosystems are deliberately absent: the
+# uv.lock resolution cutoff is a reproducibility contract a bot bump cannot
+# honor (moving it is a human decision, documented in pyproject.toml), so
+# Python dependency updates ride the manual uv ritual instead of
+# Dependabot PRs.
+#
+# Security updates are not throttled here: Dependabot always raises them as
+# soon as a vulnerable manifest is detected, regardless of the schedule below.
+
+version: 2
+
+# GitHub Actions used by CI. New actions are tracked as soon as the
+# workflows using them land.
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+
+  # Pre-commit hook revisions pinned in .pre-commit-config.yaml. Dependabot
+  # resolves hook versions from upstream git tags and bumps the `rev:` lines,
+  # including SHA-pinned hooks.
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+
+  # Base images for the CI emulation container and the devcontainer. Both
+  # Dockerfiles pin their FROM lines by digest with the tag kept as the
+  # human-readable intent; Dependabot bumps the digest when the named tag
+  # moves.
+  - package-ecosystem: "docker"
+    directory: "/ci/ubuntu-24.04"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    # The tag names the runner OS the workflows' runs-on pins select, and
+    # the digest freezes the apt snapshot the provisioning scripts see:
+    # tag movement is a deliberate, coordinated change, never an automated
+    # one. Digest refreshes of the pinned tag stay in scope.
+    ignore:
+      - dependency-name: "ubuntu"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    # The base tag pins the OS snapshot the devcontainer's checksummed
+    # toolchain builds against, in step with the emulation image's base:
+    # tag movement is a deliberate, coordinated change. The rule names the
+    # base image only, so the pinned uv image keeps receiving version
+    # bumps.
+    ignore:
+      - dependency-name: "mcr.microsoft.com/devcontainers/base"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
