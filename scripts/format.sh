@@ -20,8 +20,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if ! command -v clang-format-22 >/dev/null 2>&1; then
-    echo "format.sh: 'clang-format-22' not found; install the clang-format 22" >&2
+if ! command -v clang-format-23 >/dev/null 2>&1; then
+    echo "format.sh: 'clang-format-23' not found; install the clang-format 23" >&2
     echo "toolchain the pre-commit hook pins" >&2
     exit 1
 fi
@@ -39,7 +39,7 @@ py_files=$(git ls-files "*.py" | grep -v "^tools/fixtures/" || true)
 echo "==> format.sh: clang-format (C/H)"
 if [ -n "$c_h_files" ]; then
     # shellcheck disable=SC2086
-    clang-format-22 -i $c_h_files
+    clang-format-23 -i $c_h_files
 fi
 
 echo "==> format.sh: ruff format + ruff check --fix (Python)"
@@ -49,7 +49,6 @@ if [ -n "$py_files" ]; then
     # shellcheck disable=SC2086
     ruff check --fix $py_files
 fi
-
 
 echo "==> format.sh: trivial whitespace/line-ending/BOM fixers"
 # Apply the same four invariants check_trivial_fixers.py verifies. These are

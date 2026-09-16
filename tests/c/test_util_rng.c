@@ -73,7 +73,7 @@ static int test_creation_validation(void)
     kith_rng_params_t good = valid_params(0x12345678);
     /* An allocator missing most of its struct is undersized against the
      * allocator contract, so the create call rejects it before allocating. */
-    const kith_allocator_t undersized = {.size = 8U, .abi_version = KITH_ABI_VERSION };
+    const kith_allocator_t undersized = {.size = 8U, .abi_version = KITH_ABI_VERSION};
     if (kith_rng_create(&good, &undersized, &rng) != kith_error_return(KITH_ESIZE))
     {
         return 4;

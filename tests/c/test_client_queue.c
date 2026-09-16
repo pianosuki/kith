@@ -253,14 +253,12 @@ static int test_eventq_argument_guards(void)
     int failures = 0;
     struct eventq_fixture q;
     eventq_init(&q, 4u);
-    kith_client_event_t event = {
-        .size = sizeof(event),
-        .abi_version = KITH_ABI_VERSION,
-        .ts_mono_ns = 1u,
-        .type_id = 7u,
-        .payload_len = 2u,
-        .payload = "hi"
-    };
+    kith_client_event_t event = {.size = sizeof(event),
+                                 .abi_version = KITH_ABI_VERSION,
+                                 .ts_mono_ns = 1u,
+                                 .type_id = 7u,
+                                 .payload_len = 2u,
+                                 .payload = "hi"};
 
     CHECK(client_eventq_push(nullptr, 4u, &q.head, &q.tail, &q.count, &event) ==
           kith_error_return(KITH_EINVAL));
@@ -303,11 +301,7 @@ static int test_eventq_overwrite_oldest(void)
     for (uint16_t i = 1u; i <= 4u; i++)
     {
         kith_client_event_t event = {
-            .size = sizeof(event),
-            .abi_version = KITH_ABI_VERSION,
-            .ts_mono_ns = i,
-            .type_id = i
-        };
+            .size = sizeof(event), .abi_version = KITH_ABI_VERSION, .ts_mono_ns = i, .type_id = i};
         CHECK(client_eventq_push(q.records, q.cap, &q.head, &q.tail, &q.count, &event) == 0);
     }
     CHECK(q.count == 3u);
@@ -342,14 +336,12 @@ static int test_eventq_partial_drain_empty_clear(void)
 
     for (uint16_t i = 1u; i <= 3u; i++)
     {
-        kith_client_event_t event = {
-            .size = sizeof(event),
-            .abi_version = KITH_ABI_VERSION,
-            .ts_mono_ns = i,
-            .type_id = i,
-            .payload_len = 3u,
-            .payload = "abc"
-        };
+        kith_client_event_t event = {.size = sizeof(event),
+                                     .abi_version = KITH_ABI_VERSION,
+                                     .ts_mono_ns = i,
+                                     .type_id = i,
+                                     .payload_len = 3u,
+                                     .payload = "abc"};
         CHECK(client_eventq_push(q.records, q.cap, &q.head, &q.tail, &q.count, &event) == 0);
     }
 

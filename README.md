@@ -127,16 +127,14 @@ channels in CI.
 
 ## Requirements
 
-## Requirements
-
 - Linux, x86-64, glibc 2.38 or newer. `import kith` raises a load error on
   any other platform.
 - Python 3.14+, standard or free-threaded builds.
 - Wheel path: the bundled libraries link `liburing`, `libpq`, `libhiredis`
   at runtime; install them from the system package manager.
-- Source path: Clang 22+ (or GCC 14+), clang-format-22 (the pinned formatter —
-  `uv tool install clang-format==22.1.8`, then symlink `~/.local/bin/clang-format`
-  as `clang-format-22`), CMake 4.4+, Ninja 1.13+, `uv`, `pre-commit`.
+- Source path: Clang 22+ (or GCC 14+), clang-format-23 (the pinned formatter —
+  `uv tool install clang-format==23.1.0`, then symlink `~/.local/bin/clang-format`
+  as `clang-format-23`), CMake 4.4+, Ninja 1.13+, `uv`, `pre-commit`.
 
 ## Stability
 

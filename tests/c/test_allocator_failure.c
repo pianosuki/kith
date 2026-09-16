@@ -1087,10 +1087,8 @@ static kith_proto_t *client_scaffold_proto(void)
 {
     if (g_client_scaffold == nullptr)
     {
-        kith_proto_params_t params = {
-            .size = sizeof(kith_proto_params_t),
-            .abi_version = KITH_ABI_VERSION
-        };
+        kith_proto_params_t params = {.size = sizeof(kith_proto_params_t),
+                                      .abi_version = KITH_ABI_VERSION};
         if (kith_proto_create(&params, nullptr, &g_client_scaffold) != 0)
         {
             return nullptr;

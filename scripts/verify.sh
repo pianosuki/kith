@@ -532,7 +532,7 @@ if [ "$stage_ft" -eq 1 ]; then
             # venv installs outside uv.lock, and an unpinned latest would
             # drift from the standard leg's runner.
             uv pip install --python "$ft_venv" \
-                pytest==9.1.1 pytest-xdist==3.8.0 ruff==0.16.0 clang2==22.1.8.post0 pyyaml==6.0.3 >/dev/null 2>&1 \
+                pytest==9.1.1 pytest-xdist==3.8.0 ruff==0.16.7 clang2==22.1.8.post0 pyyaml==6.0.3 >/dev/null 2>&1 \
                 || fail "free-threaded (pytest+xdist+ruff+clang2+pyyaml install)"
         fi
 

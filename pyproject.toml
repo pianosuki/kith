@@ -97,15 +97,18 @@ exclude-newer = "2026-08-09T17:00:00Z"
 required-version = ">=0.12.0"
 # Managed venv targets the project's requires-python.
 python-preference = "managed"
-
 # Per-package windows for releases that published after the global cutoff:
-# the isolated build environment (hatchling, cmake, ninja). Every other
-# dependency stays frozen at the global cutoff. This sub-table must stay
-# last: a table header claims every key that follows it.
+# the isolated build environment (hatchling, cmake, ninja) and the dev
+# tools matching the pre-commit hook revs (ruff 0.16.7, mypy 2.3.1).
+# Every other dependency stays frozen at the global cutoff. This
+# sub-table must stay last: a table header claims every key that follows
+# it.
 [tool.uv.exclude-newer-package]
 hatchling = "2026-08-12T00:00:00Z"
 cmake = "2026-08-31T00:00:00Z"
 ninja = "2026-08-31T00:00:00Z"
+mypy = "2026-08-16T00:00:00Z"
+ruff = "2026-09-11T00:00:00Z"
 # The visual example's window stack, published after the global
 # cutoff; arcade pins its pyglet build exactly, and the pair is what
 # the example verifies against.
@@ -113,7 +116,7 @@ arcade = "2026-08-22T00:00:00Z"
 pyglet = "2026-08-21T00:00:00Z"
 
 # ---------------------------------------------------------------------------
-# Ruff: formatter + linter
+# Ruff: formatter + linter (pre-commit hook rev v0.16.7)
 # ---------------------------------------------------------------------------
 
 [tool.ruff]
@@ -169,7 +172,7 @@ line-ending = "lf"
 docstring-code-format = true
 
 # ---------------------------------------------------------------------------
-# mypy: static type checking
+# mypy: static type checking (pre-commit hook rev v2.3.1)
 # ---------------------------------------------------------------------------
 
 [tool.mypy]

@@ -14,7 +14,7 @@ find_program(KITH_PYTHON3_EXECUTABLE NAMES python3 REQUIRED)
 # clang-format is pinned to the exact major the pre-commit hook enforces:
 # two formatter majors in one gate reject each other's output, so this
 # check, scripts/format.sh, and the hook must resolve the same version.
-find_program(KITH_CLANG_FORMAT_EXECUTABLE NAMES clang-format-22)
+find_program(KITH_CLANG_FORMAT_EXECUTABLE NAMES clang-format-23)
 find_program(KITH_CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
 
 # Tracked-file producers used by the file-list checkers. git ls-files keeps
@@ -51,7 +51,7 @@ add_custom_target(check-forbidden-patterns
 
 add_custom_target(check-clang-format
     COMMAND bash -c
-        "[ -x '${KITH_CLANG_FORMAT_EXECUTABLE}' ] || { echo 'error: clang-format-22 not found; install the pinned formatter' >&2; exit 2; }; ${_kith_tracked_c_h} | xargs -r '${KITH_CLANG_FORMAT_EXECUTABLE}' --dry-run --Werror"
+        "[ -x '${KITH_CLANG_FORMAT_EXECUTABLE}' ] || { echo 'error: clang-format-23 not found; install the pinned formatter' >&2; exit 2; }; ${_kith_tracked_c_h} | xargs -r '${KITH_CLANG_FORMAT_EXECUTABLE}' --dry-run --Werror"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Checking clang-format compliance"
     VERBATIM

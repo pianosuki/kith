@@ -64,7 +64,7 @@ static int test_creation_validation(void)
     kith_tick_clock_params_t good = valid_params(20U);
     /* An allocator missing most of its struct is undersized against the
      * allocator contract, so the create call rejects it before allocating. */
-    const kith_allocator_t undersized = {.size = 8U, .abi_version = KITH_ABI_VERSION };
+    const kith_allocator_t undersized = {.size = 8U, .abi_version = KITH_ABI_VERSION};
     if (kith_tick_clock_create(&good, &undersized, &clock) != kith_error_return(KITH_ESIZE))
     {
         return 5;
