@@ -1,0 +1,152 @@
+# Weekly line-coverage lane: clang source-based coverage (llvm-cov) over the
+# shared libraries and coverage.py over the Python framework suite.
+#
+# Coverage is reported, not gated (AGENTS.md §4.2): totals land in the job
+# summary with the floors printed beside them, and the HTML reports ride as
+# artifacts. Trend data on a reported metric does not justify a per-push
+# session, so this lane runs weekly; the sanitizer and fuzzing legs run in
+# their own weekly lane.
+#
+# The postgres service backs the Python-driven legs (the KITH_PG_* env
+# points the db pool at it); the C and Python legs share one C-core number
+# through the shared LLVM_PROFILE_FILE namespace.
+
+name: coverage
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'  # Monday 04:00 UTC, clear of the stress window
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Coverage report (llvm-cov + coverage.py)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Mirrors the postgres service definition and KITH_PG_* environment
+    # declared in ci.yml. YAML anchors do not reach across workflow files,
+    # so the block is duplicated per job; keep every copy in sync. Only
+    # the Python-driven legs need it.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kith
+          POSTGRES_PASSWORD: kith
+          POSTGRES_DB: kith_example
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kith -d kith_example"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      KITH_PG_HOST: 127.0.0.1
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+      # Every process that loads the instrumented libraries appends one
+      # profile variant per module (%m); the C and Python legs share the
+      # namespace so their execution merges into a single C-core number.
+      LLVM_PROFILE_FILE: ${{ github.workspace }}/profraw/c-%m.profraw
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Provision (clang 22 toolchain, llvm-cov, dev libs, cmake, pytest, coverage)
+        run: ./scripts/provision-ci.sh coverage
+      - name: Configure (coverage preset)
+        run: cmake --preset coverage
+      - name: Build (coverage preset)
+        run: cmake --build --preset coverage
+      - name: Test the C suite under source-based coverage
+        run: |
+          set -euo pipefail
+          # The profile runtime creates no directories: the job-level
+          # LLVM_PROFILE_FILE points here, so the directory exists before
+          # the first instrumented process exits.
+          mkdir -p "$PWD/profraw"
+          ctest --preset coverage --output-log coverage-ctest.log
+      - name: Report C core line coverage
+        run: |
+          set -euo pipefail
+          llvm-profdata merge -sparse profraw/*.profraw -o kith.profdata
+          # The report is scoped to the shared libraries: they are the only
+          # form the framework ships in, so their mapping is exactly the C
+          # core AGENTS.md §4.2 states a floor for. The profiles carry the
+          # execution of both test legs (C suite and Python-driven).
+          # Additional objects must ride -object flags; positional arguments
+          # after the first binary are source filters, not objects.
+          libs=(build/coverage/libkith_*.so)
+          objects=()
+          for so in "${libs[@]:1}"; do
+              objects+=(-object "$so")
+          done
+          {
+            echo '### C core line coverage'
+            echo '```'
+            llvm-cov report --instr-profile=kith.profdata \
+                "${libs[0]}" "${objects[@]}"
+            echo '```'
+            echo 'Floor: >= 85% line coverage for the C core; reported, not gated.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Generate the C coverage HTML report
+        run: |
+          libs=(build/coverage/libkith_*.so)
+          objects=()
+          for so in "${libs[@]:1}"; do
+              objects+=(-object "$so")
+          done
+          llvm-cov show --format=html --output-dir=coverage-html \
+              --instr-profile=kith.profdata "${libs[0]}" "${objects[@]}"
+      - name: Test the Python framework suite under coverage.py
+        run: |
+          set -euo pipefail
+          export KITH_BUILD_DIR="$PWD/build/coverage"
+          python -m coverage run --source python/kith --omit '*/_generated/*' \
+              -m pytest tests/python tests/integration -q
+          {
+            echo '### Python framework line coverage'
+            echo '```'
+            python -m coverage report
+            echo '```'
+            echo 'Floor: >= 90% line coverage for the Python framework; reported, not gated.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Generate the Python coverage HTML report
+        run: python -m coverage html -d python-coverage-html
+      - name: Upload the coverage ctest log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-ctest-log
+          path: coverage-ctest.log
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload the coverage HTML reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-html-reports
+          path: |
+            coverage-html/
+            python-coverage-html/
+          if-no-files-found: ignore
+          retention-days: 7
