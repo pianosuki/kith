@@ -1,0 +1,145 @@
+# Scaling-gate canary workflow.
+#
+# The certified scaling gates (dense-1000 full drive; distributed-2000 full
+# drive) are NOT runnable on hosted runners: the certified configuration —
+# free-threaded Python, the native movement-apply path, the
+# delivery-executor threads, dual drivers, and CPU pinning on a dedicated
+# host envelope — is part of the certified claim itself, and a shared
+# 4-vCPU runner is not
+# that envelope. The certified gates run on a dedicated reference host whose
+# envelope is recorded, per docs/guides/scaling_checklist.md. The certified
+# distributed-2000
+# invocation, for reference (python_workers is the profile's 8, backed by
+# the worker pool sized for free-threaded builds):
+#
+#   KITH_NATIVE_APPLY=1 python3.14t -m tools.agent.load_harness \
+#     --profile distributed-2000 --subprocess-cluster \
+#     --delivery-workers 2 --dual-drivers --server-affinity <server-cpus>
+#
+# This workflow is the hosted-runner canary. Scheduled weekly, it drives the
+# two smoke profiles end-to-end (multi-client login, movement, per-instance
+# bootstrap, gate-metric computation) under the free-threaded interpreter so
+# the gate machinery itself stays healthy on a fresh environment; the harness
+# exit code gates on the relaxed smoke thresholds (the machinery is
+# validated, not the ceiling). It makes no N² or fidelity claim, and its
+# numbers are not comparable to certified runs.
+#
+# Baseline comparison is deferred: absolute gate numbers vary by runner
+# class, so no baseline reports are recorded for hosted runners and the
+# comparator (tools/perf/compare_scaling_baseline.py) is used only on the
+# fixed reference envelope. workflow_dispatch re-runs the canary manually.
+
+name: stress
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Monday 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A scheduled run is not cancelled by a manual dispatch on the same
+# branch; the two do not contend for resources that require serialization.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  smoke-dense:
+    name: Dense machinery canary (free-threaded)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache uv (free-threaded interpreter)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv/python
+          key: uv-${{ runner.os }}-stress-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            uv-${{ runner.os }}-stress-
+      - name: Provision (clang 22, libclang bindings, cmake, uv, free-threaded python)
+        run: ./scripts/provision-ci.sh free-threaded
+      - name: Build the C shared libraries
+        run: |
+          cmake --preset debug
+          cmake --build build/debug
+      - name: Resolve the free-threaded interpreter
+        id: ft
+        run: |
+          ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+          if [ -z "$ft_python" ] || [ ! -x "$ft_python" ]; then
+            echo "free-threaded interpreter (python3.14t) not found" >&2
+            exit 1
+          fi
+          "$ft_python" -c "import sys; sys.exit(0 if not sys._is_gil_enabled() else 1)"
+          echo "python=$ft_python" >> "$GITHUB_OUTPUT"
+      - name: Run the smoke-dense canary
+        env:
+          KITH_LIB: build/debug
+          PYTHONPATH: python
+        run: |
+          ${{ steps.ft.outputs.python }} -m tools.agent.load_harness \
+            --profile smoke-dense \
+            --embedded \
+            --format json \
+            --output smoke-dense-report.json
+      - name: Upload the canary report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: smoke-dense-report
+          path: smoke-dense-report.json
+          retention-days: 28
+
+  smoke-distributed:
+    name: Distributed machinery canary (free-threaded)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache uv (free-threaded interpreter)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv/python
+          key: uv-${{ runner.os }}-stress-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            uv-${{ runner.os }}-stress-
+      - name: Provision (clang 22, libclang bindings, cmake, uv, free-threaded python)
+        run: ./scripts/provision-ci.sh free-threaded
+      - name: Build the C shared libraries
+        run: |
+          cmake --preset debug
+          cmake --build build/debug
+      - name: Resolve the free-threaded interpreter
+        id: ft
+        run: |
+          ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+          if [ -z "$ft_python" ] || [ ! -x "$ft_python" ]; then
+            echo "free-threaded interpreter (python3.14t) not found" >&2
+            exit 1
+          fi
+          "$ft_python" -c "import sys; sys.exit(0 if not sys._is_gil_enabled() else 1)"
+          echo "python=$ft_python" >> "$GITHUB_OUTPUT"
+      - name: Run the smoke-distributed canary
+        env:
+          KITH_LIB: build/debug
+          PYTHONPATH: python
+        run: |
+          ${{ steps.ft.outputs.python }} -m tools.agent.load_harness \
+            --profile smoke-distributed \
+            --subprocess-cluster \
+            --format json \
+            --output smoke-distributed-report.json
+      - name: Upload the canary report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: smoke-distributed-report
+          path: smoke-distributed-report.json
+          retention-days: 28
