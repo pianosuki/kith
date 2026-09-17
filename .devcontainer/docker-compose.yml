@@ -1,0 +1,41 @@
+# Development containers: the kith toolchain image plus a Postgres service
+# shaped exactly like the CI service container (.github/workflows/ci.yml):
+# role kith / password kith / database kith_example, pg_isready health
+# check. The dev service reaches the db over the compose network by
+# service name, so no host port is published and a developer's own local
+# Postgres is never disturbed.
+name: kith
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        LLVM_VERSION: "22"
+        NINJA_VERSION: "1.13.2"
+        LIBURING_VERSION: "2.14"
+    volumes:
+      - ..:/workspaces/${localWorkspaceFolderBasename}:cached
+    command: sleep infinity
+    environment:
+      KITH_PG_HOST: db
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: kith
+      POSTGRES_PASSWORD: kith
+      POSTGRES_DB: kith_example
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kith -d kith_example"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

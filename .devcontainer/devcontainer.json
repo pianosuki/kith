@@ -1,0 +1,28 @@
+{
+  "name": "kith",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "EditorConfig.EditorConfig",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "clangd.arguments": [
+          "--compile-commands-dir=build/debug"
+        ],
+        "C_Cpp.intelliSenseEngine": "disabled",
+        "files.eol": "\n"
+      }
+    }
+  },
+  "postCreateCommand": "uv sync && pre-commit install --install-hooks -t pre-commit -t pre-push -t commit-msg"
+}
