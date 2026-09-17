@@ -83,7 +83,6 @@ _REQUIRED_LIBS: tuple[str, ...] = (
     "client",
     "server",
 )
-
 _OPTIONAL_LIBS: tuple[str, ...] = ("control",)
 
 # Where the bundled libraries land inside the wheel archive (and thus under
@@ -323,6 +322,9 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
         # PyPI-acceptable tag (bare linux_x86_64 is rejected at upload), its
         # glibc floor is the documented install floor, and pip enforces it
         # at install time, falling back to the sdist below it. py3-none
-        # keeps the artifact interpreter-agnostic.
+        # keeps the artifact interpreter-agnostic, which is what lets the
+        # same wheel serve the free-threaded smoke. The release census
+        # (the shipped wheel's symbol ceiling must read GLIBC_2.38) fails
+        # the release if a future change raises the floor past this tag.
         build_data["pure_python"] = False
         build_data["tag"] = "py3-none-manylinux_2_38_x86_64"

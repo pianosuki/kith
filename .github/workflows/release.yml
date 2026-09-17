@@ -1,0 +1,440 @@
+# Tag-triggered release pipeline: build the sdist and the binary wheel,
+# smoke the wheel in a clean environment, checksum the artifacts, and open a
+# DRAFT GitHub release.
+#
+# Nothing publishes automatically. The draft is the human approval gate: the
+# release becomes public only when a maintainer reviews the draft and
+# publishes it, keeping irreversible publication human-owned (AGENTS.md
+# §5.0). A published release with this tag makes the draft job fail loudly
+# instead of touching it; a stale DRAFT from an earlier run of the same tag
+# is replaced so re-running the pipeline after a failed attempt works.
+#
+# The wheel bundles the C shared libraries through the hatch build hook
+# (hatch_build.py): it configures CMake in a Release configuration, builds
+# every library the bundle ships, and force-includes the SONAME-form
+# libraries into kith/_libs/ inside the wheel, where the ctypes bridge finds
+# them on import ($ORIGIN runpath resolves siblings inside the flat bundle).
+# The sdist ships the source tree so users with a C toolchain can build from
+# source; the sdist job installs from the tarball and boots a server from the
+# result, so the asset is exercised end to end before it can ship. Its
+# version and the wheel's both derive from CMake's
+# project(kith VERSION ...) line, which the gate job pins to the tag.
+#
+# Compiler matrix: the Clang leg produces the artifacts attached to the
+# release — Clang 22 is the toolchain CI, the hardening gates, and the LTO
+# contract are validated against. The GCC leg is a portability check that
+# the same source builds and imports under GCC (the build hook disables LTO
+# for non-clang toolchains because their LTO objects cannot be linked by the
+# lld link cmake/framework.cmake selects); its wheel is uploaded for
+# inspection only and never attached to the release.
+#
+# Wheel tagging: the build hook tags the wheel py3-none-manylinux_2_38_x86_64
+# once the libraries are bundled. manylinux_2_38 is the lowest PyPI-acceptable
+# platform tag (a bare linux_x86_64 tag is rejected at upload) and its glibc
+# floor is the documented install floor, so pip enforces at install time what
+# the README promises, falling back to the sdist below it. The py3-none ABI
+# keeps the artifact interpreter-agnostic — pure Python driving ctypes-loaded
+# .so files — which is what makes installing and exercising the same wheel
+# under python3.14t valid in the free-threaded smoke below. The release
+# census guards the tag: if a future change raises the bundled libraries'
+# symbol ceiling past GLIBC_2.38, the census fails and moving the tag is a
+# deliberate packaging change. macOS wheels do not exist: the framework ships
+# on Linux. The version must
+# equal the tag (v<version>); a mismatched tag fails before any build starts.
+# The bundled libraries carry the SONAME major (.so.1, from PROJECT_VERSION's
+# major component); bumping the SONAME is a coordinated change across
+# cmake/abi.cmake and the hatch hook's soname naming, not something this
+# pipeline derives.
+#
+# Concurrency cancels an in-flight run when the same tag re-triggers: until a
+# release is published, everything this pipeline produces (including the
+# draft) is disposable and the newest run is the authoritative one.
+#
+# workflow_dispatch runs the same pipeline without a tag: the tag comparison
+# and the draft creation are tag-only, so a dispatch run exercises the build
+# and smoke machinery and leaves the artifacts in the run for inspection.
+# This is the dry-run path for validating pipeline changes before a real
+# tag exists.
+#
+# Supply-chain artifacts: the SBOM job describes the release wheel's real
+# composition (the bundled C libraries and the system libraries they link)
+# in CycloneDX 1.6 and attaches it to the draft. The attest job mints build
+# provenance attestations for the sdist and the wheel — provenance mode,
+# then SBOM mode with the same subjects — and attaches the Sigstore bundles
+# as an attestation.intoto.jsonl release asset, the shape release scanners
+# read. GitHub's artifact-attestations service is public-repo-only outside
+# GitHub Enterprise Cloud, so the attest steps stand down while the
+# repository is private and light up at the public flip.
+#
+# PyPI publish: the publish-pypi job uploads the sdist and the release wheel
+# to PyPI under the distribution name kith-fw (the import surface and the
+# C consumer surface stay kith) via trusted publishing — no API token, the
+# job's OIDC identity is the credential, and the PyPI trusted publisher for
+# this repository and workflow must be pre-registered. Within the tag run
+# the upload follows every other job: the tag push is the human-owned
+# irreversible act for the registry upload (pushes are human-only), while
+# the draft release remains the review gate for the GitHub release assets.
+
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-tag:
+    name: Tag matches project version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # A dispatch run carries a branch ref instead of a tag: the comparison
+      # is skipped and the job passes, keeping the downstream needs chain
+      # alive so the dry run exercises the whole pipeline.
+      - name: Compare the tag against CMake's project version
+        if: github.event_name == 'push'
+        run: |
+          version="$(sed -n 's/^project(kith VERSION \([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' CMakeLists.txt)"
+          echo "project version: $version"
+          if [ -z "$version" ] || [ "v$version" != "${{ github.ref_name }}" ]; then
+            echo "tag ${{ github.ref_name }} does not match project(kith VERSION) v$version" >&2
+            exit 1
+          fi
+
+  sdist:
+    name: Source distribution
+    needs: check-tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      # The from-source contract floor: compiler and dev libraries only.
+      # cmake and ninja come from the pip build environment and the
+      # dev-checker toolchain is absent, so the smoke below configures the
+      # tarball exactly as a from-source user does.
+      - name: Provision (clang 22 toolchain, dev libraries)
+        run: ./scripts/provision-ci.sh sdist
+      - name: Build the sdist
+        run: |
+          python -m pip install build
+          python -m build --sdist
+      # The sdist is the asset a C-toolchain user builds: install it the way
+      # pip does (source -> wheel through the hatch hook -> install) and boot
+      # a server from the result. wheel_smoke.py pops KITH_LIB itself, so the
+      # install must self-discover its own bundled libraries.
+      - name: Smoke a from-source install of the sdist
+        run: |
+          python -m venv /tmp/sdist-smoke
+          /tmp/sdist-smoke/bin/pip install dist/*.tar.gz
+          /tmp/sdist-smoke/bin/python scripts/wheel_smoke.py
+      - name: Upload the sdist artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  wheel:
+    name: Wheel (${{ matrix.compiler }})
+    needs: check-tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: clang
+            cc: clang
+          - compiler: gcc
+            cc: gcc-14
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja)
+        run: ./scripts/provision-ci.sh build
+      - name: Provision GCC 14 (gcc leg)
+        if: ${{ matrix.compiler == 'gcc' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-14
+      - name: Build the wheel (C libraries bundled by the hatch hook)
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          python -m pip install build
+          python -m build --wheel
+      - name: Smoke the wheel in a clean environment
+        run: |
+          python -m venv /tmp/wheel-smoke
+          /tmp/wheel-smoke/bin/pip install dist/*.whl
+          /tmp/wheel-smoke/bin/python scripts/wheel_smoke.py
+      - name: Upload the wheel artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wheel-${{ matrix.compiler }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  smoke-free-threaded:
+    name: Free-threaded wheel smoke (python3.14t)
+    needs: wheel
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The release wheel comes from the clang leg; the gcc wheel exists for
+      # portability inspection and is never attached to the release.
+      - name: Download the release wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wheel-clang
+          path: dist
+      - name: Provision (clang 22 toolchain, uv, free-threaded python)
+        run: ./scripts/provision-ci.sh free-threaded
+      - name: Install the wheel under python3.14t
+        run: |
+          ft_python="$(uv python find python3.14t)"
+          uv venv --python "$ft_python" /tmp/ft-smoke
+          uv pip install --python /tmp/ft-smoke/bin/python dist/*.whl
+      - name: Exercise the bridge on the free-threaded interpreter
+        run: |
+          /tmp/ft-smoke/bin/python - <<'PY'
+          import ctypes
+          import sys
+          import threading
+
+          assert sys._is_gil_enabled() is False, "expected a free-threaded interpreter"
+
+          from kith import _bridge
+
+          bridge = _bridge.load()
+          print(bridge.mode, bridge.version_string)
+          assert bridge.version_string, "empty version string"
+
+          create = bridge.lib("reactor").kith_reactor_create
+          create.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+          create.restype = ctypes.c_int
+          destroy = bridge.lib("reactor").kith_reactor_destroy
+          destroy.argtypes = [ctypes.c_void_p]
+          destroy.restype = None
+
+          errors = []
+
+          def work():
+              try:
+                  # Few iterations per thread: the kernel retires io_uring
+                  # instances asynchronously after destroy, and hosts with a
+                  # low per-user instance budget fail rapid create/destroy
+                  # loops with transient resource errors unrelated to the
+                  # framework.
+                  for _ in range(3):
+                      handle = ctypes.c_void_p()
+                      rc = create(None, None, ctypes.byref(handle))
+                      assert rc == 0, f"kith_reactor_create returned {rc}"
+                      destroy(handle)
+              except BaseException as exc:
+                  errors.append(exc)
+
+          threads = [threading.Thread(target=work) for _ in range(4)]
+          for thread in threads:
+              thread.start()
+          for thread in threads:
+              thread.join()
+          assert not errors, errors
+          PY
+
+      - name: Boot a server from the wheel
+        run: |
+          /tmp/ft-smoke/bin/python scripts/wheel_smoke.py
+
+  checksums:
+    name: SHA256 checksums
+    needs: [sdist, wheel]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download the sdist and release wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts
+          pattern: '{sdist,wheel-clang}'
+          merge-multiple: true
+      - name: Generate SHA256 checksums
+        run: |
+          cd artifacts
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+      - name: Upload the checksums artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: checksums
+          path: artifacts/SHA256SUMS
+          if-no-files-found: error
+
+  sbom:
+    name: CycloneDX SBOM
+    needs: wheel
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download the release wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wheel-clang
+          path: dist
+      - name: Generate the SBOM from the wheel
+        run: python3 tools/gen_release_sbom.py dist/*.whl --output-dir sbom
+      - name: Upload the SBOM artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: sbom/*.cdx.json
+          if-no-files-found: error
+
+  attest:
+    name: Build provenance attestations
+    needs: [sdist, wheel, sbom]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download the sdist and release wheel
+        if: github.event.repository.visibility == 'public'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+          pattern: '{sdist,wheel-clang}'
+          merge-multiple: true
+      - name: Download the SBOM
+        if: github.event.repository.visibility == 'public'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sbom
+          path: sbom
+      - name: Locate the SBOM
+        if: github.event.repository.visibility == 'public'
+        id: sbom
+        run: echo "path=$(ls sbom/*.cdx.json)" >> "$GITHUB_OUTPUT"
+      - name: Attest the sdist and wheel (provenance)
+        if: github.event.repository.visibility == 'public'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: 'dist/*'
+      - name: Attest the SBOM over the same subjects
+        if: github.event.repository.visibility == 'public'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: 'dist/*'
+          sbom-path: ${{ steps.sbom.outputs.path }}
+      - name: Collect the attestation bundles
+        if: github.event.repository.visibility == 'public'
+        run: |
+          mkdir attestation
+          cat $(cat "$RUNNER_TEMP"/created_attestation_paths.txt) \
+            > attestation/attestation.intoto.jsonl
+      - name: Upload the attestation bundles
+        if: github.event.repository.visibility == 'public'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation
+          path: attestation/attestation.intoto.jsonl
+          if-no-files-found: error
+
+  draft-release:
+    name: Draft GitHub release
+    needs: [sdist, wheel, checksums, smoke-free-threaded, sbom, attest]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-tags: true
+      - name: Download the sdist, release wheel, checksums, and SBOM
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts
+          pattern: '{sdist,wheel-clang,checksums,sbom}'
+          merge-multiple: true
+      - name: Download the attestation bundles
+        if: github.event.repository.visibility == 'public'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: attestation
+          path: attestation
+      - name: Replace a stale draft; refuse to touch a published release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Every draft for this tag is pipeline-owned and replaced on
+          # re-run — including a release a maintainer converted back to
+          # draft, which is indistinguishable from a stale pipeline draft.
+          # A published release is never modified: the job fails loudly.
+          tag="${{ github.ref_name }}"
+          if gh release view "$tag" --json isDraft > /dev/null 2>&1; then
+            if [ "$(gh release view "$tag" --json isDraft --jq '.isDraft')" != "true" ]; then
+              echo "release $tag already exists and is published; refusing to modify it" >&2
+              exit 1
+            fi
+            echo "replacing the stale draft for $tag"
+            gh release delete "$tag" --yes
+          fi
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --draft \
+            --verify-tag \
+            --generate-notes \
+            --title "${{ github.ref_name }}" \
+            artifacts/*
+      - name: Attach the attestation bundles
+        if: github.event.repository.visibility == 'public'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" attestation/*
+
+  publish-pypi:
+    name: Publish to PyPI (kith-fw)
+    needs: draft-release
+    if: github.event_name == 'push' && github.event.repository.visibility == 'public'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download the sdist and release wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+          pattern: '{sdist,wheel-clang}'
+          merge-multiple: true
+      # Trusted publishing: the job's OIDC identity is the credential. The
+      # PyPI trusted publisher (and the pending publisher that creates the
+      # project on first upload) must name this repository and workflow.
+      - name: Publish to PyPI via trusted publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
