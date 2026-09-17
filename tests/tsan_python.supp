@@ -1,0 +1,19 @@
+# ThreadSanitizer suppressions for the Python-driven leg of the sanitizer
+# lane (.github/workflows/sanitizers.yml, pytest-tsan job).
+#
+# The interpreter process preloads the shared TSan runtime so the
+# ctypes-loaded kith libraries resolve their instrumentation against one
+# runtime instance. Every framework-side access is instrumented, so
+# framework races report normally and findings stay attributable to
+# framework code.
+#
+# The entry covers one class the lane cannot triage: libpq is
+# uninstrumented third-party code, so a race whose stack carries a libpq
+# frame has at most one instrumented side (an interceptor such as write)
+# and no both-side visibility. The db module's own state is instrumented,
+# so a defect confined to kith code reports independently with framework
+# frames only. A mixed pair — a kith-db call racing a libpq-internal
+# access — is suppressed here; the sanitizer lane's tsan ctest leg links
+# the same libpq with no suppression file and is the independent detector
+# for that shape.
+called_from_lib:libpq

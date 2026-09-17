@@ -1,0 +1,16 @@
+# LeakSanitizer suppressions for the Python-driven leg of the sanitizer lane
+# (.github/workflows/sanitizers.yml, pytest-asan job).
+#
+# Entries match function names anywhere in an allocation's stack. These two
+# cover CPython's own allocator machinery, whose arenas and interned objects
+# legitimately survive pytest at process exit on interpreter builds where
+# pymalloc falls back to intercepted malloc. kith allocations never pass
+# through those functions (they allocate directly inside libkith_*.so), so
+# framework findings stay visible.
+#
+# Known masking boundary: a Python-object leak allocated on behalf of kith
+# code (the worker pool dispatching Python handlers) carries _PyObject*
+# frames and is suppressed by the patterns below; leaks of that shape need
+# triage outside this lane.
+leak:_PyObject*
+leak:*obmalloc*

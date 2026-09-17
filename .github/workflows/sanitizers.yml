@@ -1,0 +1,529 @@
+# Weekly sanitizer and fuzzing lane: AddressSanitizer +
+# UndefinedBehaviorSanitizer over the C test suite, the sanitizer-driven
+# Python integration legs, and bounded libFuzzer sessions against the
+# protocol decoder and the control HTTP parser.
+#
+# The default CI lane runs unsanitized binaries: a memory-safety defect that
+# needs a specific interleaving or input shape to surface stays invisible to
+# it. This lane rebuilds every C test binary under ASan + UBSan (the
+# asan-ubsan preset) and fails on the first heap error, leak, or
+# undefined-behavior report (-fno-sanitize-recover makes UBSan abort rather
+# than print-and-continue). It runs weekly and on demand instead of per-push:
+# sanitizer builds run several times slower and double memory use, and the
+# lane is a standing detector for latent defects, not a merge gate.
+#
+# Six legs run instrumented builds:
+#
+#   asan-ubsan    the ctest suite: fully instrumented C binaries. Each test
+#                 executable statically links both sanitizer runtimes, which
+#                 also resolve the kith libraries' undefined __asan_*/
+#                 __ubsan_* symbols at link time.
+#   tsan          the ctest suite rebuilt under ThreadSanitizer (the tsan
+#                 preset). Every racing access the suite can observe is
+#                 instrumented on both sides — the test executables and the
+#                 kith libraries carry the instrumentation, and the
+#                 happens-before edges ride kith's own mutexes and atomics
+#                 plus the intercepted pthread primitives — so a report is
+#                 an unsynchronized access pair in framework or test code,
+#                 not an artifact of an uninstrumented participant. Reports
+#                 do not halt the run: the full census lands in the log, and
+#                 ThreadSanitizer's nonzero exit code fails the job.
+#   pytest-tsan   the Python integration suite under the standard (GIL)
+#                 interpreter with the shared libclang_rt.tsan-x86_64.so
+#                 preloaded ahead of CPython: the ctypes-loaded kith
+#                 libraries resolve their instrumentation against the
+#                 preloaded instance, and TSan's default exit code fails
+#                 the job like the tsan ctest leg. The interpreter is the
+#                 GIL build deliberately — under the preload the
+#                 free-threaded interpreter reports CPython's own
+#                 reference-counting internals, an interpreter-own class
+#                 this lane cannot triage. Races inside uninstrumented
+#                 third-party code (libpq) are scoped out via
+#                 tests/tsan_python.supp — a race with a libpq frame has
+#                 at most one instrumented side. The C driver subprocess
+#                 runs preload-free: the bench wrapper strips the
+#                 sanitizer environment for children that statically link
+#                 their own runtime.
+#   pytest-asan   the Python integration suite driven through ctypes. The
+#                 instrumented libraries leave those runtime symbols
+#                 unresolved, and an interpreter process has no static
+#                 runtime to satisfy them, so the shared
+#                 libclang_rt.asan-x86_64.so is LD_PRELOADed before CPython
+#                 starts: preloading initializes ASan ahead of every other
+#                 library (malloc interception requires being first), lets
+#                 the dlopened libraries resolve their runtime symbols
+#                 against the preloaded instance instead of pulling in a
+#                 second copy, and covers UBSan as well because clang's
+#                 shared ASan runtime embeds the UBSan handlers. The preload
+#                 must be the same runtime generation the libraries were
+#                 built against, which holds because provision-ci.sh pins
+#                 the clang toolchain for both. Interpreter-internal
+#                 allocator frames are suppressed via tests/lsan_python.supp
+#                 so findings stay attributable to framework code.
+#   pytest-asan-ft the same integration suite under the free-threaded
+#                 interpreter (python3.14t, GIL disabled). Free-threaded
+#                 finalization order differs from standard CPython — the
+#                 cycle collector can release an owner subgraph ahead of
+#                 its facade — so teardown defects can exist here that
+#                 the standard-interpreter leg cannot reach. The
+#                 interpreter is the uv-provisioned cpython-3.14+
+#                 freethreaded build, isolated in a dedicated .venv-ft
+#                 venv (the pattern of verify.sh's free-threaded stage),
+#                 and the job asserts GIL-off under the preloaded
+#                 runtime before driving the suite.
+#   fuzz          bounded live mutation sessions against the libFuzzer
+#                 targets (the protocol decoder and the control HTTP
+#                 parser) under the fuzz preset (libFuzzer + ASan). ctest
+#                 first replays the deterministic seed corpora (-runs=0),
+#                 then libFuzzer mutates for a bounded wall-clock budget
+#                 per target. Crash, leak, timeout, and OOM reproducers
+#                 land under fuzz-artifacts/ and are uploaded so they can
+#                 be replayed and minimized locally through the same
+#                 preset.
+#
+# One leg is not instrumented:
+#
+#   gcc-build     the GCC 14 portability leg, which runs the same
+#                 verification gates the per-push build runs (configure,
+#                 build, ctest, pytest, check-all, ABI diff, checksec,
+#                 consumer) under gcc-14. GCC-only breakage surfaces within
+#                 a week; clang remains the toolchain every gate targets.
+#
+# Timing under instrumentation: ASan slows execution roughly 2-3x, so
+# reactor tests that lean on wall-clock assumptions get proportionally less
+# done per tick under either leg. ThreadSanitizer slows execution further
+# and multiplies memory use per thread. A test failing here while passing
+# the default lane is a finding to triage — either a real defect or a
+# latency assumption the test cannot rely on — not noise to suppress.
+
+name: sanitizers
+
+on:
+  schedule:
+    - cron: '0 3 * * 4'  # weekly Thursday 03:00 UTC, clear of the Monday windows
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  asan-ubsan:
+    name: ASan + UBSan ctest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja)
+        run: ./scripts/provision-ci.sh build
+      - name: Configure (asan-ubsan preset)
+        run: cmake --preset asan-ubsan
+      - name: Build (asan-ubsan preset)
+        run: cmake --build --preset asan-ubsan
+      - name: Test (asan-ubsan preset; sanitizer options come from the test preset)
+        run: |
+          ctest --preset asan-ubsan --output-log sanitizer-ctest.log
+      - name: Upload the sanitizer test log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sanitizer-ctest-log
+          path: sanitizer-ctest.log
+          if-no-files-found: error
+          retention-days: 7
+
+  tsan:
+    name: TSan ctest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja)
+        run: ./scripts/provision-ci.sh build
+      - name: Configure (tsan preset)
+        run: cmake --preset tsan
+      - name: Build (tsan preset)
+        run: cmake --build --preset tsan
+      # TSAN_OPTIONS comes from the test preset. The lane relies on two
+      # ThreadSanitizer defaults: a report does not halt the run, and the
+      # process exits 66 if any race surfaced during the run, so the step
+      # fails with the full report census in the log.
+      - name: Test (tsan preset; sanitizer options come from the test preset)
+        run: |
+          ctest --preset tsan --output-log tsan-ctest.log
+      - name: Upload the TSan test log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tsan-ctest-log
+          path: tsan-ctest.log
+          if-no-files-found: error
+          retention-days: 7
+
+  pytest-tsan:
+    name: TSan pytest (integration)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Mirrors the postgres service definition and KITH_PG_* environment
+    # declared in ci.yml. YAML anchors do not reach across workflow files,
+    # so the block is duplicated per job; keep every copy in sync.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kith
+          POSTGRES_PASSWORD: kith
+          POSTGRES_DB: kith_example
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kith -d kith_example"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      KITH_PG_HOST: 127.0.0.1
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja, pytest)
+        run: ./scripts/provision-ci.sh build
+      - name: Configure (tsan preset)
+        run: cmake --preset tsan
+      - name: Build (tsan preset)
+        run: cmake --build --preset tsan
+      # The preload initializes TSan ahead of every other library and
+      # satisfies the ctypes-loaded kith libraries' instrumentation
+      # symbols. TSAN_OPTIONS carries the tsan test preset's value plus
+      # the suppression file above.
+      - name: Test (integration suite under the preloaded TSan runtime)
+        run: |
+          set -euo pipefail
+          runtime="$(clang -print-file-name=libclang_rt.tsan-x86_64.so)"
+          if [ ! -e "$runtime" ]; then
+            echo "shared TSan runtime not found; check the clang provisioning" >&2
+            exit 1
+          fi
+          export KITH_BUILD_DIR="$PWD/build/tsan"
+          export LD_PRELOAD="$runtime"
+          export TSAN_OPTIONS="second_deadlock_stack=1 suppressions=$PWD/tests/tsan_python.supp"
+          python -m pytest tests/integration -q 2>&1 | tee sanitizer-pytest-tsan.log
+      - name: Upload the TSan pytest log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sanitizer-pytest-tsan-log
+          path: sanitizer-pytest-tsan.log
+          if-no-files-found: error
+          retention-days: 7
+
+  pytest-asan:
+    name: ASan + UBSan pytest (integration)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Mirrors the postgres service definition and KITH_PG_* environment
+    # declared in ci.yml. YAML anchors do not reach across workflow files,
+    # so the block is duplicated here; keep the two in sync.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kith
+          POSTGRES_PASSWORD: kith
+          POSTGRES_DB: kith_example
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kith -d kith_example"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      KITH_PG_HOST: 127.0.0.1
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja, pytest)
+        run: ./scripts/provision-ci.sh build
+      - name: Configure (asan-ubsan preset)
+        run: cmake --preset asan-ubsan
+      - name: Build (asan-ubsan preset)
+        run: cmake --build --preset asan-ubsan
+      - name: Test (integration suite under the preloaded ASan runtime)
+        run: |
+          set -euo pipefail
+          runtime="$(clang -print-file-name=libclang_rt.asan-x86_64.so)"
+          if [ ! -e "$runtime" ]; then
+            echo "shared ASan runtime not found; check the clang provisioning" >&2
+            exit 1
+          fi
+          export KITH_BUILD_DIR="$PWD/build/asan-ubsan"
+          export LD_PRELOAD="$runtime"
+          export ASAN_OPTIONS=detect_leaks=1
+          export LSAN_OPTIONS="suppressions=$PWD/tests/lsan_python.supp"
+          python -m pytest tests/integration -q 2>&1 | tee sanitizer-pytest.log
+      - name: Upload the pytest sanitizer log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sanitizer-pytest-log
+          path: sanitizer-pytest.log
+          if-no-files-found: error
+          retention-days: 7
+
+  pytest-asan-ft:
+    name: ASan + UBSan pytest (integration, free-threaded)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Mirrors the postgres service definition and KITH_PG_* environment
+    # declared in ci.yml. YAML anchors do not reach across workflow files,
+    # so the block is duplicated per job; keep every copy in sync.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kith
+          POSTGRES_PASSWORD: kith
+          POSTGRES_DB: kith_example
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kith -d kith_example"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      KITH_PG_HOST: 127.0.0.1
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Cache uv (free-threaded interpreter + wheel downloads)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv/python
+          key: uv-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            uv-${{ runner.os }}-sanitizers-
+      - name: Provision (clang 22 toolchain, uv, free-threaded python, cmake, ninja)
+        run: ./scripts/provision-ci.sh free-threaded
+      - name: Configure (asan-ubsan preset)
+        run: cmake --preset asan-ubsan
+      - name: Build (asan-ubsan preset)
+        run: cmake --build --preset asan-ubsan
+      - name: Test (integration suite under the preloaded ASan runtime, GIL off)
+        run: |
+          set -euo pipefail
+          runtime="$(clang -print-file-name=libclang_rt.asan-x86_64.so)"
+          if [ ! -e "$runtime" ]; then
+            echo "shared ASan runtime not found; check the clang provisioning" >&2
+            exit 1
+          fi
+          ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+          if [ -z "$ft_python" ]; then
+            echo "free-threaded interpreter (python3.14t) not found; check the uv provisioning" >&2
+            exit 1
+          fi
+          uv venv --python "$ft_python" "$PWD/.venv-ft"
+          uv pip install --python "$PWD/.venv-ft" pytest
+          export KITH_BUILD_DIR="$PWD/build/asan-ubsan"
+          export LD_PRELOAD="$runtime"
+          export ASAN_OPTIONS=detect_leaks=1
+          export LSAN_OPTIONS="suppressions=$PWD/tests/lsan_python.supp"
+          # Asserting GIL-free under the full sanitizer environment doubles
+          # as a smoke that the preloaded runtime initializes ahead of
+          # CPython without breaking interpreter startup.
+          .venv-ft/bin/python3.14t -c "import sys; assert sys._is_gil_enabled() \
+              is False, 'expected a free-threaded interpreter'"
+          export PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/kith-pycache-ft-asan"
+          "$PWD/.venv-ft/bin/python3.14t" -m pytest tests/integration -q 2>&1 | tee sanitizer-pytest-ft.log
+      - name: Upload the free-threaded pytest sanitizer log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sanitizer-pytest-ft-log
+          path: sanitizer-pytest-ft.log
+          if-no-files-found: error
+          retention-days: 7
+
+  fuzz:
+    name: libFuzzer parsers (bounded weekly session)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja)
+        run: ./scripts/provision-ci.sh build
+      - name: Configure (fuzz preset)
+        run: cmake --preset fuzz
+      - name: Build (fuzz preset)
+        run: cmake --build --preset fuzz
+      - name: Smoke (deterministic seed replay over the instrumented suite)
+        run: |
+          ctest --preset fuzz --output-log fuzz-ctest.log
+      - name: Fuzz (bounded live mutation sessions seeded from the corpora)
+        run: |
+          set -uo pipefail
+          artifacts="$PWD/fuzz-artifacts"
+          mkdir -p "$artifacts/proto" "$artifacts/control-http"
+          # The committed regression corpora exist only once a minimized
+          # crashing input lands for a target; until then their absence is
+          # the steady state, not an error.
+          proto_corpora=(build/fuzz/corpus/proto)
+          control_corpora=(build/fuzz/corpus/control-http)
+          if [ -d tests/fuzz/corpus/proto ]; then
+              proto_corpora+=(tests/fuzz/corpus/proto)
+          fi
+          if [ -d tests/fuzz/corpus/control-http ]; then
+              control_corpora+=(tests/fuzz/corpus/control-http)
+          fi
+          # Bounded compute: ten wall-clock minutes of mutation per target
+          # per night, inputs capped at each harness's own 64 KiB limit
+          # (-max_len mirrors FUZZ_MAX_INPUT in both harnesses), each input
+          # killed at thirty seconds so a hang cannot absorb the budget
+          # without leaving a timeout reproducer behind. Both sessions run
+          # every night even when one crashes — a finding in one target
+          # must not cost the other target its budget — and the step fails
+          # if either session failed.
+          proto_rc=0
+          control_rc=0
+          ./build/fuzz/tests/fuzz/fuzz_proto_decode \
+              -max_total_time=600 \
+              -max_len=65536 \
+              -timeout=30 \
+              -print_final_stats=1 \
+              -artifact_prefix="$artifacts/proto/" \
+              "${proto_corpora[@]}" || proto_rc=$?
+          ./build/fuzz/tests/fuzz/fuzz_control_http \
+              -max_total_time=600 \
+              -max_len=65536 \
+              -timeout=30 \
+              -print_final_stats=1 \
+              -artifact_prefix="$artifacts/control-http/" \
+              "${control_corpora[@]}" || control_rc=$?
+          [ "$proto_rc" -eq 0 ] && [ "$control_rc" -eq 0 ]
+      - name: Upload the fuzz smoke log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fuzz-smoke-log
+          path: fuzz-ctest.log
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload fuzz reproducers
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fuzz-reproducers
+          path: fuzz-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  gcc-build:
+    name: GCC 14 build and verification gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Mirrors the postgres service definition and KITH_PG_* environment
+    # declared in ci.yml. YAML anchors do not reach across workflow files,
+    # so the block is duplicated per job; keep every copy in sync. The
+    # build stage's pytest legs need it.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kith
+          POSTGRES_PASSWORD: kith
+          POSTGRES_DB: kith_example
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kith -d kith_example"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      KITH_PG_HOST: 127.0.0.1
+      KITH_PG_PORT: "5432"
+      KITH_PG_USER: kith
+      KITH_PG_PASSWORD: kith
+      KITH_PG_DB: kith_example
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-sanitizers-${{ hashFiles('scripts/provision-ci.sh') }}
+          restore-keys: |
+            pip-${{ runner.os }}-sanitizers-
+      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja, gcc-14)
+        run: ./scripts/provision-ci.sh build-gcc
+      - name: Run build stage under gcc-14 (configure, build, ctest, pytest, check-all, ABI, checksec)
+        env:
+          # A cache variable beats the debug preset's pinned CC=clang preset
+          # environment entry, which an exported CC alone cannot override.
+          KITH_C_COMPILER: gcc-14
+        run: ./scripts/verify.sh build
