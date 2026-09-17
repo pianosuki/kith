@@ -25,27 +25,25 @@ are not supported; on them the reactor creation path reports KITH_ENOSYS.
 
 ## 2. Initial setup
 
-Clone, configure git, and bootstrap the development environment:
+Clone and bootstrap in one pass:
 
 ```sh
 git clone <repo-url> kith
 cd kith
-uv sync
-pre-commit install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push
+
+# One-command bootstrap: preflights the host toolchain (clang, cmake, ninja,
+# python, uv, pre-commit) and prints an install hint for anything missing,
+# then applies the project git configuration, syncs the Python dev
+# environment (uv sync), installs the free-threaded interpreter the test
+# suite runs under, and wires the pre-commit hooks. Idempotent; safe to
+# re-run. Pass --yes for non-interactive use (CI/agents).
+./scripts/setup.sh
 ```
 
-Commit signing is SSH (not GPG). Configure the identity and the signing
-key that git commits with:
-
-```sh
-git config user.name "Your Name"
-git config user.email "you@example.com"
-git config commit.gpgsign true
-git config gpg.format ssh
-git config user.signingkey ~/.ssh/id_ed25519.pub
-```
-
-The DCO sign-off
+`setup.sh` orchestrates the individual setup steps. The git step
+(`scripts/setup-git-config.sh`) configures SSH commit signing (not GPG); it
+auto-detects the local git identity and signing key and confirms them, or
+accepts `--name` / `--email` / `--signing-key` overrides. The DCO sign-off
 line is added by the `dco-signoff` commit-msg hook that the pre-commit step
 installs. An unsigned commit does not land.
 

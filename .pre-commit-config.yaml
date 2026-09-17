@@ -4,10 +4,11 @@ default_install_hook_types: [pre-commit, pre-push, commit-msg]
 # Local python hooks run under language: python so pre-commit owns their
 # environment: each hook installs its declared additional_dependencies into an
 # isolated, version-pinned virtualenv, independent of the developer's project
-# venv or system python. The ctypes drift hook runs under language: python
-# with the clang2 pip wheel (LLVM 22 python bindings) but still loads the
-# system libclang1-22 C library and invokes the clang-22 driver for
-# system-include discovery.
+# venv or system python. Only clang-tidy stays language: system because it
+# needs the full host clang 22 C toolchain and compile database. The ctypes
+# drift hook runs under language: python with the clang2 pip wheel (LLVM 22
+# python bindings) but still loads the system libclang1-22 C library and
+# invokes the clang-22 driver for system-include discovery.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -44,6 +45,14 @@ repos:
 
   - repo: local
     hooks:
+      - id: clang-tidy
+        name: clang-tidy (run via scripts/run-clang-tidy.sh)
+        entry: ./scripts/run-clang-tidy.sh
+        language: system
+        types_or: [c]
+        pass_filenames: false
+        stages: [manual]
+
       - id: check-module-layers
         name: dependency-layer enforcement
         entry: python tools/check_module_layers.py include src

@@ -22,7 +22,7 @@ cd "$(dirname "$0")/.."
 
 if ! command -v clang-format-23 >/dev/null 2>&1; then
     echo "format.sh: 'clang-format-23' not found; install the clang-format 23" >&2
-    echo "toolchain the pre-commit hook pins" >&2
+    echo "wheel (install hint in scripts/setup.sh's preflight)" >&2
     exit 1
 fi
 if ! command -v ruff >/dev/null 2>&1; then

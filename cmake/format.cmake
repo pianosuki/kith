@@ -35,7 +35,7 @@ set(_kith_format_tracked_all
 
 add_custom_target(check-ruff-format
     COMMAND bash -c
-        "[ -x '${KITH_RUFF_EXECUTABLE}' ] || { echo 'error: ruff not found; install the pinned version' >&2; exit 2; }; ${_kith_format_tracked_py} | xargs -r '${KITH_RUFF_EXECUTABLE}' format --check"
+        "[ -x '${KITH_RUFF_EXECUTABLE}' ] || { echo 'error: ruff not found; install the pinned version (scripts/setup.sh preflight names it)' >&2; exit 2; }; ${_kith_format_tracked_py} | xargs -r '${KITH_RUFF_EXECUTABLE}' format --check"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Checking ruff format compliance"
     VERBATIM
@@ -44,7 +44,7 @@ add_custom_target(check-ruff-format
 
 add_custom_target(check-ruff
     COMMAND bash -c
-        "[ -x '${KITH_RUFF_EXECUTABLE}' ] || { echo 'error: ruff not found; install the pinned version' >&2; exit 2; }; ${_kith_format_tracked_py} | xargs -r '${KITH_RUFF_EXECUTABLE}' check"
+        "[ -x '${KITH_RUFF_EXECUTABLE}' ] || { echo 'error: ruff not found; install the pinned version (scripts/setup.sh preflight names it)' >&2; exit 2; }; ${_kith_format_tracked_py} | xargs -r '${KITH_RUFF_EXECUTABLE}' check"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Checking ruff lint compliance"
     VERBATIM

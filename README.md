@@ -3,6 +3,7 @@
 `kith` is a scalable server framework for real-time, stateful multiplayer
 worlds.
 
+[![ci](https://github.com/pianosuki/kith/actions/workflows/ci.yml/badge.svg)](https://github.com/pianosuki/kith/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![python](https://img.shields.io/badge/python-3.14%20%7C%20free--threaded-blue.svg)
 
@@ -30,7 +31,7 @@ belong to the game.
 ## Capabilities
 
 - Five-plane fabric: Sim, Fabric, Gateway, Coord, Control, with the
-  data-flow contracts between planes enforced in the build.
+  data-flow contracts between planes enforced by CI.
 - Pluggable components within planes: sim models, database queries, wire
   types, control routes, and delivery presets register behind their plane's
   contract.
@@ -81,7 +82,7 @@ kith-visual play crowd-in   # bots converge on your cell; watch the HUD
 
 ```sh
 git clone https://github.com/pianosuki/kith kith && cd kith
-uv sync
+./scripts/setup.sh  # preflight, git config, uv sync, hooks
 source .venv/bin/activate
 cmake --preset release && cmake --build build/release
 python -m examples.free_movement.server  # prints: free_movement: gateway=… control=…

@@ -136,7 +136,9 @@ the module docstring (§3.5). No license block: Apache-2.0 lives in
   place only when a competent reader would otherwise assume that
   behavior and misread its absence as a defect — and then it is one
   clause, not a narrative. A rejected design alternative never meets
-  that bar.
+  that bar. The sign-off paragraph at the top of
+  `scripts/setup-git-config.sh` is the shipped model of the one-clause
+  form.
 - **Cite decision records.** No `ADR-NNNN` in code comments or
   docstrings: code under `src/`, `include/`, `python/`, `examples/`, and
   `tests/` must be self-supporting, and the same rule governs `tools/`
@@ -719,9 +721,10 @@ GPG). The sign-off certifies the Developer Certificate of Origin
 work under the project's Apache-2.0 license. The `dco-signoff` commit-msg
 hook appends the sign-off when the message lacks one; git has no setting
 that enables `--signoff` by default (gitfaq(7)). The signing configuration (`gpg.format ssh`, the
-Ed25519 signing key, `commit.gpgsign true`) is required of every clone. An
-unsigned commit does not land; GitHub verifies SSH-signed commits
-against the key registered to the author's account.
+Ed25519 signing key, `commit.gpgsign true`) is applied by
+`scripts/setup-git-config.sh`. An unsigned commit does not land; CI
+checks signature presence on every push, and GitHub verifies SSH-signed
+commits against the key registered to the author's account.
 
 #### 5.2.9 Atomic commits
 

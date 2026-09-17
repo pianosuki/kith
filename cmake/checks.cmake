@@ -15,7 +15,6 @@ find_program(KITH_PYTHON3_EXECUTABLE NAMES python3 REQUIRED)
 # two formatter majors in one gate reject each other's output, so this
 # check, scripts/format.sh, and the hook must resolve the same version.
 find_program(KITH_CLANG_FORMAT_EXECUTABLE NAMES clang-format-23)
-find_program(KITH_CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
 
 # Tracked-file producers used by the file-list checkers. git ls-files keeps
 # the list current without a reconfigure; tools/fixtures/ holds checker test
@@ -23,8 +22,6 @@ find_program(KITH_CLANG_TIDY_EXECUTABLE NAMES clang-tidy)
 # .pre-commit-config.yaml exclude rules.
 set(_kith_tracked_src_py
     "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.yml\" \"*.yaml\" \"*.cmake\" \"CMakeLists.txt\" | grep -v \"^tools/fixtures/\"")
-set(_kith_tracked_src_py_md
-    "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.md\" | grep -v \"^tools/fixtures/\"")
 set(_kith_tracked_src_py_md
     "git ls-files \"*.c\" \"*.h\" \"*.py\" \"*.md\" | grep -v \"^tools/fixtures/\"")
 set(_kith_tracked_c_h
@@ -51,7 +48,7 @@ add_custom_target(check-forbidden-patterns
 
 add_custom_target(check-clang-format
     COMMAND bash -c
-        "[ -x '${KITH_CLANG_FORMAT_EXECUTABLE}' ] || { echo 'error: clang-format-23 not found; install the pinned formatter' >&2; exit 2; }; ${_kith_tracked_c_h} | xargs -r '${KITH_CLANG_FORMAT_EXECUTABLE}' --dry-run --Werror"
+        "[ -x '${KITH_CLANG_FORMAT_EXECUTABLE}' ] || { echo 'error: clang-format-23 not found; install the pinned formatter (scripts/setup.sh preflight names it)' >&2; exit 2; }; ${_kith_tracked_c_h} | xargs -r '${KITH_CLANG_FORMAT_EXECUTABLE}' --dry-run --Werror"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Checking clang-format compliance"
     VERBATIM
@@ -120,14 +117,8 @@ add_custom_target(check-ctypes-drift
 )
 
 # --- clang-tidy over the compilation database ----------------------------
-# The file list is the tracked .c set minus the trees that compile outside
-# the library targets' compilation database (tools/ probes and fixtures,
-# third-party sources, the fuzz harnesses, and the downstream consumer
-# probes): clang-tidy -p fails closed on a file the database has no entry
-# for.
 add_custom_target(check-clang-tidy
-    COMMAND bash -c
-        "[ -x '${KITH_CLANG_TIDY_EXECUTABLE}' ] || { echo 'error: clang-tidy not found; install the pinned clang tools' >&2; exit 2; }; git ls-files \"*.c\" | grep -v \"^tools/\" | grep -v \"^third_party/\" | grep -v \"^tests/fuzz/\" | grep -v \"^tests/consumer/\" | xargs -r '${KITH_CLANG_TIDY_EXECUTABLE}' -p ${CMAKE_BINARY_DIR} --quiet --warnings-as-errors='*'"
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/run-clang-tidy.sh -p ${CMAKE_BINARY_DIR}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running clang-tidy over the compilation database"
     VERBATIM
