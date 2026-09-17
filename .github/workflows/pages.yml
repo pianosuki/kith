@@ -1,0 +1,75 @@
+# Build and deploy the Doxygen API reference to GitHub Pages.
+#
+# Generates the browsable C API reference from the public headers under
+# include/kith/ (whose doc comments follow AGENTS.md §2.9) and
+# publishes the static HTML so the reference promised in AGENTS.md §7.1
+# is reachable at the GitHub Pages URL.
+#
+# The workflow runs only when the API surface or its rendering config
+# changes (paths filter), plus on manual dispatch, so a push that
+# touches no headers does not redeploy an identical site.
+#
+# GitHub Pages must be enabled in repository settings (Settings -> Pages,
+# source: GitHub Actions) for the deploy job to succeed; the build job
+# generates the reference regardless.
+#
+# Doxygen is installed inline rather than via scripts/provision-ci.sh:
+# the provisioning script is the single source of truth for the build
+# and test toolchain that must match between CI and the local Docker CI
+# image, neither of which renders documentation. Doxygen has no
+# build/test counterpart to keep in sync, so it stays local to this job.
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'include/**'
+      - 'Doxyfile'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Doxygen reference
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends doxygen
+      - name: Generate API reference
+        # The Doxyfile renders into build/doxygen below the checkout root;
+        # a fresh checkout has no build/ directory and doxygen does not
+        # create nested output paths itself.
+        run: mkdir -p build/doxygen && doxygen Doxyfile
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: build/doxygen/html
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
