@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1136" height="696" viewBox="32 32 1136 696" role="img" aria-labelledby="title description">
+  <title id="title">Kith runtime architecture</title>
+  <desc id="description">The diagram shows the five Kith runtime planes. Simulation publishes immutable cell products to Fabric. Fabric and Gateway exchange cell streams and subscriptions. Gateway delivers bounded views to clients. Coordination governs routing and authority for Gateway, Fabric, and Simulation. Control attaches as an operational plane. Foundation modules serve every plane without owning plane data.</desc>
+  <defs>
+    <marker id="flow-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#dbe7f2"/>
+    </marker>
+    <marker id="ops-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#98acbf"/>
+    </marker>
+    <style>
+      .text { font-family: Inter, ui-sans-serif, system-ui, sans-serif; fill: #dbe7f2; letter-spacing: 0; }
+      .kicker { font-size: 11px; font-weight: 800; fill: #98acbf; }
+      .title { font-size: 25px; font-weight: 800; }
+      .axis { font-size: 12px; font-weight: 800; fill: #98acbf; }
+      .node-title { font-size: 17px; font-weight: 800; }
+      .node-copy { font-size: 13px; font-weight: 560; fill: #aab9c7; }
+      .plane-number { font-size: 13px; font-weight: 850; fill: #06111b; }
+      .legend { font-size: 12px; font-weight: 620; fill: #aab9c7; }
+      .shell { fill: #0c1722; stroke: #33485b; }
+      .runtime-band { fill: #111e2a; }
+      .service-band { fill: #0e1923; stroke: #263b4c; }
+      .module { fill: #101a25; stroke-width: 2; }
+      .flow { fill: none; stroke: #dbe7f2; stroke-width: 2.5; marker-end: url(#flow-arrow); }
+      .flow-return { fill: none; stroke: #dbe7f2; stroke-width: 2.5; marker-end: url(#flow-arrow); }
+      .ops { fill: none; stroke: #98acbf; stroke-width: 1.7; stroke-dasharray: 7 6; marker-end: url(#ops-arrow); }
+      .ops-spine { fill: none; stroke: #98acbf; stroke-width: 1.7; stroke-dasharray: 7 6; }
+      .support { fill: none; stroke: #526578; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="760" fill="#070d14"/>
+  <rect x="32" y="32" width="1136" height="696" class="shell"/>
+
+  <text x="64" y="70" class="text kicker">SYSTEM DESIGN OVERVIEW</text>
+  <text x="64" y="101" class="text title">KITH RUNTIME ARCHITECTURE</text>
+  <line x1="64" y1="124" x2="1136" y2="124" stroke="#33485b"/>
+
+  <rect x="64" y="152" width="1072" height="260" class="runtime-band"/>
+  <rect x="64" y="432" width="1072" height="228" class="service-band"/>
+  <text x="82" y="178" class="text axis">RUNTIME DATA PLANE</text>
+  <text x="82" y="458" class="text axis">COORDINATION, CONTROL, AND SHARED MODULES</text>
+
+  <path d="M248 280H302" class="flow"/>
+  <path d="M532 266H630" class="flow"/>
+  <path d="M630 296H532" class="flow-return"/>
+  <path d="M952 280H860" class="flow"/>
+
+  <path d="M160 596V580" class="support"/>
+  <path d="M350 596V462 M350 446V368" class="support"/>
+  <path d="M700 596V368" class="support"/>
+  <path d="M1000 596V340" class="support"/>
+  <path d="M914 596V580" class="support"/>
+  <path d="M211 596V580" class="support"/>
+
+  <line x1="211" y1="480" x2="1044" y2="480" class="ops-spine"/>
+  <path d="M211 502V480" class="ops-spine"/>
+  <path d="M914 502V480" class="ops-spine"/>
+  <path d="M416 480V368" class="ops"/>
+  <path d="M746 480V368" class="ops"/>
+  <path d="M1044 480V340" class="ops"/>
+
+  <g>
+    <rect x="64" y="222" width="184" height="116" class="module" stroke="#7f95aa"/>
+    <rect x="64" y="222" width="184" height="28" fill="#7f95aa"/>
+    <text x="86" y="278" class="text node-title">CLIENTS</text>
+    <text x="86" y="304" class="text node-copy"><tspan x="86">socket traffic</tspan><tspan x="86" dy="18">session input/output</tspan></text>
+  </g>
+
+  <g>
+    <rect x="302" y="196" width="230" height="172" class="module" stroke="#75a7d7"/>
+    <rect x="302" y="196" width="230" height="28" fill="#75a7d7"/>
+    <text x="316" y="216" class="text plane-number">03</text>
+    <text x="324" y="252" class="text node-title">GATEWAY</text>
+    <text x="324" y="278" class="text node-copy"><tspan x="324">client sockets</tspan><tspan x="324" dy="18">shared cell cache</tspan><tspan x="324" dy="18">bounded relevance view</tspan><tspan x="324" dy="18">delivery budgets</tspan></text>
+  </g>
+
+  <g>
+    <rect x="630" y="196" width="230" height="172" class="module" stroke="#5ebaa5"/>
+    <rect x="630" y="196" width="230" height="28" fill="#5ebaa5"/>
+    <text x="644" y="216" class="text plane-number">02</text>
+    <text x="652" y="252" class="text node-title">FABRIC</text>
+    <text x="652" y="278" class="text node-copy"><tspan x="652">append-only streams</tspan><tspan x="652" dy="18">tiered cell products</tspan><tspan x="652" dy="18">subscription fanout</tspan><tspan x="652" dy="18">supersession</tspan></text>
+  </g>
+
+  <g>
+    <rect x="952" y="222" width="184" height="116" class="module" stroke="#b99670"/>
+    <rect x="952" y="222" width="184" height="28" fill="#b99670"/>
+    <text x="966" y="242" class="text plane-number">01</text>
+    <text x="974" y="278" class="text node-title">SIMULATION</text>
+    <text x="974" y="304" class="text node-copy"><tspan x="974">authoritative cells</tspan><tspan x="974" dy="18">immutable publishes</tspan></text>
+  </g>
+
+  <g>
+    <rect x="96" y="502" width="230" height="78" class="module" stroke="#b69ad8"/>
+    <rect x="96" y="502" width="230" height="28" fill="#b69ad8"/>
+    <text x="110" y="522" class="text plane-number">05</text>
+    <text x="118" y="552" class="text node-title">CONTROL</text>
+    <text x="118" y="572" class="text node-copy">HTTP / WS ops API</text>
+  </g>
+
+  <g>
+    <rect x="798" y="502" width="230" height="78" class="module" stroke="#c58f7d"/>
+    <rect x="798" y="502" width="230" height="28" fill="#c58f7d"/>
+    <text x="812" y="522" class="text plane-number">04</text>
+    <text x="820" y="552" class="text node-title">COORD</text>
+    <text x="820" y="572" class="text node-copy">ownership and routing</text>
+  </g>
+
+  <g>
+    <rect x="96" y="596" width="942" height="48" class="module" stroke="#8998a7"/>
+    <rect x="96" y="596" width="942" height="8" fill="#8998a7"/>
+    <text x="116" y="626" class="text node-title">FOUNDATION</text>
+    <text x="264" y="626" class="text node-copy">shared modules: util, config, logger, metrics, proto, net, reactor, worker, state, db, aoi</text>
+  </g>
+
+  <line x1="64" y1="684" x2="1136" y2="684" stroke="#263b4c"/>
+  <line x1="64" y1="704" x2="112" y2="704" stroke="#dbe7f2" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+  <text x="126" y="708" class="text legend">runtime data flow</text>
+  <line x1="286" y1="704" x2="334" y2="704" stroke="#98acbf" stroke-width="1.7" stroke-dasharray="7 6" marker-end="url(#ops-arrow)"/>
+  <text x="348" y="708" class="text legend">coordination and operational access</text>
+  <line x1="616" y1="704" x2="664" y2="704" stroke="#526578" stroke-width="1.5"/>
+  <text x="678" y="708" class="text legend">shared module use</text>
+</svg>

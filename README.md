@@ -1,11 +1,15 @@
-# kith
+<h1 align="center">kith</h1>
 
-`kith` is a scalable server framework for real-time, stateful multiplayer
-worlds.
+<p align="center">
+  <em>A scalable server framework for real-time, stateful multiplayer worlds.</em>
+</p>
 
-[![ci](https://github.com/pianosuki/kith/actions/workflows/ci.yml/badge.svg)](https://github.com/pianosuki/kith/actions/workflows/ci.yml)
-[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![python](https://img.shields.io/badge/python-3.14%20%7C%20free--threaded-blue.svg)
+<p align="center">
+  <a href="https://pypi.org/project/kith-fw/"><img src="https://img.shields.io/pypi/v/kith-fw" alt="PyPI"></a>
+  <img src="https://img.shields.io/badge/python-3.14%20%7C%20free--threaded-blue.svg" alt="python 3.14 or free-threaded">
+  <a href="https://github.com/pianosuki/kith/actions/workflows/ci.yml"><img src="https://github.com/pianosuki/kith/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="Apache-2.0 license"></a>
+</p>
 
 A C23 core owns the performance-critical systems: transport, the reactor,
 spatial indexing, the world stream fabric, and the simulation. Game logic
@@ -27,6 +31,12 @@ a simulation cadence.
 The framework runs on Linux only; the reactor is io_uring. It ships
 without accounts, authentication, matchmaking, or billing; those services
 belong to the game.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-overview-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/architecture-overview.svg">
+  <img alt="Architecture overview: five numbered planes show Simulation publishing immutable cell products to Fabric, Fabric and Gateway exchanging streams and subscriptions, Gateway delivering bounded views to clients, Coord managing ownership and routing, Control exposing operational access, and Foundation providing shared modules beneath the planes." src="docs/assets/architecture-overview.svg">
+</picture>
 
 ## Capabilities
 
