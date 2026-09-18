@@ -144,6 +144,13 @@ repos:
         pass_filenames: true
         files: '^docs/architecture/adr/.*\.md$'
 
+      - id: check-changelog-version
+        name: changelog version lockstep
+        entry: python tools/check_changelog_version.py
+        language: python
+        pass_filenames: false
+        files: '^(CHANGELOG\.md|CMakeLists\.txt)$'
+
       - id: check-replay-codec-imports
         name: replay codec stdlib-only enforcement
         entry: python tools/check_replay_codec_imports.py

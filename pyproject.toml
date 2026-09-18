@@ -306,7 +306,11 @@ path = "hatch_build.py"
 [tool.hatch.build.targets.sdist]
 # The sdist ships the source tree a from-source build needs: the C source,
 # headers, CMake build files, version scripts, the Hatch build hook, the ABI
-# snapshots, and the Python package. Every include pattern is anchored to the
+# snapshots, and the Python package. The changelog and the third-party
+# notices ride along: the notices file's license texts under docs/third-party/
+# are what keep the bundled libraries' copyright obligations met for sdist
+# distribution, and the notices file links them by a path relative to the
+# sdist root. Every include pattern is anchored to the
 # repository root: hatchling compiles the list into a gitignore spec, where a
 # bare name matches that name at every depth and would pull partial fragments
 # of the test, example, and tooling trees without their sources. A
@@ -321,10 +325,13 @@ include = [
     "/src",
     "/cmake",
     "/tests/abi",
+    "/docs/third-party",
     "/hatch_build.py",
     "/CMakeLists.txt",
     "/CMakePresets.json",
     "/README.md",
     "/LICENSE",
+    "/CHANGELOG.md",
+    "/THIRD-PARTY-NOTICES.md",
     "/pyproject.toml",
 ]

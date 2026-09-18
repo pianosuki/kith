@@ -702,10 +702,7 @@ def _emit_init(modules: list[str], decls_by_module: dict[str, HeaderDecls]) -> s
     lines.append("")
     lines.append("from __future__ import annotations")
     lines.append("")
-    # contextlib rides its use: the optional plane's suppress. The generated
-    # file carries what it uses, no more.
-    if any(m in _OPTIONAL_MODULES for m in configured):
-        lines.append("import contextlib")
+    lines.append("import contextlib")
     lines.append("import ctypes")
     lines.append("from typing import Protocol")
     lines.append("")
