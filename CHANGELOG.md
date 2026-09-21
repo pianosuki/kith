@@ -4,7 +4,7 @@ All notable changes to kith are documented in this file. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0]
+## [1.0.0] - 2026-09-21
 
 The first stable release of kith: a scalable server framework for real-time,
 stateful multiplayer worlds. A C23 core owns the performance-critical systems
@@ -46,6 +46,16 @@ driver per instance cohort, pinned cores per the recorded reference
 envelope. The per-operation budgets and the per-instance capacity model
 that records both apply-path regimes live in
 `docs/architecture/performance_budgets.md`.
+
+The release certification ran on the release tree under this configuration
+on the recorded reference host, 2026-09-21: distributed-2000 twice
+back-to-back, both passing every threshold per instance — session_ok
+100.00%, selected_clients 100.00% of 2000 eligible,
+move_missing_ratio_certified 0.00%, no continuity flicker, bootstrap_ms_p95
+304 ms and 331 ms — and dense-1000 once, passing its stress gate
+(session_ok 100.00%, selected_clients 100.00% of 996 eligible,
+bootstrap_ms_p95 470 ms; its delivery-fidelity readings are the
+reported-not-thresholded dense semantics described above).
 
 ### Out-of-box visual example
 
