@@ -135,7 +135,7 @@ jobs:
           ctest --preset asan-ubsan --output-log sanitizer-ctest.log
       - name: Upload the sanitizer test log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sanitizer-ctest-log
           path: sanitizer-ctest.log
@@ -170,7 +170,7 @@ jobs:
           ctest --preset tsan --output-log tsan-ctest.log
       - name: Upload the TSan test log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tsan-ctest-log
           path: tsan-ctest.log
@@ -241,7 +241,7 @@ jobs:
           python -m pytest tests/integration -q 2>&1 | tee sanitizer-pytest-tsan.log
       - name: Upload the TSan pytest log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sanitizer-pytest-tsan-log
           path: sanitizer-pytest-tsan.log
@@ -309,7 +309,7 @@ jobs:
           python -m pytest tests/integration -q 2>&1 | tee sanitizer-pytest.log
       - name: Upload the pytest sanitizer log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sanitizer-pytest-log
           path: sanitizer-pytest.log
@@ -395,7 +395,7 @@ jobs:
           "$PWD/.venv-ft/bin/python3.14t" -m pytest tests/integration -q 2>&1 | tee sanitizer-pytest-ft.log
       - name: Upload the free-threaded pytest sanitizer log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sanitizer-pytest-ft-log
           path: sanitizer-pytest-ft.log
@@ -467,7 +467,7 @@ jobs:
           [ "$proto_rc" -eq 0 ] && [ "$control_rc" -eq 0 ]
       - name: Upload the fuzz smoke log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-smoke-log
           path: fuzz-ctest.log
@@ -475,7 +475,7 @@ jobs:
           retention-days: 7
       - name: Upload fuzz reproducers
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-reproducers
           path: fuzz-artifacts/
