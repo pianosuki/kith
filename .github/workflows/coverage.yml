@@ -36,7 +36,7 @@ jobs:
     # the Python-driven legs need it.
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
         env:
           POSTGRES_USER: kith
           POSTGRES_PASSWORD: kith
@@ -121,6 +121,8 @@ jobs:
         run: |
           set -euo pipefail
           export KITH_BUILD_DIR="$PWD/build/coverage"
+          export KITH_PROTO_LIB="$PWD/build/coverage/libkith_proto.so.1"
+          export KITH_CLIENT_LIB="$PWD/build/coverage/libkith_client.so.1"
           python -m coverage run --source python/kith --omit '*/_generated/*' \
               -m pytest tests/python tests/integration -q
           {
@@ -134,7 +136,7 @@ jobs:
         run: python -m coverage html -d python-coverage-html
       - name: Upload the coverage ctest log
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-ctest-log
           path: coverage-ctest.log
@@ -142,7 +144,7 @@ jobs:
           retention-days: 7
       - name: Upload the coverage HTML reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-html-reports
           path: |

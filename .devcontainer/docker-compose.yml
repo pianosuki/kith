@@ -14,7 +14,7 @@ services:
       args:
         LLVM_VERSION: "22"
         NINJA_VERSION: "1.13.2"
-        LIBURING_VERSION: "2.14"
+        LIBURING_VERSION: "2.15"
     volumes:
       - ..:/workspaces/${localWorkspaceFolderBasename}:cached
     command: sleep infinity
@@ -29,13 +29,18 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:16
+    image: postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
     environment:
       POSTGRES_USER: kith
       POSTGRES_PASSWORD: kith
       POSTGRES_DB: kith_example
+    volumes:
+      - postgres18-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kith -d kith_example"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+volumes:
+  postgres18-data:

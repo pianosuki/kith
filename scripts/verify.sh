@@ -513,36 +513,19 @@ if [ "$stage_ft" -eq 1 ]; then
         # libclang1-22 (the C library) and clang-22 (the driver) come from the
         # system, installed by provision-ci.sh.
         ft_venv="$(pwd)/.venv-ft"
-        need_venv=0
+        if ! command -v uv >/dev/null 2>&1; then
+            echo "verify.sh: 'uv' not found; cannot provision free-threaded venv" >&2
+            fail "free-threaded (uv missing)"
+        fi
         if [ ! -x "$ft_venv/bin/python3.14t" ]; then
-            need_venv=1
-        elif ! "$ft_venv/bin/python3.14t" -c "import pytest" >/dev/null 2>&1 \
-             || ! "$ft_venv/bin/python3.14t" -c "import xdist" >/dev/null 2>&1 \
-             || ! "$ft_venv/bin/python3.14t" -c "import clang.cindex" >/dev/null 2>&1 \
-             || ! "$ft_venv/bin/python3.14t" -c "import yaml" >/dev/null 2>&1 \
-             || [ ! -x "$ft_venv/bin/ruff" ]; then
-            need_venv=1
-        fi
-        if [ "$need_venv" -eq 1 ]; then
-            if ! command -v uv >/dev/null 2>&1; then
-                echo "verify.sh: 'uv' not found; cannot provision free-threaded venv" >&2
-                fail "free-threaded (uv missing)"
-            fi
-            uv venv --python "$ft_python" --clear "$ft_venv" >/dev/null 2>&1 \
+            uv venv --python "$ft_python" "$ft_venv" >/dev/null 2>&1 \
                 || fail "free-threaded (venv create)"
-            # ruff is pinned so regenerated bindings are formatted
-            # byte-identical to the checked-in set; an unpinned/latest ruff
-            # could reformat output and make every drift check spuriously
-            # fail. The pin matches the pre-commit ruff hook rev, so one
-            # ruff version formats the corpus on every gate path. clang2 is
-            # the LLVM 22 python bindings (same version the drift hook uses).
-            # pytest and pytest-xdist are pinned for the same reason: this
-            # venv installs outside uv.lock, and an unpinned latest would
-            # drift from the standard leg's runner.
-            uv pip install --python "$ft_venv" \
-                pytest==9.1.1 pytest-xdist==3.8.0 ruff==0.16.7 clang2==22.1.8.post0 pyyaml==6.0.3 >/dev/null 2>&1 \
-                || fail "free-threaded (pytest+xdist+ruff+clang2+pyyaml install)"
         fi
+        # Existing environments retain extra tools, while the gate's tools
+        # stay at the exact versions used by the other verification paths.
+        uv pip install --python "$ft_venv" \
+            pytest==9.1.1 pytest-xdist==3.8.0 ruff==0.17.1 clang2==22.1.8.post0 pyyaml==6.0.3 >/dev/null 2>&1 \
+            || fail "free-threaded (pytest+xdist+ruff+clang2+pyyaml install)"
 
         # Confirm the interpreter really runs GIL-free before driving the suite.
         if ! "$ft_venv/bin/python3.14t" -c "import sys; sys.exit(0 if not sys._is_gil_enabled() else 1)"; then
@@ -553,7 +536,7 @@ if [ "$stage_ft" -eq 1 ]; then
         # Use a per-interpreter pycache prefix so the free-threaded run never
         # shares .pyc files with the standard interpreter's cache. The
         # separation is load-bearing, not redundant: both interpreters are
-        # 3.14.7 and share the identical cache tag and bytecode magic number.
+        # the same Python minor and share a cache tag and bytecode magic number.
         # This leg runs serial by default: its teardown-sensitive tests
         # (finalizers, asyncio loop shutdown) are load-timing sensitive, and
         # parallel workers surface that sensitivity on a loaded host.

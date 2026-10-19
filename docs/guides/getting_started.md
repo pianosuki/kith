@@ -593,6 +593,38 @@ stack includes the same service shaped like the CI one) and paste the
 `KITH_PG_*` variables it prints into the shell; see CONTRIBUTING.md for
 details. Without a usable Postgres those tests skip cleanly.
 
+### PostgreSQL development data across major versions
+
+The development services use PostgreSQL 18.6. The helper creates
+`kith-dev-postgres18` with the named volume `kith-dev-postgres18-data`;
+the compose service uses a separate `postgres18-data` volume. PostgreSQL 18
+mounts its data at `/var/lib/postgresql`. Existing PostgreSQL 16 containers
+and volumes remain separate. Reusing a PostgreSQL 16 data directory with
+PostgreSQL 18 does not upgrade it.
+
+For existing helper data, stop application writers, keep the old database
+running, and dump it outside the checkout before starting the new helper
+on another port:
+
+```bash
+mkdir -p ../kith-postgres-backups
+docker exec kith-dev-postgres pg_dump -U kith -d kith_example -Fc \
+    > ../kith-postgres-backups/postgres16.dump
+KITH_DEV_PG_PORT=55432 scripts/dev-postgres.sh
+docker exec -i kith-dev-postgres18 pg_restore --exit-on-error --no-owner \
+    --clean --if-exists \
+    -U kith -d kith_example < ../kith-postgres-backups/postgres16.dump
+```
+
+The helper creates the example's empty `game_state` table. The restore
+command replaces it from the dump; use `--clean --if-exists` only against
+the **new, empty** database. Check the restored data and integration tests
+before retiring the old container or its volume. For compose data, identify
+the existing database container with `docker ps -a`, dump it before
+recreating the service, and restore into the new compose database with
+`docker compose -f .devcontainer/docker-compose.yml exec -T db pg_restore`.
+Keep the dump and old volume until the migration has been verified.
+
 ## Where to go next
 
 - `docs/guides/writing_extensions.md` — add a new wire message type and a

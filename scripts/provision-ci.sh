@@ -132,13 +132,13 @@ pip_user() {
     python3 -m pip install --user --break-system-packages "$@"
 }
 
-# liburing 2.14, built from source into /usr/local. The version and sha256
+# liburing 2.15, built from source into /usr/local. The version and sha256
 # are pinned together with .devcontainer/Dockerfile: bump both files in the
 # same change. noble's liburing-dev is 2.5, below the 2.7 floor
 # cmake/lib_reactor.cmake enforces at configure, so the archive package
 # cannot satisfy the reactor backend.
-LIBURING_VERSION=2.14
-LIBURING_SHA256=5f80964108981c6ad979c735f0b4877d5f49914c2a062f8e88282f26bf61de0c
+LIBURING_VERSION=2.15
+LIBURING_SHA256=8d052f2622dcb3678cbaee5ff582a87572672a6c0a56533cdda5b65cb636120a
 
 build_liburing() {
     # /usr/local precedes /usr in pkg-config's default search path, so the
@@ -211,7 +211,7 @@ provision_lint() {
     # ruff, mypy, codespell, clang2) each provision their own isolated env
     # from the .pre-commit-config.yaml additional_dependencies, so the
     # runner's system python does not need them on PATH.
-    pip_user pre-commit
+    pip_user pre-commit==4.7.0
     setup_libclang_env
     clang --version
 }
@@ -236,8 +236,8 @@ provision_build() {
         python3-pip pkg-config
     build_liburing
     symlink_clang_tools clang clang++ clang-tidy ld.lld run-clang-tidy
-    pip_user cmake==4.4.3 ninja==1.13.2 PyYAML==6.0.3 pytest==9.1.1 pytest-xdist==3.8.0 \
-        ruff==0.16.7 clang2==22.1.8.post0 clang-format==23.1.0
+    pip_user cmake==4.4.4 ninja==1.13.2 PyYAML==6.0.3 pytest==9.1.1 pytest-xdist==3.8.0 \
+        ruff==0.17.1 clang2==22.1.8.post0 clang-format==23.1.3
     # The formatter ships as the clang-format PyPI wheel; expose it under the
     # versioned name the CMake check and scripts/format.sh resolve.
     ln -sf "$HOME/.local/bin/clang-format" "$HOME/.local/bin/clang-format-23"
@@ -268,7 +268,7 @@ provision_coverage() {
     provision_build
     run_priv apt-get install -y --no-install-recommends llvm-22
     symlink_clang_tools llvm-cov llvm-profdata
-    pip_user coverage==7.15.4
+    pip_user coverage==7.16.2
 }
 
 provision_free_threaded() {
@@ -292,10 +292,10 @@ provision_free_threaded() {
     # present in both environments. The pip wheel is the official
     # distribution, pinned like every other tool above; the interpreter pin
     # names the exact CPython build uv must resolve.
-    pip_user cmake==4.4.3 ninja==1.13.2 uv==0.12.15
+    pip_user cmake==4.4.4 ninja==1.13.2 uv==0.13.1
     clang --version
     setup_libclang_env
-    uv python install cpython-3.14.7+freethreaded-linux-x86_64-gnu
+    uv python install cpython-3.14.8+freethreaded-linux-x86_64-gnu
 }
 
 provision_sdist() {

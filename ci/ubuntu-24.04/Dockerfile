@@ -18,9 +18,9 @@
 # If a job passes here, it passes on the runner.
 
 # The digest pins the image bytes; the tag documents the intended version.
-# The pin also freezes the apt package snapshot the provisioning script sees,
-# so bumping is deliberate: re-resolve the tag's digest and update both.
-FROM ubuntu:24.04@sha256:69cecf4bbf72d2d44a9eef1b71fb98c7fb973d78af11399deccef19beb008ad9
+# APT repositories still supply current package updates during provisioning.
+# Bumping is deliberate: re-resolve the tag's digest and update both.
+FROM ubuntu:24.04@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac
 
 # Avoid tzdata and other interactive prompts during apt installs.
 ENV DEBIAN_FRONTEND=noninteractive

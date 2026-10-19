@@ -8,13 +8,15 @@
 # sudo — the runner account's shape, required because root's DAC override
 # makes permission-dependent tests pass that must fail — then runs that
 # job's provisioning mode followed by the job's own steps from
-# .github/workflows/. The runner's postgres:16 service container is
+# .github/workflows/. The runner's postgres:18.6 service container is
 # reproduced alongside on a private network for the jobs that attach one.
 # If every job passes, CI passes.
 #
 # Jobs (default: all, in workflow order):
 #   lint           ci.yml lint          — provision lint, then verify.sh lint
 #   build          ci.yml build         — provision build, then verify.sh build
+#   build-gcc      sanitizers.yml gcc-portability — provision build-gcc, then
+#                                         verify.sh build
 #   free-threaded  ci.yml free-threaded — provision free-threaded, the job's
 #                                         cmake configure/build, then
 #                                         verify.sh free-threaded
@@ -35,7 +37,13 @@
 #   - The pages artifact upload and Pages deploy are runner-side
 #     publishing; only the reference generation is reproduced.
 #   - Scheduled and tag-gated workflows (sanitizers, coverage, stress,
-#     release) gate no push; they are not emulated.
+#     release) gate no push; their GCC portability job is reproduced,
+#     and their remaining jobs are not emulated.
+#
+# KITH_CI_HOST_NETWORK=1 uses host networking when Docker bridge egress is
+# unavailable. The database binds an ephemeral loopback port in that mode;
+# service discovery differs from the hosted runner, and host configuration
+# remains unchanged.
 #
 # The host user must be non-root for the same reason the container user is.
 
@@ -43,6 +51,7 @@ set -euo pipefail
 
 image="kith-ci"
 dockerfile="ci/ubuntu-24.04/Dockerfile"
+pg_image="postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336"
 
 cd "$(dirname "$0")/.."
 
@@ -53,20 +62,24 @@ fi
 
 jobs=("$@")
 if [ "${#jobs[@]}" -eq 0 ]; then
-    jobs=(lint build free-threaded commits pages)
+    jobs=(lint build build-gcc free-threaded commits pages)
 fi
 for job in "${jobs[@]}"; do
     case "$job" in
-        lint|build|free-threaded|commits|pages) ;;
+        lint|build|build-gcc|free-threaded|commits|pages) ;;
         *) echo "ci-local.sh: unknown job: $job" >&2; exit 1 ;;
     esac
 done
 
 echo "==> ci-local.sh: building image $image"
-docker build -t "$image" -f "$dockerfile" "$(dirname "$dockerfile")"
+build_net_args=()
+if [ "${KITH_CI_HOST_NETWORK:-0}" = 1 ]; then
+    build_net_args=(--network host)
+fi
+docker build "${build_net_args[@]}" -t "$image" -f "$dockerfile" "$(dirname "$dockerfile")"
 
 # --- Postgres service ----------------------------------------------------
-# ci.yml attaches a postgres:16 service container to the build and
+# ci.yml attaches a postgres:18.6 service container to the build and
 # free-threaded jobs. Reproduce it on a per-invocation bridge network so
 # those containers reach it by the same service-name resolution CI uses; no
 # host port is published. Names are PID-suffixed so concurrent invocations
@@ -85,14 +98,22 @@ trap cleanup EXIT
 need_pg=false
 for job in "${jobs[@]}"; do
     case "$job" in
-        build|free-threaded) need_pg=true ;;
+        build|build-gcc|free-threaded) need_pg=true ;;
     esac
 done
 
+pg_host=postgres
+pg_port=5432
+pg_publish_args=()
+if [ "${KITH_CI_HOST_NETWORK:-0}" = 1 ]; then
+    pg_publish_args=(-p 127.0.0.1::5432)
+fi
+
 if [ "$need_pg" = true ]; then
     docker network create "$net" > /dev/null
-    echo "==> ci-local.sh: starting postgres service (first run pulls postgres:16)"
+    echo "==> ci-local.sh: starting postgres service (first run pulls postgres:18.6)"
     docker run -d --name "$pg" --network "$net" --network-alias postgres \
+        "${pg_publish_args[@]}" \
         -e POSTGRES_USER=kith \
         -e POSTGRES_PASSWORD=kith \
         -e POSTGRES_DB=kith_example \
@@ -100,7 +121,12 @@ if [ "$need_pg" = true ]; then
         --health-interval 10s \
         --health-timeout 5s \
         --health-retries 5 \
-        postgres:16 > /dev/null
+        "$pg_image" > /dev/null
+
+    if [ "${KITH_CI_HOST_NETWORK:-0}" = 1 ]; then
+        pg_host=127.0.0.1
+        pg_port="$(docker port "$pg" 5432/tcp | sed 's/.*://')"
+    fi
 
     printf '==> ci-local.sh: waiting for the postgres service to become healthy'
     pg_healthy=""
@@ -141,7 +167,7 @@ groupadd -g "$HOST_GID" ci
 useradd -m -u "$HOST_UID" -g "$HOST_GID" -s /bin/bash ci
 echo 'ci ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ci
 chmod 440 /etc/sudoers.d/ci
-rm -rf build/ci build/ci-ft .venv-ft .pytest_cache build/doxygen
+rm -rf build/ci build/ci-gcc build/ci-ft .venv-ft .pytest_cache build/doxygen
 export GITHUB_PATH=/tmp/kith-gh-path GITHUB_ENV=/tmp/kith-gh-env
 runuser -u ci -- bash -ec ': > "$GITHUB_PATH" && : > "$GITHUB_ENV"'
 runuser -u ci -- bash -e /job/job.sh
@@ -164,6 +190,17 @@ if [ -f "$GITHUB_ENV" ]; then
 fi
 EOF
 
+# The build jobs use actions/setup-python on the runner. A standalone
+# interpreter reproduces that step without replacing the container's APT
+# Python, which remains the provisioning bootstrap.
+cat > "$job_tmp/setup-python.sh" <<'EOF'
+python3 -m pip install --user --break-system-packages uv==0.13.1
+export PATH="$HOME/.local/bin:$PATH"
+uv python install 3.14.8
+uv venv --seed --system-site-packages --python 3.14.8 "$HOME/runner-python"
+export PATH="$HOME/runner-python/bin:$PATH"
+EOF
+
 # --- Job definitions ------------------------------------------------------
 # Each value is the job's shell, executed as the non-root ci user from the
 # repository root. provision-ci.sh <mode> precedes the workflow's own steps,
@@ -173,13 +210,21 @@ job_scripts=(
     "lint|./scripts/provision-ci.sh lint
 . /job/apply-env.sh
 ./scripts/verify.sh lint"
-    "build|./scripts/provision-ci.sh build
+    "build|. /job/setup-python.sh
+./scripts/provision-ci.sh build
 . /job/apply-env.sh
+KITH_PROTO_LIB=build/ci/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci/libkith_client.so.1 \
 KITH_C_COMPILER=clang KITH_BUILD_DIR=build/ci ./scripts/verify.sh build"
+    "build-gcc|. /job/setup-python.sh
+./scripts/provision-ci.sh build-gcc
+. /job/apply-env.sh
+KITH_PROTO_LIB=build/ci-gcc/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci-gcc/libkith_client.so.1 \
+KITH_C_COMPILER=gcc-14 KITH_BUILD_DIR=build/ci-gcc ./scripts/verify.sh build"
     "free-threaded|./scripts/provision-ci.sh free-threaded
 . /job/apply-env.sh
 cmake --preset debug -B build/ci-ft
 cmake --build build/ci-ft
+KITH_PROTO_LIB=build/ci-ft/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci-ft/libkith_client.so.1 \
 KITH_BUILD_DIR=build/ci-ft ./scripts/verify.sh free-threaded"
     "commits|./scripts/verify.sh commits"
     "pages|sudo apt-get update
@@ -199,15 +244,22 @@ for wanted in "${jobs[@]}"; do
         pg_args=()
         if [ "$need_pg" = true ]; then
             net_args=(--network "$net")
-            if [ "$name" = "build" ] || [ "$name" = "free-threaded" ]; then
+            if [ "${KITH_CI_HOST_NETWORK:-0}" = 1 ]; then
+                net_args=(--network host)
+            fi
+            if [ "$name" = "build" ] || [ "$name" = "build-gcc" ] || [ "$name" = "free-threaded" ]; then
                 pg_args=(
-                    -e KITH_PG_HOST=postgres
-                    -e KITH_PG_PORT=5432
+                    -e KITH_PG_HOST="$pg_host"
+                    -e KITH_PG_PORT="$pg_port"
                     -e KITH_PG_USER=kith
                     -e KITH_PG_PASSWORD=kith
                     -e KITH_PG_DB=kith_example
                 )
             fi
+        fi
+
+        if [ "$need_pg" = false ] && [ "${KITH_CI_HOST_NETWORK:-0}" = 1 ]; then
+            net_args=(--network host)
         fi
 
         echo "==> ci-local.sh: job $name (provision + steps, non-root runner shape)"

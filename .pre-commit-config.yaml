@@ -24,7 +24,7 @@ repos:
       - id: check-shebang-scripts-are-executable
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v23.1.0
+    rev: v23.1.3
     hooks:
       - id: clang-format
         types_or: [c]
@@ -125,7 +125,7 @@ repos:
         # `ruff format` and `ruff check --fix` before comparing against the
         # checked-in bindings; without it the generated files are unformatted
         # and every header change looks like a spurious drift.
-        additional_dependencies: [clang2==22.1.8.post0, ruff==0.16.7]
+        additional_dependencies: [clang2==22.1.8.post0, ruff==0.17.1]
         pass_filenames: false
         files: 'include/kith/.*\.(h)$'
 
@@ -174,7 +174,7 @@ repos:
         types_or: [python]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.7
+    rev: v0.17.1
     hooks:
       # Verify-only: neither hook fixes. `ruff check` reports lint
       # violations and exits non-zero; `ruff format --check` reports
@@ -185,7 +185,7 @@ repos:
         args: [--check]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
+    rev: v2.4.0
     hooks:
       - id: mypy
         additional_dependencies: [pytest>=9.1.1]

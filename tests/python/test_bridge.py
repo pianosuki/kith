@@ -68,7 +68,7 @@ class TestDiscovery:
 
     def test_kith_lib_env_relative_path_resolves(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.chdir(_REPO_ROOT)
-        monkeypatch.setenv("KITH_LIB", str(_BUILD_DEBUG.relative_to(_REPO_ROOT)))
+        monkeypatch.setenv("KITH_LIB", str(_BUILD_DEBUG.relative_to(_REPO_ROOT, walk_up=True)))
         reset()
         bridge = load()
         assert bridge.root == _BUILD_DEBUG

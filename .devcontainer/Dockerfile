@@ -16,7 +16,7 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04@sha256:d94c97dd9cacf183d0
 
 ARG LLVM_VERSION=22
 ARG NINJA_VERSION=1.13.2
-ARG LIBURING_VERSION=2.14
+ARG LIBURING_VERSION=2.15
 
 # --- Base packages -------------------------------------------------------
 # ca-certificates/curl/wget/gnupg/unzip/xz-utils: key and asset fetching and
@@ -94,7 +94,7 @@ RUN curl -fsSL "https://github.com/ninja-build/ninja/releases/download/v${NINJA_
 # find it.
 RUN curl -fsSL "https://github.com/axboe/liburing/archive/refs/tags/liburing-${LIBURING_VERSION}.tar.gz" \
     -o /tmp/liburing.tar.gz \
- && echo "5f80964108981c6ad979c735f0b4877d5f49914c2a062f8e88282f26bf61de0c  /tmp/liburing.tar.gz" | sha256sum -c - \
+ && echo "8d052f2622dcb3678cbaee5ff582a87572672a6c0a56533cdda5b65cb636120a  /tmp/liburing.tar.gz" | sha256sum -c - \
  && mkdir -p /tmp/liburing-build \
  && tar -xzf /tmp/liburing.tar.gz -C /tmp/liburing-build --strip-components=1 \
  && cd /tmp/liburing-build \
@@ -111,7 +111,7 @@ RUN curl -fsSL "https://github.com/axboe/liburing/archive/refs/tags/liburing-${L
 # the tag's digest and update both. Installed to /usr/local/bin so it is
 # available to every user; postCreateCommand runs as the non-root "vscode"
 # user.
-COPY --from=ghcr.io/astral-sh/uv:0.12.15@sha256:62f8c047d0a0e9ece6b53fc63df902585a67a47a7f318ddec4a37db586edc8e3 \
+COPY --from=ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56d7ef30279f7d64048519ab901ada336 \
      /uv /uvx /usr/local/bin/
 
 # --- pre-commit ----------------------------------------------------------
@@ -119,7 +119,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.12.15@sha256:62f8c047d0a0e9ece6b53fc63df90258
 # symlink (/usr/local/bin/pre-commit) is executable by the "vscode" user even
 # though the tool venv was created as root.
 RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install --python python3.14 pre-commit \
+    uv tool install --python python3.14 pre-commit==4.7.0 \
+ && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install --python python3.14 clang-format==23.1.3 \
+ && ln -s /usr/local/bin/clang-format /usr/local/bin/clang-format-23 \
  && chmod -R a+rX /opt/uv-tools
 
 # --- Interactive Python defaults -----------------------------------------

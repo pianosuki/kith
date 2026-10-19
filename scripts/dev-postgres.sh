@@ -6,12 +6,12 @@
 # containers use (.github/workflows/ci.yml) so the db-backed integration
 # tests and examples behave locally as they do in CI:
 #
-#   image     postgres:16
+#   image     postgres:18.6
 #   role      kith / password kith
 #   database  kith_example
 #   health    pg_isready -U kith -d kith_example
 #
-# The container is named kith-dev-postgres and survives reboots; data
+# The container is named kith-dev-postgres18 and survives reboots; data
 # persists across runs and re-running this script starts the existing
 # container rather than recreating it. The game_state table the postgres
 # example persists into is created idempotently once the server is
@@ -24,12 +24,13 @@
 #
 # On success the exact KITH_PG_* exports are printed; paste them into the
 # shell before running the tests or the example. A SIGKILL'd run can leave
-# the container behind; remove it with `docker rm -f kith-dev-postgres`.
+# the container behind; remove it with `docker rm -f kith-dev-postgres18`.
 
 set -euo pipefail
 
-image="postgres:16"
-name="kith-dev-postgres"
+image="postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336"
+name="kith-dev-postgres18"
+volume="kith-dev-postgres18-data"
 requested_port="${KITH_DEV_PG_PORT:-5432}"
 
 if docker inspect "$name" > /dev/null 2>&1; then
@@ -39,6 +40,7 @@ else
     echo "==> dev-postgres.sh: pulling $image if needed, creating $name"
     if ! docker run -d --name "$name" \
         -p "127.0.0.1:${requested_port}:5432" \
+        -v "${volume}:/var/lib/postgresql" \
         -e POSTGRES_USER=kith \
         -e POSTGRES_PASSWORD=kith \
         -e POSTGRES_DB=kith_example \

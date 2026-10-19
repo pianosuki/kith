@@ -44,8 +44,8 @@ cd "$(dirname "$0")/.."
 # absent so a contributor knows exactly what to install before re-running.
 required_tools=(
     "clang|clang 22+ (apt: clang-22, brew: llvm@22, or https://releases.llvm.org)"
-    "clang-format-23|clang-format 23 (uv tool install clang-format==23.1.0, then ln -s ~/.local/bin/clang-format ~/.local/bin/clang-format-23; or apt.llvm.org: clang-format-23)"
-    "cmake|cmake 4.4+ (pip install cmake==4.4.3, or https://cmake.org/download)"
+    "clang-format-23|clang-format 23 (uv tool install clang-format==23.1.3, then ln -s ~/.local/bin/clang-format ~/.local/bin/clang-format-23; or apt.llvm.org: clang-format-23)"
+    "cmake|cmake 4.4+ (pip install cmake==4.4.4, or https://cmake.org/download)"
     "ninja|ninja 1.13+ (apt: ninja-build, brew: ninja, pip: ninja==1.13.2)"
     "python3|python 3.14+ (https://www.python.org, or uv: uv python install 3.14)"
     "uv|uv 0.12+ (pip install uv, or https://docs.astral.sh/uv/getting-started/installation/)"

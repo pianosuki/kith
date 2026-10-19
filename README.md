@@ -144,7 +144,7 @@ channels in CI.
 - Wheel path: the bundled libraries link `liburing`, `libpq`, `libhiredis`
   at runtime; install them from the system package manager.
 - Source path: Clang 22+ (or GCC 14+), clang-format-23 (the pinned formatter —
-  `uv tool install clang-format==23.1.0`, then symlink `~/.local/bin/clang-format`
+  `uv tool install clang-format==23.1.3`, then symlink `~/.local/bin/clang-format`
   as `clang-format-23`), CMake 4.4+, Ninja 1.13+, `uv`, `pre-commit`.
 
 ## Stability
