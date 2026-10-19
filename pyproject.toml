@@ -1,11 +1,10 @@
 [build-system]
 # cmake and ninja are pip-installed into the isolated build environment so a
 # from-source sdist build does not need a pre-installed CMake/Ninja on the
-# host. The C compiler and dev libraries (liburing, libpq, libhiredis) stay
-# the host's responsibility on every install path: releases are GitHub
-# release assets only, where the binary wheel bundles the libkith_* shared
-# libraries and leaves the system libraries above dynamically linked, while
-# the sdist carries the source tree to build them.
+# host. Source installs require a C compiler and the native development
+# libraries (liburing, libpq, libhiredis). Local wheels use that host ABI;
+# the release workflow repairs portable wheels and bundles their native
+# dependencies before distribution through PyPI and GitHub release assets.
 requires = ["hatchling>=1.32.4", "cmake>=4.4.4", "ninja>=1.13.2"]
 build-backend = "hatchling.build"
 
@@ -283,8 +282,8 @@ ignore-words-list = "lod,intoto"
 # (uv build --wheel, pip wheel, non-editable installs). The hook
 # runs CMake with a release configuration, builds every library the bundle
 # ships, and force-includes the SONAME-form libraries from its CMake build
-# tree into the wheel under kith/_libs/ (their build-tree $ORIGIN runpath is
-# the one that resolves siblings inside a flat bundle), where the ctypes
+# tree into the wheel under kith/_libs/ (the private wheel configuration
+# links with the final $ORIGIN runpath), where the ctypes
 # bridge (python/kith/_bridge.py) discovers them via its _WHEEL_SUBDIRS list
 # on import. Editable installs (uv sync, pip install -e) skip the hook: they
 # stay pure-Python, and the bridge discovers an in-tree preset build

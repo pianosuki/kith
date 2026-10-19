@@ -4,6 +4,21 @@ All notable changes to kith are documented in this file. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1]
+
+### Fixed
+
+- Local binary wheels carry the build platform tag. Portable release wheels
+  bundle and audit native dependencies against the declared manylinux policy,
+  including redistribution notices and the dependency closure in the SBOM.
+- Installed-wheel smoke checks require the package's own native libraries and
+  matching Python and C release versions.
+
+### Changed
+
+- Refresh the reproducible development, visual-example and build toolchains,
+  container images and artifact actions to compatible maintained versions.
+
 ## [1.0.0] - 2026-09-21
 
 The first stable release of kith: a scalable server framework for real-time,

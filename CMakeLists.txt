@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 4.4)
 # version file (write_basic_package_version), and the find_package(kith
 # VERSION ...) check a downstream project issues. It tracks the release
 # target the release infrastructure in this cluster produces.
-project(kith VERSION 1.0.0 LANGUAGES C)
+project(kith VERSION 1.0.1 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)

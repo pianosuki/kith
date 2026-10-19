@@ -16,6 +16,12 @@ protection, a non-executable stack, no RPATH, and fortified source code, with
 symbol visibility hidden by default (ADR-0008). The build emits a hardening
 report and CI fails if any artifact drops below the required hardening set.
 
+**Amendment (wheel distribution):** installed Python wheels use relative
+origin-based library search paths within the package to resolve their bundled
+libraries. The release repair tool may emit RPATH for transitive dependencies;
+absolute build paths and writable external search directories remain forbidden.
+The wheel packaging contract is documented in `docs/guides/releases.md`.
+
 ## Consequences
 
 Positive — every release is hardened by construction and a regression is

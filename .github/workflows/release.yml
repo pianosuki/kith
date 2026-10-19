@@ -2,10 +2,10 @@
 # smoke the wheel in a clean environment, checksum the artifacts, and open a
 # DRAFT GitHub release.
 #
-# Nothing publishes automatically. The draft is the human approval gate: the
-# release becomes public only when a maintainer reviews the draft and
-# publishes it, keeping irreversible publication human-owned (AGENTS.md
-# §5.0). A published release with this tag makes the draft job fail loudly
+# The human-owned tag push authorizes automatic PyPI publication after every
+# release check passes. GitHub assets remain a draft until the maintainer
+# publishes that draft (AGENTS.md §5.0). A published release with this tag
+# makes the draft job fail loudly
 # instead of touching it; a stale DRAFT from an earlier run of the same tag
 # is replaced so re-running the pipeline after a failed attempt works.
 #
@@ -28,23 +28,10 @@
 # lld link cmake/framework.cmake selects); its wheel is uploaded for
 # inspection only and never attached to the release.
 #
-# Wheel tagging: the build hook tags the wheel py3-none-manylinux_2_38_x86_64
-# once the libraries are bundled. manylinux_2_38 is the lowest PyPI-acceptable
-# platform tag (a bare linux_x86_64 tag is rejected at upload) and its glibc
-# floor is the documented install floor, so pip enforces at install time what
-# the README promises, falling back to the sdist below it. The py3-none ABI
-# keeps the artifact interpreter-agnostic — pure Python driving ctypes-loaded
-# .so files — which is what makes installing and exercising the same wheel
-# under python3.14t valid in the free-threaded smoke below. The release
-# census guards the tag: if a future change raises the bundled libraries'
-# symbol ceiling past GLIBC_2.38, the census fails and moving the tag is a
-# deliberate packaging change. macOS wheels do not exist: the framework ships
-# on Linux. The version must
-# equal the tag (v<version>); a mismatched tag fails before any build starts.
-# The bundled libraries carry the SONAME major (.so.1, from PROJECT_VERSION's
-# major component); bumping the SONAME is a coordinated change across
-# cmake/abi.cmake and the hatch hook's soname naming, not something this
-# pipeline derives.
+# Raw wheels carry the host linux platform tag. auditwheel repairs the complete
+# non-policy dependency closure and validates the manylinux_2_38 policy before
+# an artifact can enter the release path. Redistribution notices travel inside
+# the repaired wheel; smoke jobs consume those exact bytes.
 #
 # Concurrency cancels an in-flight run when the same tag re-triggers: until a
 # release is published, everything this pipeline produces (including the
@@ -128,8 +115,8 @@ jobs:
         run: ./scripts/provision-ci.sh sdist
       - name: Build the sdist
         run: |
-          python -m pip install build
-          python -m build --sdist
+          python -m pip install uv==0.13.1
+          uv build --sdist
       # The sdist is the asset a C-toolchain user builds: install it the way
       # pip does (source -> wheel through the hatch hook -> install) and boot
       # a server from the result. wheel_smoke.py pops KITH_LIB itself, so the
@@ -172,12 +159,40 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends gcc-14
+      - name: Build the release-only PostgreSQL client
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          sudo apt-get install -y --no-install-recommends bison flex libssl-dev bzip2
+          prefix="$RUNNER_TEMP/kith-libpq"
+          ./scripts/build-wheel-libpq.sh "$prefix" "$RUNNER_TEMP/libpq-build"
+          echo "KITH_RELEASE_LIBPQ_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$prefix/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$prefix/lib" >> "$GITHUB_ENV"
+      - name: Build the release-only Redis client
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          prefix="$RUNNER_TEMP/kith-hiredis"
+          ./scripts/build-wheel-hiredis.sh "$prefix" "$RUNNER_TEMP/hiredis-build"
+          echo "KITH_RELEASE_HIREDIS_PREFIX=$prefix" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$prefix/lib/pkgconfig:$KITH_RELEASE_LIBPQ_PREFIX/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$prefix/lib:$KITH_RELEASE_LIBPQ_PREFIX/lib" >> "$GITHUB_ENV"
       - name: Build the wheel (C libraries bundled by the hatch hook)
         env:
           CC: ${{ matrix.cc }}
         run: |
-          python -m pip install build
-          python -m build --wheel
+          python -m pip install uv==0.13.1
+          uv build --wheel --out-dir raw-dist
+          python tools/check_wheel_elf_paths.py raw-dist/*.whl
+      - name: Repair and validate the portable wheel
+        run: |
+          uv tool install auditwheel==6.8.2
+          uv tool install patchelf==0.19.1.0
+          auditwheel repair --plat manylinux_2_38_x86_64 --only-plat raw-dist/*.whl --wheel-dir dist
+          python tools/license_release_wheel.py raw-dist/*.whl dist/*.whl
+          auditwheel show dist/*.whl
+          python tools/check_wheel_elf_paths.py dist/*.whl
       - name: Smoke the wheel in a clean environment
         run: |
           python -m venv /tmp/wheel-smoke
@@ -261,6 +276,28 @@ jobs:
       - name: Boot a server from the wheel
         run: |
           /tmp/ft-smoke/bin/python scripts/wheel_smoke.py
+
+  smoke-portable:
+    name: Portable wheel without host client libraries
+    needs: wheel
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wheel-clang
+          path: dist
+      - name: Smoke in a minimal independent runtime
+        run: |
+          docker run --rm --security-opt seccomp=unconfined \
+            -v "$PWD/dist:/wheels:ro" -v "$PWD/scripts:/smoke:ro" \
+            python:3.14-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 sh -ec '
+              test ! -e /usr/lib/x86_64-linux-gnu/libhiredis.so.1.1.0
+              python -m venv /tmp/runtime
+              /tmp/runtime/bin/pip install --no-index /wheels/*.whl
+              cd /tmp
+              /tmp/runtime/bin/python /smoke/wheel_smoke.py'
 
   checksums:
     name: SHA256 checksums
@@ -361,7 +398,7 @@ jobs:
 
   draft-release:
     name: Draft GitHub release
-    needs: [sdist, wheel, checksums, smoke-free-threaded, sbom, attest]
+    needs: [sdist, wheel, checksums, smoke-free-threaded, smoke-portable, sbom, attest]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 15

@@ -62,8 +62,9 @@ Tagged releases ship a binary wheel, the sdist, and SHA256 checksums on the
 wheel bundles the compiled core; boot an embedded server:
 
 ```sh
-python3 -m venv .venv && source .venv/bin/activate
-pip install kith_fw-1.0.0-py3-none-manylinux_2_38_x86_64.whl
+uv venv --python 3.14 .venv
+source .venv/bin/activate
+uv pip install --python .venv kith_fw-1.0.1-py3-none-manylinux_2_38_x86_64.whl
 ```
 
 The PyPI distribution is `kith-fw`; the module you import is `kith`.
@@ -141,8 +142,10 @@ channels in CI.
 - Linux, x86-64, glibc 2.38 or newer. `import kith` raises a load error on
   any other platform.
 - Python 3.14+, standard or free-threaded builds.
-- Wheel path: the bundled libraries link `liburing`, `libpq`, `libhiredis`
-  at runtime; install them from the system package manager.
+- Release wheel: native dependencies outside the manylinux policy are bundled
+  with the framework. Local wheels and source installs use the build host's
+  `liburing`, `libpq` and `libhiredis` ABI; install their development packages
+  before building. See the [release guide](docs/guides/releases.md).
 - Source path: Clang 22+ (or GCC 14+), clang-format-23 (the pinned formatter —
   `uv tool install clang-format==23.1.3`, then symlink `~/.local/bin/clang-format`
   as `clang-format-23`), CMake 4.4+, Ninja 1.13+, `uv`, `pre-commit`.

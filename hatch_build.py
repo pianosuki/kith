@@ -37,15 +37,12 @@ for development wheel snapshots that load the C libraries from an in-tree
 build directory (the bridge's discovery walks the preset build directories
 when no wheel-relative libraries are present).
 
-The libraries are bundled from the build tree rather than through
-``cmake --install`` for runpath reasons: cmake/framework.cmake builds with
-``CMAKE_BUILD_RPATH_USE_ORIGIN`` ON, so every built library carries
-``RUNPATH $ORIGIN`` and resolves its ``DT_NEEDED`` siblings in the same flat
-directory — exactly the layout of ``kith/_libs/``. An install relinks for the
-``<prefix>/lib`` consumer layout (``$ORIGIN/../lib``), which cannot resolve
-inside a wheel, and a cache-level ``-DCMAKE_INSTALL_RPATH`` override from the
-hook is shadowed by the normal-variable set in framework.cmake. The build
-tree's own runpath is the one that matches the bundle.
+The private wheel configuration links every framework library with the final
+flat-layout ``$ORIGIN`` search path. Building with that final path avoids
+CMake's padding for install-time relinking: empty path components would add
+the process's current directory to the runtime library search. The bundled
+SONAME-form artifacts come directly from this build tree; normal native
+installations retain their prefix-relative layout.
 """
 
 from __future__ import annotations
@@ -55,6 +52,7 @@ import re
 import shutil
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -256,13 +254,9 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
 
         self.app.display_info(f"kith wheel build hook: configuring CMake at {build_dir}")
 
-        # Release + IPO per the bundle contract; the compiler is pinned to
-        # the probed binary so the LTO decision above describes what actually
-        # builds. IPO stays off for non-clang toolchains because their LTO
-        # objects cannot be linked by lld. No install-prefix or install-rpath
-        # configuration: the libraries are bundled from this build tree,
-        # whose runpath cmake/framework.cmake already shapes for flat
-        # sibling resolution.
+        # The flat bundle uses its final runpath during linking, so CMake
+        # reserves no install-time padding that searches the current directory.
+        # GCC's LTO objects remain incompatible with the selected lld linker.
         configure_cmd = [
             "cmake",
             "-S",
@@ -272,6 +266,7 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
             "-G",
             "Ninja",
             "-DCMAKE_BUILD_TYPE=Release",
+            "-DKITH_WHEEL_BUNDLE=ON",
             "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=" + ("ON" if lto_allowed else "OFF"),
         ]
         if compiler:
@@ -293,9 +288,8 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
 
         self.app.display_info(f"kith wheel build hook: bundling C libraries from {build_dir}")
 
-        # The build-tree artifacts already carry the runpath a flat bundle
-        # needs ($ORIGIN, from CMAKE_BUILD_RPATH_USE_ORIGIN), and each module
-        # exposes its SONAME-form name as a symlink here.
+        # The private wheel configuration emits the final flat-layout
+        # runpath; each module exposes its SONAME-form name as a symlink.
         force_include: dict[str, str] = build_data.setdefault("force_include", {})  # type: ignore[assignment]
         bundled: list[str] = []
         for module in (*_REQUIRED_LIBS, *_OPTIONAL_LIBS):
@@ -316,15 +310,10 @@ class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
             f"kith wheel build hook: bundled {len(bundled)} libraries into {_BUNDLE_DIR}/"
         )
 
-        # A wheel carrying platform binaries must not ship the pure-Python
-        # default tag: pip installs such a wheel on any operating system,
-        # and the failure waits for import. manylinux_2_38 is the lowest
-        # PyPI-acceptable tag (bare linux_x86_64 is rejected at upload), its
-        # glibc floor is the documented install floor, and pip enforces it
-        # at install time, falling back to the sdist below it. py3-none
-        # keeps the artifact interpreter-agnostic, which is what lets the
-        # same wheel serve the free-threaded smoke. The release census
-        # (the shipped wheel's symbol ceiling must read GLIBC_2.38) fails
-        # the release if a future change raises the floor past this tag.
+        # Local builds depend on the host's native ABI. Only the release
+        # repair step bundles external dependencies and certifies a
+        # manylinux policy; the compiler host alone cannot establish it.
         build_data["pure_python"] = False
-        build_data["tag"] = "py3-none-manylinux_2_38_x86_64"
+        build_data["tag"] = "py3-none-" + sysconfig.get_platform().replace("-", "_").replace(
+            ".", "_"
+        )

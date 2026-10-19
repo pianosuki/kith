@@ -13,8 +13,8 @@ import ctypes
 # ---------------------------------------------------------------------------
 KITH_VERSION_MAJOR = 1
 KITH_VERSION_MINOR = 0
-KITH_VERSION_PATCH = 0
-KITH_VERSION_STRING = "1.0.0"
+KITH_VERSION_PATCH = 1
+KITH_VERSION_STRING = "1.0.1"
 KITH_ABI_VERSION = 1
 
 

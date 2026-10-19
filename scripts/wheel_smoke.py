@@ -14,7 +14,9 @@ import os
 import socket
 import threading
 import time
+from pathlib import Path
 
+import kith
 from kith import Server, ServerStatus
 from kith._bridge import load
 
@@ -36,8 +38,12 @@ def main() -> None:
     # KITH_LIB redirects the load at a build tree and the smoke passes
     # without proving the bundling contract.
     os.environ.pop("KITH_LIB", None)
+    os.environ.pop("KITH_BUILD_DIR", None)
 
     bridge = load()
+    expected_root = Path(kith.__file__).resolve().parent / "_libs"
+    assert bridge.root == expected_root, (bridge.root, expected_root)
+    assert bridge.version_string == kith.__version__, (bridge.version_string, kith.__version__)
     print(bridge.mode, bridge.version_string, flush=True)
     assert bridge.mode == "individual", bridge.mode
     assert bridge.version_string, "empty version string"

@@ -109,7 +109,13 @@ add_compile_options(
     -fdebug-prefix-map=${CMAKE_BINARY_DIR}=.
 )
 set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
-set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+option(KITH_WHEEL_BUNDLE "Use the private flat wheel library layout" OFF)
+if(KITH_WHEEL_BUNDLE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+else()
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+endif()
 
 # --- Compressed debug info (release + relwithdebinfo) --------------------
 if(CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo")
