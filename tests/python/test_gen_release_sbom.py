@@ -1,121 +1,72 @@
-"""Self-test for tools/gen_release_sbom.py.
-
-Builds synthetic release wheels and drives the generator against them:
-bundle members are discovered from kith/_libs/ rather than assumed, the
-ldd resolver is injectable so the system-dependency graph is exercisable
-without real ELF files, the C runtime family never enters the document,
-two runs over the same wheel produce byte-identical output, and the
-output carries the OSSF naming convention.
-"""
+"""Artifact composition and reference integrity checks for the release SBOM."""
 
 from __future__ import annotations
 
+import hashlib
 import json
-import uuid
+import subprocess
+import sys
 import zipfile
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
+import pytest
 import tools.gen_release_sbom as sbom
 
 
-def _write_wheel(path: Path, name: str = "kith", version: str = "1.0.0") -> None:
-    """Build a minimal wheel with two bundle members and no python deps."""
-    metadata = f"Metadata-Version: 2.4\nName: {name}\nVersion: {version}\n"
-    with zipfile.ZipFile(path, "w") as wheel:
-        wheel.writestr(f"{name}-{version}.dist-info/METADATA", metadata)
-        wheel.writestr(f"{name}/__init__.py", "")
-        wheel.writestr(f"{sbom.BUNDLE_DIR}/libkith_gateway.so.1", b"\x7fELF-gateway")
-        wheel.writestr(f"{sbom.BUNDLE_DIR}/libkith_reactor.so.1", b"\x7fELF-reactor")
-
-
-def _resolver(paths: dict[str, list[str]]) -> Callable[[Path], list[str]]:
-    """Return a resolver stub keyed by the lib filename."""
-
-    def resolve(lib: Path) -> list[str]:
-        return paths.get(lib.name, [])
-
-    return resolve
-
-
-def _bom_via_pipeline(tmp_path: Path, resolver: Callable[[Path], list[str]]) -> dict[str, Any]:
-    """Run the generator's stages over a synthetic wheel, return the BOM."""
-    wheel = tmp_path / "kith-1.0.0-py3-none-any.whl"
-    _write_wheel(wheel)
-    with zipfile.ZipFile(wheel) as archive:
-        metadata = sbom._dist_info_metadata(archive)
-        name = sbom._metadata_field(metadata, "Name")
-        version = sbom._metadata_field(metadata, "Version")
-        libs = sbom._bundled_libs(archive)
-        deps = sbom._system_sonames(archive, libs, resolver)
-    bom = sbom.build_bom(name, version, libs, deps)
-    decoded: dict[str, Any] = json.loads(json.dumps(bom))
-    return decoded
-
-
-def test_sbom_describes_wheel_bundled_libs_and_system_deps(tmp_path: Path) -> None:
-    resolver = _resolver(
-        {
-            "libkith_gateway.so.1": ["liburing.so.2", "libc.so.6"],
-            "libkith_reactor.so.1": [],
-        }
+def test_bom_tracks_grafted_components_and_direct_edges() -> None:
+    framework = 'kith/_libs/libkith_state.so.1'
+    hiredis = 'kith_fw.libs/libhiredis-12345678.so.1.1.0'
+    bom = sbom.build_bom(
+        'kith-fw',
+        '1.0.1',
+        [framework, hiredis],
+        {framework: ['libhiredis-12345678.so.1.1.0'], hiredis: []},
+        {framework: 'a' * 64, hiredis: 'b' * 64},
+        {hiredis: {'version': '1.2.0-6', 'package': 'libhiredis1.1.0'}},
     )
-    bom = _bom_via_pipeline(tmp_path, resolver)
-
-    assert bom["bomFormat"] == "CycloneDX"
-    assert bom["specVersion"] == "1.6"
-    assert bom["serialNumber"] == (
-        "urn:uuid:" + str(uuid.uuid5(uuid.NAMESPACE_URL, "pkg:pypi/kith@1.0.0"))
-    )
-    component = bom["metadata"]["component"]
-    assert component["name"] == "kith"
-    assert component["purl"] == "pkg:pypi/kith@1.0.0"
-
-    names = [c["name"] for c in bom["components"]]
-    assert names == ["libkith_gateway", "liburing.so.2", "libkith_reactor"]
-    bundled = {c["name"]: c["properties"][0]["value"] for c in bom["components"]}
-    assert bundled["libkith_gateway"] == "true"
-    assert bundled["liburing.so.2"] == "false"
-
-    graph = {d["ref"]: d.get("dependsOn", []) for d in bom["dependencies"]}
-    assert graph["pkg:pypi/kith@1.0.0"] == [
-        "libkith_gateway.so.1",
-        "libkith_reactor.so.1",
-    ]
-    assert graph["libkith_gateway.so.1"] == ["liburing.so.2"]
-    assert "libkith_reactor.so.1" not in graph
+    components = bom['components']
+    assert isinstance(components, list)
+    by_ref = {component['bom-ref']: component for component in components}
+    assert by_ref[framework]['version'] == '1.0.1'
+    assert by_ref[hiredis]['version'] == '1.2.0-6'
+    assert by_ref[hiredis]['hashes'] == [{'alg': 'SHA-256', 'content': 'b' * 64}]
+    graph = bom['dependencies']
+    assert isinstance(graph, list)
+    assert {edge['ref']: edge['dependsOn'] for edge in graph}[framework] == [hiredis]
+    refs = set(by_ref) | {'pkg:pypi/kith-fw@1.0.1'}
+    assert all(edge['ref'] in refs for edge in graph)
+    assert all(target in refs for edge in graph for target in edge['dependsOn'])
 
 
-def test_runtime_family_is_filtered_from_the_graph(tmp_path: Path) -> None:
-    resolver = _resolver(
-        {
-            "libkith_gateway.so.1": [
-                "libc.so.6",
-                "libm.so.6",
-                "ld-linux-x86-64.so.2",
-                "libpq.so.5",
-            ]
-        }
-    )
-    bom = _bom_via_pipeline(tmp_path, resolver)
-    names = [c["name"] for c in bom["components"]]
-    assert "libc.so.6" not in names
-    assert "libm.so.6" not in names
-    assert "ld-linux-x86-64.so.2" not in names
-    assert "libpq.so.5" in names
+def test_bundled_objects_are_discovered_outside_framework_directory(tmp_path: Path) -> None:
+    wheel_path = tmp_path / 'sample.whl'
+    with zipfile.ZipFile(wheel_path, 'w') as wheel:
+        wheel.writestr('kith/_libs/libkith_state.so.1', b'\x7fELFframework')
+        wheel.writestr('kith_fw.libs/libhiredis-12345678.so.1.1.0', b'\x7fELFhiredis')
+        wheel.writestr('kith_fw-1.0.1.dist-info/licenses/native/copyright', b'notice')
+    with zipfile.ZipFile(wheel_path) as wheel:
+        assert sbom._bundled_libs(wheel) == [
+            'kith/_libs/libkith_state.so.1',
+            'kith_fw.libs/libhiredis-12345678.so.1.1.0',
+        ]
 
 
-def test_generate_is_deterministic_and_names_output(tmp_path: Path) -> None:
-    wheel = tmp_path / "kith-1.0.0-py3-none-any.whl"
-    _write_wheel(wheel)
-    # The default ldd resolver reads nothing from the stub members (ldd
-    # fails on non-ELF bytes), so the system graph is empty and the run
-    # needs no real ELF files.
-    first = sbom.generate(wheel, tmp_path / "out")
-    second = sbom.generate(wheel, tmp_path / "out")
-    assert first.name == "kith-1.0.0.cdx.json"
-    assert first.read_bytes() == second.read_bytes()
-    bom = json.loads(first.read_text(encoding="utf-8"))
-    assert bom["components"][0]["name"] == "libkith_gateway"
-    assert bom["components"][0]["version"] == "1.0.0"
+def test_dependency_scanner_rejects_invalid_elf(tmp_path: Path) -> None:
+    invalid = tmp_path / 'invalid.so'
+    invalid.write_bytes(b'\x7fELFbroken')
+    with pytest.raises(subprocess.CalledProcessError):
+        sbom._ldd_sonames(invalid)
+
+
+def test_generate_uses_artifact_hashes_and_is_deterministic(tmp_path: Path) -> None:
+    wheel_path = tmp_path / 'sample.whl'
+    member = 'kith/_libs/libkith_util.so.1'
+    native = Path(sys.executable).read_bytes()
+    with zipfile.ZipFile(wheel_path, 'w') as wheel:
+        wheel.writestr('kith_fw-1.0.1.dist-info/METADATA', 'Name: kith-fw\nVersion: 1.0.1\n')
+        wheel.writestr(member, native)
+    first = sbom.generate(wheel_path, tmp_path / 'out').read_bytes()
+    second = sbom.generate(wheel_path, tmp_path / 'out').read_bytes()
+    assert first == second
+    bom = json.loads(first)
+    assert bom['components'][0]['hashes'][0]['content'] == hashlib.sha256(native).hexdigest()
