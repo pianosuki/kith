@@ -174,7 +174,7 @@ repos:
         types_or: [python]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.1
+    rev: v0.17.2
     hooks:
       # Verify-only: neither hook fixes. `ruff check` reports lint
       # violations and exits non-zero; `ruff format --check` reports
