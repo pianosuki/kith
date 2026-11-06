@@ -5,7 +5,37 @@
 
 #include <pthread.h>
 
+#ifdef __linux__
+#include <liburing.h>
+#endif
+
 #include "kith/reactor/reactor.h"
+
+#ifdef __linux__
+// Kernel requests carry numeric identities only. Retired requests remain
+// owned by the ring until completion or ring destruction.
+struct uring_fd_entry
+{
+    int fd;
+    unsigned int events;
+    uint32_t gen;
+    uint32_t last_gen; // consumed at preparation, including failed submissions
+};
+
+struct uring_backend
+{
+    const kith_allocator_t *alloc;
+    struct io_uring ring;
+    int wake_fd;
+    bool wake_fd_added;
+    struct uring_fd_entry *fd_entries;
+    unsigned int fd_capacity;
+
+    // Registration and cancellation share these submission boundaries.
+    struct io_uring_sqe *(*get_sqe)(struct io_uring *ring);
+    int (*submit)(struct io_uring *ring);
+};
+#endif
 
 // ---------------------------------------------------------------------------
 // fd-to-callback hash map entry
@@ -52,10 +82,11 @@ struct kith_reactor_backend
     int (*init)(const kith_allocator_t *alloc, void **out_backend_data, unsigned int max_fds);
     // Destroy platform backend (io_uring_queue_exit / close).
     void (*destroy)(void *backend_data);
-    // Start polling fd for events. Returns 0, -KITH_EINVAL, -KITH_ENOMEM, or
-    // -KITH_EIO.
+    // Start polling fd for events. Returns 0, -KITH_EINVAL, -KITH_EBUSY,
+    // -KITH_ENOMEM, or -KITH_EIO.
     int (*add)(void *backend_data, int fd, unsigned int events);
-    // Change events of interest for fd. Returns 0, -KITH_ENOENT, or -KITH_EIO.
+    // Change events of interest for fd. Returns 0, -KITH_ENOENT, -KITH_EBUSY,
+    // or -KITH_EIO.
     // A mod whose mask equals the fd's currently registered mask is a no-op
     // success: the backend keeps exactly one outstanding poll per registered
     // fd, and re-registering an unchanged mask must not cancel and re-issue
@@ -63,7 +94,9 @@ struct kith_reactor_backend
     // dispatches). Callers re-issue mods every tick with mostly
     // unchanged masks, so the no-op path is the hot case.
     int (*mod)(void *backend_data, int fd, unsigned int events);
-    // Stop polling fd. Returns 0, -KITH_ENOENT, or -KITH_EIO.
+    // Retire fd before attempting kernel cancellation. Pending completions
+    // cannot dispatch or rearm it, including on -KITH_EIO.
+    // Returns 0, -KITH_ENOENT, or -KITH_EIO.
     int (*del)(void *backend_data, int fd);
     // Wait for events. Returns 0 on timeout/interrupt, -KITH_EIO on syscall
     // failure, or >= 1 (number of ready fds). Ready fds are delivered via the

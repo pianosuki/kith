@@ -538,15 +538,12 @@ KITH_API void kith_reactor_destroy(kith_reactor_t *reactor)
         return kith_error_return(KITH_ENOENT);
     }
 
-    int rc = reactor->backend.del(reactor->backend_data, fd);
-    if (rc != 0)
-    {
-        return rc;
-    }
-
     entry->fd = -2; // tombstone; fd_hash_find_slot reuses the first one
+    entry->events = 0;
+    entry->cb = nullptr;
+    entry->ctx = nullptr;
     reactor->fd_count--;
-    return 0;
+    return reactor->backend.del(reactor->backend_data, fd);
 }
 
 [[nodiscard]] KITH_API int

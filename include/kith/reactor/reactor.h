@@ -223,7 +223,8 @@ KITH_API void kith_reactor_destroy(kith_reactor_t *reactor);
  *                  @p cb is NULL,
  *                - -KITH_EEXIST if @p fd is already registered,
  *                - -KITH_EBUSY if the registration table is full or the
- *                  backend cannot accept another registration,
+ *                  backend cannot accept another registration (including
+ *                  exhausted identities for this fd on this handle),
  *                - -KITH_ENOMEM on allocation failure,
  *                - -KITH_EIO on platform backend failure.
  * @thread_safety unsafe — call from the reactor thread (the thread that calls
@@ -252,6 +253,7 @@ KITH_API void kith_reactor_destroy(kith_reactor_t *reactor);
  * @return        0 on success, negative kith_error on failure:
  *                - -KITH_EINVAL if @p reactor is NULL or @p fd is negative,
  *                - -KITH_ENOENT if @p fd is not registered,
+ *                - -KITH_EBUSY if this fd's registration identities are exhausted,
  *                - -KITH_EIO on platform backend failure.
  * @thread_safety unsafe — call from the reactor thread.
  * @ownership caller — @p reactor is borrowed for the call only.
@@ -259,18 +261,25 @@ KITH_API void kith_reactor_destroy(kith_reactor_t *reactor);
 [[nodiscard]] KITH_API int kith_reactor_mod(kith_reactor_t *reactor, int fd, unsigned int events);
 
 /**
- * Deregister @p fd from the reactor. The fd stops being polled; the caller
- * retains ownership and must close @p fd separately if desired.
+ * Deregister @p fd from the reactor. The caller retains ownership and must
+ * close @p fd separately if desired.
  *
- * It is safe to call from within the fd's own readiness callback (the
- * deregistration takes effect after the current poll batch drains).
+ * Once a registered fd is found, its callback and context are detached before
+ * kernel cancellation is attempted, including when cancellation returns
+ * -KITH_EIO. No subsequent readiness callback uses that registration. Pending
+ * kernel requests remain reactor-owned until completion or reactor destruction;
+ * the fd can be registered again without waiting for those requests.
+ *
+ * It is safe to call from within a readiness callback. An already executing
+ * callback continues, but the registration is not rearmed after it returns.
  *
  * @param reactor Reactor handle.
  * @param fd      File descriptor to deregister.
  * @return        0 on success, negative kith_error on failure:
  *                - -KITH_EINVAL if @p reactor is NULL or @p fd is negative,
  *                - -KITH_ENOENT if @p fd is not registered,
- *                - -KITH_EIO on platform backend failure.
+ *                - -KITH_EIO if cancellation admission or submission fails
+ *                  after local retirement.
  * @thread_safety unsafe — call from the reactor thread (or from within a
  *                readiness callback for any fd on the same reactor).
  * @ownership caller — @p reactor is borrowed for the call only.

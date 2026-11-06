@@ -51,7 +51,7 @@ def _isolate_bridge(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 @needs_build
 class TestReactorLifecycle:
     def test_close_blocks_until_run_exits(self) -> None:
-        reactor = Reactor()
+        reactor = _new_reactor_with_retry()
         left, right = socket.socketpair()
         try:
             entered = threading.Event()
@@ -79,14 +79,14 @@ class TestReactorLifecycle:
             right.close()
 
     def test_close_without_run_destroys_cleanly(self) -> None:
-        reactor = Reactor()
+        reactor = _new_reactor_with_retry()
         assert reactor.handle is not None
         reactor.close()
         assert reactor.handle is None
         reactor.close()
 
     def test_run_after_close_raises_state_error(self) -> None:
-        reactor = Reactor()
+        reactor = _new_reactor_with_retry()
         reactor.close()
         with pytest.raises(KithStateError):
             reactor.run()

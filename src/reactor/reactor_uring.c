@@ -17,40 +17,8 @@
 #include <sys/eventfd.h>
 
 // ---------------------------------------------------------------------------
-// per-fd tracking for the uring backend
-// ---------------------------------------------------------------------------
-// A deregistered fd's pending POLL_ADD completions remain in the kernel
-// completion queue until reaped. The OS reuses small integer fd numbers
-// (close(9) then accept() -> 9 again), so a stale CQE for the old fd carries
-// the same fd number as the new, reused registration. To keep a stale CQE
-// from dispatching against the new registration, every POLL_ADD carries a
-// per-fd generation counter in the high 32 bits of its user_data; a CQE whose
-// generation does not match the fd's current generation is dropped.
-struct uring_fd_entry
-{
-    int fd;
-    unsigned int events; // events-of-interest (KITH_REACTOR_IN, etc.)
-    uint32_t gen;        // bumped on each (re)registration; carried in sqe data
-};
-
-// ---------------------------------------------------------------------------
-// backend data
-// ---------------------------------------------------------------------------
-struct uring_backend
-{
-    const kith_allocator_t *alloc;     // as given at init; owns every free
-    struct io_uring ring;
-    int wake_fd;                       // eventfd for waking io_uring_wait_cqe
-    bool wake_fd_added;                // whether the wake fd is registered in the ring
-
-    struct uring_fd_entry *fd_entries; // indexed by fd
-    unsigned int fd_capacity;
-};
-
-// ---------------------------------------------------------------------------
 // CQE user_data sentinels
-// Normal fds use the fd value directly as data64; special completions
-// use these sentinel values.
+// Normal fds carry a generation and fd; special completions use sentinels.
 // ---------------------------------------------------------------------------
 enum : uint64_t
 {
@@ -59,7 +27,7 @@ enum : uint64_t
 };
 
 // Encode a (generation, fd) pair into the 64-bit sqe user_data. The sentinels
-// above occupy the top of the u64 range, so any (gen, fd) with gen below
+// above occupy the top of the u64 range, so any (gen, fd) with gen at most
 // URING_GEN_MAX encodes strictly below URING_DATA_CANCEL and never collides.
 //
 // fd is a non-negative int bounded by fd_capacity (it is an array index
@@ -119,6 +87,34 @@ static unsigned int from_poll_mask(short revents)
         mask |= KITH_REACTOR_ERR;
     }
     return mask;
+}
+
+static int
+uring_prepare_poll(struct uring_backend *b, int fd, unsigned int events, uint32_t *out_gen)
+{
+    struct io_uring_sqe *sqe = b->get_sqe(&b->ring);
+    if (sqe == nullptr)
+    {
+        return kith_error_return(KITH_EIO);
+    }
+    // A failed submit can leave this SQE pending. Its identity is consumed
+    // even when the caller cannot publish a live registration.
+    *out_gen = ++b->fd_entries[fd].last_gen;
+    io_uring_prep_poll_add(sqe, fd, to_poll_mask(events));
+    io_uring_sqe_set_data64(sqe, uring_encode_gen(*out_gen, fd));
+    return b->submit(&b->ring) < 0 ? kith_error_return(KITH_EIO) : 0;
+}
+
+static int uring_cancel(struct uring_backend *b, uint64_t identity)
+{
+    struct io_uring_sqe *sqe = b->get_sqe(&b->ring);
+    if (sqe == nullptr)
+    {
+        return kith_error_return(KITH_EIO);
+    }
+    io_uring_prep_cancel64(sqe, identity, 0);
+    io_uring_sqe_set_data64(sqe, URING_DATA_CANCEL);
+    return b->submit(&b->ring) < 0 ? kith_error_return(KITH_EIO) : 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -299,6 +295,8 @@ static int uring_init(const kith_allocator_t *alloc, void **out_data, unsigned i
         return kith_error_return(KITH_ENOMEM);
     }
     b->alloc = alloc;
+    b->get_sqe = io_uring_get_sqe;
+    b->submit = io_uring_submit;
 
     int rc;
     unsigned int attempts = 0u;
@@ -399,28 +397,16 @@ static int uring_add(void *data, int fd, unsigned int events)
         return rc;
     }
 
-    // Bump the generation on (re)registration so a stale CQE for a prior
-    // registration of this fd number (deregistered, closed, and the number
-    // reused by a new accept) carries an outdated generation and is dropped
-    // by uring_process_cqe.
-    uint32_t gen = b->fd_entries[fd].gen + 1u;
-    if (gen >= URING_GEN_MAX)
+    if (b->fd_entries[fd].last_gen >= URING_GEN_MAX)
     {
-        gen = 0u;
+        return kith_error_return(KITH_EBUSY);
     }
 
-    struct io_uring_sqe *sqe = io_uring_get_sqe(&b->ring);
-    if (sqe == nullptr)
+    uint32_t gen;
+    rc = uring_prepare_poll(b, fd, events, &gen);
+    if (rc != 0)
     {
-        return kith_error_return(KITH_EIO);
-    }
-    io_uring_prep_poll_add(sqe, fd, to_poll_mask(events));
-    io_uring_sqe_set_data64(sqe, uring_encode_gen(gen, fd));
-
-    rc = io_uring_submit(&b->ring);
-    if (rc < 0)
-    {
-        return kith_error_return(KITH_EIO);
+        return rc;
     }
 
     b->fd_entries[fd].fd = fd;
@@ -452,49 +438,25 @@ static int uring_mod(void *data, int fd, unsigned int events)
         return 0;
     }
 
-    // Cancel outstanding poll.
-    struct io_uring_sqe *sqe = io_uring_get_sqe(&b->ring);
-    if (sqe == nullptr)
+    if (b->fd_entries[fd].last_gen >= URING_GEN_MAX)
     {
-        return kith_error_return(KITH_EIO);
-    }
-    io_uring_prep_cancel_fd(sqe, fd, 0);
-    io_uring_sqe_set_data64(sqe, URING_DATA_CANCEL);
-
-    int rc = io_uring_submit(&b->ring);
-    if (rc < 0)
-    {
-        return kith_error_return(KITH_EIO);
+        return kith_error_return(KITH_EBUSY);
     }
 
-    // Bump the generation so the canceled poll's CQE (carrying the prior
-    // generation) is dropped by uring_process_cqe instead of dispatching with
-    // the stale events. (A poll that completed normally just before the cancel
-    // takes effect carries the prior generation too and is dropped here; the
-    // new poll submitted below catches the next edge. This is the same edge-
-    // triggered drop semantics the cancel already implied.)
-    uint32_t gen = b->fd_entries[fd].gen + 1u;
-    if (gen >= URING_GEN_MAX)
+    int rc = uring_cancel(b, uring_encode_gen(b->fd_entries[fd].gen, fd));
+    if (rc != 0)
     {
-        gen = 0u;
+        return rc;
     }
+
+    uint32_t gen;
+    rc = uring_prepare_poll(b, fd, events, &gen);
+    if (rc != 0)
+    {
+        return rc;
+    }
+
     b->fd_entries[fd].gen = gen;
-
-    // Submit new poll with updated events.
-    sqe = io_uring_get_sqe(&b->ring);
-    if (sqe == nullptr)
-    {
-        return kith_error_return(KITH_EIO);
-    }
-    io_uring_prep_poll_add(sqe, fd, to_poll_mask(events));
-    io_uring_sqe_set_data64(sqe, uring_encode_gen(gen, fd));
-
-    rc = io_uring_submit(&b->ring);
-    if (rc < 0)
-    {
-        return kith_error_return(KITH_EIO);
-    }
-
     b->fd_entries[fd].events = events;
     return 0;
 }
@@ -507,22 +469,14 @@ static int uring_del_fn(void *data, int fd)
         return kith_error_return(KITH_EINVAL);
     }
 
-    struct io_uring_sqe *sqe = io_uring_get_sqe(&b->ring);
-    if (sqe == nullptr)
+    if (b->fd_entries[fd].fd != fd)
     {
-        return kith_error_return(KITH_EIO);
+        return kith_error_return(KITH_ENOENT);
     }
-    io_uring_prep_cancel_fd(sqe, fd, 0);
-    io_uring_sqe_set_data64(sqe, URING_DATA_CANCEL);
-
-    int rc = io_uring_submit(&b->ring);
-    if (rc < 0)
-    {
-        return kith_error_return(KITH_EIO);
-    }
-
+    uint64_t identity = uring_encode_gen(b->fd_entries[fd].gen, fd);
     b->fd_entries[fd].fd = -1;
-    return 0;
+    b->fd_entries[fd].events = 0;
+    return uring_cancel(b, identity);
 }
 
 static int uring_wait(void *data,
