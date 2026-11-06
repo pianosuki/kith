@@ -4,6 +4,9 @@ KITH_SIM_1 {
         kith_sim_destroy;
         kith_sim_register_model;
         kith_sim_create_model;
+        kith_sim_model_storage_create;
+        kith_sim_model_state;
+        kith_sim_model_storage_destroy;
         kith_sim_model_destroy;
         kith_sim_model_step;
         kith_sim_model_apply_input;

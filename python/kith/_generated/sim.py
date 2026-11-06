@@ -237,6 +237,17 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
             ctypes.POINTER(ctypes.POINTER(kith_sim_model_t)),
         ],
     ),
+    (
+        "kith_sim_model_storage_create",
+        ctypes.c_int,
+        [
+            ctypes.c_size_t,
+            ctypes.POINTER(kith_allocator_t),
+            ctypes.POINTER(ctypes.POINTER(kith_sim_model_t)),
+        ],
+    ),
+    ("kith_sim_model_state", ctypes.c_void_p, [ctypes.POINTER(kith_sim_model_t)]),
+    ("kith_sim_model_storage_destroy", None, [ctypes.POINTER(kith_sim_model_t)]),
     ("kith_sim_model_destroy", None, [ctypes.POINTER(kith_sim_model_t)]),
     (
         "kith_sim_model_step",

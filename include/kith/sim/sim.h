@@ -336,10 +336,10 @@ struct kith_sim_model_vtable
 
     /**
      * Create a model instance from @p cfg. The implementation allocates and
-     * initializes its internal state and the opaque handle itself through
-     * @p alloc, and returns the handle. The runtime fills the handle's
-     * @c vtable and @c allocator fields after @c init returns; the
-     * implementation sets neither.
+     * initializes its state and opaque handle using
+     * kith_sim_model_storage_create with @p alloc, then returns the handle.
+     * The runtime installs the registered callbacks after init succeeds.
+     * On failure release all partial resources and leave the output NULL.
      *
      * @return 0 on success, negative kith_error on failure.
      */
@@ -486,6 +486,57 @@ kith_sim_register_model(kith_sim_t *sim, const char *name, const kith_sim_model_
                                                  const kith_sim_config_t *cfg,
                                                  const kith_allocator_t *alloc,
                                                  kith_sim_model_t **out_model);
+
+/**
+ * Allocate an opaque model handle and zeroed model-specific state.
+ *
+ * Intended for a registered model's init callback. The returned handle is
+ * incomplete until init returns it to kith_sim_create_model; do not step it
+ * or call kith_sim_model_destroy before that point. On init failure release
+ * it with kith_sim_model_storage_destroy. State has malloc alignment; types
+ * requiring extended alignment must allocate their own aligned storage.
+ *
+ * @param state_size State size in bytes; 0 creates a handle with NULL state.
+ * @param alloc Allocator borrowed until storage destruction; NULL selects
+ *              the default. Use the allocator passed to the init callback.
+ * @param out_model Receives the handle; reset to NULL on failure.
+ * @return 0 on success, -KITH_EINVAL for NULL output or invalid allocator,
+ *         -KITH_ESIZE for undersized allocator, -KITH_EABIVER for incompatible
+ *         allocator, or -KITH_ENOMEM on allocation failure.
+ * @thread_safety safe-if the allocator supports concurrent calls.
+ * @ownership callee — release with kith_sim_model_storage_destroy.
+ */
+[[nodiscard]] KITH_API int kith_sim_model_storage_create(size_t state_size,
+                                                         const kith_allocator_t *alloc,
+                                                         kith_sim_model_t **out_model);
+
+/**
+ * Borrow a model's implementation state.
+ *
+ * Only the model implementation defines this storage's type and layout.
+ * Built-in model state remains private and must not be interpreted by callers.
+ *
+ * @param model Model handle, or NULL.
+ * @return Mutable state pointer, or NULL for a NULL handle or zero-size state.
+ * @thread_safety safe-if the model remains alive; state synchronization is
+ *                the implementation's responsibility.
+ * @ownership callee — the pointer remains valid until storage destruction.
+ */
+KITH_API void *kith_sim_model_state(kith_sim_model_t *model);
+
+/**
+ * Release a storage-created model's state and handle without callback dispatch.
+ *
+ * Call from the registered destroy callback after releasing any nested resources,
+ * or from init while unwinding a failed initialization. Only handles returned
+ * by kith_sim_model_storage_create may be passed. This does not free objects
+ * referenced by the state. The allocator passed at creation must remain alive.
+ *
+ * @param model Storage-created model handle. NULL is a no-op.
+ * @thread_safety unsafe — no concurrent access to the handle or state.
+ * @ownership callee — consumes the handle and its state storage.
+ */
+KITH_API void kith_sim_model_storage_destroy(kith_sim_model_t *model);
 
 /**
  * Destroy a model instance. Passing NULL is a no-op.

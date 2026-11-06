@@ -534,6 +534,10 @@ target_link_libraries(test_python_exit_gate PRIVATE kith_server kith_gateway kit
 target_compile_definitions(test_python_exit_gate PRIVATE _GNU_SOURCE)
 add_test(NAME test_python_exit_gate COMMAND test_python_exit_gate)
 
+add_executable(test_sim_storage test_sim_storage.c)
+target_link_libraries(test_sim_storage PRIVATE kith_sim)
+add_test(NAME test_sim_storage COMMAND test_sim_storage)
+
 # One uniform ceiling for every test in the directory: a wedged test costs
 # the gate minutes rather than ctest's default 1500 s, and the threaded
 # server/gateway tests keep headroom on a loaded host where their wall

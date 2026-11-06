@@ -25,3 +25,6 @@ find_package(kith 1.0.0 REQUIRED)
 
 add_executable(kith_consumer main.c)
 target_link_libraries(kith_consumer PRIVATE kith::server kith::util)
+
+add_executable(kith_sim_consumer ../c/test_sim_storage.c)
+target_link_libraries(kith_sim_consumer PRIVATE kith::sim)

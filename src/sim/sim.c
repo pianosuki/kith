@@ -210,6 +210,58 @@ kith_sim_register_model(kith_sim_t *sim, const char *name, const kith_sim_model_
     return 0;
 }
 
+[[nodiscard]] KITH_API int kith_sim_model_storage_create(size_t state_size,
+                                                         const kith_allocator_t *alloc,
+                                                         kith_sim_model_t **out_model)
+{
+    if (!out_model)
+    {
+        return kith_error_return(KITH_EINVAL);
+    }
+    *out_model = nullptr;
+    if (alloc)
+    {
+        kith_error_t rc = kith_allocator_check(alloc);
+        if (rc != 0)
+        {
+            return kith_error_return(rc);
+        }
+    }
+    const kith_allocator_t *allocator = alloc ? alloc : kith_allocator_default();
+    kith_sim_model_t *model = kith_alloc_zero(allocator, 1, sizeof(*model));
+    if (!model)
+    {
+        return kith_error_return(KITH_ENOMEM);
+    }
+    model->allocator = allocator;
+    if (state_size != 0)
+    {
+        model->state = kith_alloc_zero(allocator, 1, state_size);
+        if (!model->state)
+        {
+            kith_free(allocator, model);
+            return kith_error_return(KITH_ENOMEM);
+        }
+    }
+    *out_model = model;
+    return 0;
+}
+
+KITH_API void *kith_sim_model_state(kith_sim_model_t *model)
+{
+    return model ? model->state : nullptr;
+}
+
+KITH_API void kith_sim_model_storage_destroy(kith_sim_model_t *model)
+{
+    if (!model)
+    {
+        return;
+    }
+    kith_free(model->allocator, model->state);
+    kith_free(model->allocator, model);
+}
+
 KITH_API void kith_sim_model_destroy(kith_sim_model_t *model)
 {
     if (!model)
