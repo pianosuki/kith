@@ -16,6 +16,8 @@ KITH_UTIL_1 {
         kith_tick_clock_tick;
         kith_tick_clock_elapsed_ms;
         kith_tick_clock_elapsed_ns;
+        kith_tick_clock_elapsed_ms_precise;
+        kith_tick_clock_elapsed_ns_precise;
         kith_version_string;
         kith_version_abi;
         kith_wall_clock_ns;

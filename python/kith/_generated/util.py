@@ -128,6 +128,16 @@ _FUNCTIONS: list[tuple[str, object, list[object]]] = [
         ctypes.c_int,
         [ctypes.POINTER(kith_tick_clock_t), ctypes.POINTER(ctypes.c_uint64)],
     ),
+    (
+        "kith_tick_clock_elapsed_ms_precise",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_tick_clock_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
+    (
+        "kith_tick_clock_elapsed_ns_precise",
+        ctypes.c_int,
+        [ctypes.POINTER(kith_tick_clock_t), ctypes.POINTER(ctypes.c_uint64)],
+    ),
     ("kith_version_string", ctypes.c_char_p, []),
     ("kith_version_abi", ctypes.c_uint, []),
     ("kith_python_finalizing_set", None, [ctypes.c_int]),

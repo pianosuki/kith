@@ -9,19 +9,16 @@
 /**
  * Deterministic simulation clock driven by the tick counter.
  *
- * Model-visible time is the tick count advanced once per simulation step by
- * the per-tick game-logic callback substrate (see
- * docs/architecture/adr/0014-deterministic-simulation-contract.md): it never
- * depends on wall-clock time, host speed, or scheduling, so identical tick
- * sequences produce identical reported time on every run. The composition
- * root owns the handle and drives it from its tick path; model code receives
- * it by injection and reads it through the accessors.
+ * An application owns the clock and advances its tick count once per
+ * simulation step. Model code receives the handle by injection and reads
+ * it through the accessors. The server does not create or advance this
+ * clock automatically. Identical tick sequences and rates produce
+ * identical reported time, independent of wall-clock time or scheduling.
  *
- * Elapsed-time conversions are pure integer arithmetic against the
- * configured tick rate. A rate that does not divide the unit evenly floors
- * (a 30 Hz tick reports 33'333'333 nanoseconds), so converted values are
- * always exact multiples of the floored period and never drift with
- * accumulated rounding.
+ * Precise elapsed-time conversions floor the total rational elapsed time
+ * once, bounding rounding error below one output unit. The deprecated
+ * conversions instead multiply the tick count by a floored per-tick
+ * period, preserving their original results for compatible callers.
  */
 
 /**
@@ -53,7 +50,8 @@ struct kith_tick_clock_params
 
     /**
      * Tick rate in ticks per second, at least 1. Drives the elapsed-time
-     * conversions; rates above one billion floor every conversion to zero.
+     * conversions. Rates above 1000 floor the deprecated millisecond period
+     * to zero; rates above one billion also floor its nanosecond period to zero.
      */
     uint32_t tick_hz;
 
@@ -104,10 +102,9 @@ typedef struct kith_tick_clock_params kith_tick_clock_params_t;
 KITH_API void kith_tick_clock_destroy(kith_tick_clock_t *clock);
 
 /**
- * Advance the clock by @p ticks. A composition-root operation called once
- * per simulation step from the tick path; model code has no reason to call
- * it, and doing so breaks the correspondence between the clock and the
- * server's tick counter.
+ * Advance the clock by @p ticks. The application's serialized simulation
+ * owner advances it for steps actually performed. Server callback indices
+ * may have gaps and do not advance this application-owned clock.
  *
  * @param clock  Handle to modify. NULL is rejected.
  * @param ticks  Number of ticks to add.
@@ -123,9 +120,9 @@ KITH_API void kith_tick_clock_destroy(kith_tick_clock_t *clock);
 
 /**
  * Set the clock to an absolute tick, rewinding or fast-forwarding without
- * stepping through the intermediate values. Like kith_tick_clock_advance,
- * this is a composition-root operation: replay rewinds and sub-simulation
- * restarts are its intended users.
+ * stepping through the intermediate values. The application's serialized
+ * simulation owner uses this for replay rewinds or sub-simulation restarts;
+ * it does not change the server's tick counter.
  *
  * @param clock Handle to modify. NULL is rejected.
  * @param tick  Absolute tick value to store.
@@ -152,6 +149,10 @@ KITH_API void kith_tick_clock_destroy(kith_tick_clock_t *clock);
  * The result is @c tick times the floored millisecond period implied by
  * @c tick_hz; see the module documentation for the rounding rule.
  *
+ * @deprecated Since 1.1.0. Use kith_tick_clock_elapsed_ms_precise for
+ *             elapsed time at the configured tick rate. This function
+ *             retains its integral-period result throughout 1.x.
+ *             Scheduled for removal in 2.0.0.
  * @param clock   Clock handle. NULL is rejected.
  * @param out_ms  Receives the elapsed milliseconds on success.
  * @return        0 on success, negative kith_error on failure:
@@ -160,8 +161,8 @@ KITH_API void kith_tick_clock_destroy(kith_tick_clock_t *clock);
  * @thread_safety safe-if (no advance or reset runs concurrently).
  * @ownership caller — both arguments are borrowed for the call only.
  */
-[[nodiscard]] KITH_API int kith_tick_clock_elapsed_ms(const kith_tick_clock_t *clock,
-                                                      uint64_t *out_ms);
+[[nodiscard]] KITH_API KITH_DEPRECATED int
+kith_tick_clock_elapsed_ms(const kith_tick_clock_t *clock, uint64_t *out_ms);
 
 /**
  * Convert the current tick to elapsed nanoseconds since tick zero.
@@ -169,6 +170,10 @@ KITH_API void kith_tick_clock_destroy(kith_tick_clock_t *clock);
  * The result is @c tick times the floored nanosecond period implied by
  * @c tick_hz; see the module documentation for the rounding rule.
  *
+ * @deprecated Since 1.1.0. Use kith_tick_clock_elapsed_ns_precise for
+ *             elapsed time at the configured tick rate. This function
+ *             retains its integral-period result throughout 1.x.
+ *             Scheduled for removal in 2.0.0.
  * @param clock   Clock handle. NULL is rejected.
  * @param out_ns  Receives the elapsed nanoseconds on success.
  * @return        0 on success, negative kith_error on failure:
@@ -177,8 +182,42 @@ KITH_API void kith_tick_clock_destroy(kith_tick_clock_t *clock);
  * @thread_safety safe-if (no advance or reset runs concurrently).
  * @ownership caller — both arguments are borrowed for the call only.
  */
-[[nodiscard]] KITH_API int kith_tick_clock_elapsed_ns(const kith_tick_clock_t *clock,
-                                                      uint64_t *out_ns);
+[[nodiscard]] KITH_API KITH_DEPRECATED int
+kith_tick_clock_elapsed_ns(const kith_tick_clock_t *clock, uint64_t *out_ns);
+
+/**
+ * Convert the total rational tick time to milliseconds, rounding down once.
+ *
+ * The result is floor(tick * units_per_second / tick_hz), with error
+ * strictly below one output unit and no accumulated period truncation.
+ * Intermediate multiplication cannot cause a false overflow rejection.
+ *
+ * @param clock  Clock handle. NULL is rejected.
+ * @param out_ms Receives elapsed milliseconds on success; unchanged on error.
+ * @return       0 on success, -KITH_EINVAL for a NULL argument, or
+ *               -KITH_ERANGE if the result exceeds 64 bits.
+ * @thread_safety safe-if (no advance or reset runs concurrently).
+ * @ownership caller — both arguments are borrowed for the call only.
+ */
+[[nodiscard]] KITH_API int kith_tick_clock_elapsed_ms_precise(const kith_tick_clock_t *clock,
+                                                              uint64_t *out_ms);
+
+/**
+ * Convert the total rational tick time to nanoseconds, rounding down once.
+ *
+ * The result is floor(tick * units_per_second / tick_hz), with error
+ * strictly below one output unit and no accumulated period truncation.
+ * Intermediate multiplication cannot cause a false overflow rejection.
+ *
+ * @param clock  Clock handle. NULL is rejected.
+ * @param out_ns Receives elapsed nanoseconds on success; unchanged on error.
+ * @return       0 on success, -KITH_EINVAL for a NULL argument, or
+ *               -KITH_ERANGE if the result exceeds 64 bits.
+ * @thread_safety safe-if (no advance or reset runs concurrently).
+ * @ownership caller — both arguments are borrowed for the call only.
+ */
+[[nodiscard]] KITH_API int kith_tick_clock_elapsed_ns_precise(const kith_tick_clock_t *clock,
+                                                              uint64_t *out_ns);
 
 /** @} */
 

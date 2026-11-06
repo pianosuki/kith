@@ -8,6 +8,26 @@
 #include "kith/util/wall_clock.h"
 #include "kith/version.h"
 
+/* Compatibility assertions exercise the original conversions deliberately. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+static int legacy_elapsed_ms(const kith_tick_clock_t *clock, uint64_t *out)
+{
+    return kith_tick_clock_elapsed_ms(clock, out);
+}
+
+static int legacy_elapsed_ns(const kith_tick_clock_t *clock, uint64_t *out)
+{
+    return kith_tick_clock_elapsed_ns(clock, out);
+}
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
 /* Sentinel address handed to create calls as the out slot, so a failure
  * path that forgets to clear it is observable. Never dereferenced. */
 static uint64_t sentinel;
@@ -17,7 +37,7 @@ static kith_tick_clock_params_t valid_params(uint32_t tick_hz)
     return (kith_tick_clock_params_t)
     {
         .size = sizeof(kith_tick_clock_params_t), .abi_version = KITH_ABI_VERSION
-        , .initial_tick = 0, .tick_hz = tick_hz
+        , .initial_tick = 0, .tick_hz = tick_hz,
     };
 }
 
@@ -46,7 +66,7 @@ static int test_creation_validation(void)
     if (params_rejected(
             (kith_tick_clock_params_t) {
                 .size = sizeof(kith_tick_clock_params_t), .abi_version = KITH_ABI_VERSION
-                +1U
+                +1U,
             },
             KITH_EABIVER))
     {
@@ -55,7 +75,7 @@ static int test_creation_validation(void)
     if (params_rejected(
             (kith_tick_clock_params_t) {
                 .size = sizeof(kith_tick_clock_params_t), .abi_version = KITH_ABI_VERSION
-                , .tick_hz = 0
+                , .tick_hz = 0,
             },
             KITH_EINVAL))
     {
@@ -94,8 +114,8 @@ static int test_advance_and_conversions(void)
         kith_tick_clock_destroy(clock);
         return 2;
     }
-    if (kith_tick_clock_elapsed_ms(clock, &value) != 0 || value != 350U ||
-        kith_tick_clock_elapsed_ns(clock, &value) != 0 || value != 350'000'000ULL)
+    if (legacy_elapsed_ms(clock, &value) != 0 || value != 350U ||
+        legacy_elapsed_ns(clock, &value) != 0 || value != 350'000'000ULL)
     {
         kith_tick_clock_destroy(clock);
         return 3;
@@ -105,8 +125,8 @@ static int test_advance_and_conversions(void)
         kith_tick_clock_destroy(clock);
         return 4;
     }
-    if (kith_tick_clock_elapsed_ms(clock, &value) != 0 || value != 500U ||
-        kith_tick_clock_elapsed_ns(clock, &value) != 0 || value != 500'000'000ULL)
+    if (legacy_elapsed_ms(clock, &value) != 0 || value != 500U ||
+        legacy_elapsed_ns(clock, &value) != 0 || value != 500'000'000ULL)
     {
         kith_tick_clock_destroy(clock);
         return 5;
@@ -120,8 +140,8 @@ static int test_advance_and_conversions(void)
         kith_tick_clock_destroy(clock);
         return 6;
     }
-    if (kith_tick_clock_advance(odd_clock, 3U) != 0 ||
-        kith_tick_clock_elapsed_ns(odd_clock, &value) != 0 || value != 99'999'999ULL)
+    if (kith_tick_clock_advance(odd_clock, 3U) != 0 || legacy_elapsed_ns(odd_clock, &value) != 0 ||
+        value != 99'999'999ULL)
     {
         kith_tick_clock_destroy(odd_clock);
         kith_tick_clock_destroy(clock);
@@ -157,8 +177,8 @@ static int test_overflow_and_reset(void)
     }
     /* Both conversions overflow at the maximal tick: the millisecond
      * period is smaller than the nanosecond one, but not by enough. */
-    if (kith_tick_clock_elapsed_ns(clock, &value) != kith_error_return(KITH_ERANGE) ||
-        kith_tick_clock_elapsed_ms(clock, &value) != kith_error_return(KITH_ERANGE))
+    if (legacy_elapsed_ns(clock, &value) != kith_error_return(KITH_ERANGE) ||
+        legacy_elapsed_ms(clock, &value) != kith_error_return(KITH_ERANGE))
     {
         kith_tick_clock_destroy(clock);
         return 4;
@@ -168,7 +188,7 @@ static int test_overflow_and_reset(void)
         kith_tick_clock_destroy(clock);
         return 5;
     }
-    if (kith_tick_clock_elapsed_ns(clock, &value) != 0 || value != 600'000'000ULL)
+    if (legacy_elapsed_ns(clock, &value) != 0 || value != 600'000'000ULL)
     {
         kith_tick_clock_destroy(clock);
         return 6;
@@ -189,13 +209,13 @@ static int test_null_contracts(void)
     {
         return 2;
     }
-    if (kith_tick_clock_elapsed_ms(nullptr, &value) != kith_error_return(KITH_EINVAL) ||
-        kith_tick_clock_elapsed_ns(nullptr, &value) != kith_error_return(KITH_EINVAL))
+    if (legacy_elapsed_ms(nullptr, &value) != kith_error_return(KITH_EINVAL) ||
+        legacy_elapsed_ns(nullptr, &value) != kith_error_return(KITH_EINVAL))
     {
         return 3;
     }
     kith_tick_clock_t *clock = nullptr;
-    if (kith_tick_clock_elapsed_ms(clock, &value) != kith_error_return(KITH_EINVAL))
+    if (legacy_elapsed_ms(clock, &value) != kith_error_return(KITH_EINVAL))
     {
         return 4;
     }
@@ -222,9 +242,82 @@ static int test_wall_monotonic(void)
     return 0;
 }
 
+static int test_precise_conversions(void)
+{
+    kith_tick_clock_params_t params = valid_params(60u);
+    kith_tick_clock_t *clock = nullptr;
+    if (kith_tick_clock_create(&params, nullptr, &clock) != 0)
+    {
+        return 1;
+    }
+    uint64_t value = 0u;
+    int failed = 0;
+    for (uint64_t tick = 1u; tick <= 60'000u; ++tick)
+    {
+        failed += kith_tick_clock_advance(clock, 1u) != 0;
+        failed += kith_tick_clock_elapsed_ms_precise(clock, &value) != 0;
+        failed += value != tick * 1000u / 60u;
+        failed += kith_tick_clock_elapsed_ns_precise(clock, &value) != 0;
+        failed += value != tick * 1'000'000'000u / 60u;
+    }
+    failed += legacy_elapsed_ms(clock, &value) != 0 || value != 960'000u;
+    failed += kith_tick_clock_elapsed_ms_precise(clock, nullptr) != kith_error_return(KITH_EINVAL);
+    value = 7u;
+    failed +=
+        kith_tick_clock_elapsed_ns_precise(nullptr, &value) != kith_error_return(KITH_EINVAL) ||
+        value != 7u;
+    failed += kith_tick_clock_reset(clock, UINT64_MAX / 16u) != 0;
+    failed += legacy_elapsed_ms(clock, &value) != 0 || value != (UINT64_MAX / 16u) * 16u;
+    value = 7u;
+    failed += kith_tick_clock_elapsed_ms_precise(clock, &value) != kith_error_return(KITH_ERANGE) ||
+              value != 7u;
+    failed += kith_tick_clock_reset(clock, UINT64_MAX / 16'666'666u) != 0;
+    failed +=
+        legacy_elapsed_ns(clock, &value) != 0 || value != (UINT64_MAX / 16'666'666u) * 16'666'666u;
+    value = 7u;
+    failed += kith_tick_clock_elapsed_ns_precise(clock, &value) != kith_error_return(KITH_ERANGE) ||
+              value != 7u;
+    failed += kith_tick_clock_reset(clock, UINT64_MAX) != 0;
+    value = 7u;
+    failed += kith_tick_clock_elapsed_ns_precise(clock, &value) != kith_error_return(KITH_ERANGE) ||
+              value != 7u;
+    failed += kith_tick_clock_elapsed_ms_precise(clock, &value) != kith_error_return(KITH_ERANGE) ||
+              value != 7u;
+    kith_tick_clock_destroy(clock);
+    return failed != 0;
+}
+
+static int test_precise_large_ticks(void)
+{
+    kith_tick_clock_params_t params = valid_params(1'000'000'000u);
+    params.initial_tick = UINT64_MAX;
+    kith_tick_clock_t *clock = nullptr;
+    if (kith_tick_clock_create(&params, nullptr, &clock) != 0)
+    {
+        return 1;
+    }
+    uint64_t value = 0u;
+    int failed = kith_tick_clock_elapsed_ns_precise(clock, &value) != 0 || value != UINT64_MAX;
+    failed +=
+        kith_tick_clock_elapsed_ms_precise(clock, &value) != 0 || value != UINT64_MAX / 1'000'000u;
+    kith_tick_clock_destroy(clock);
+    params = valid_params(UINT32_MAX);
+    params.initial_tick = UINT32_MAX;
+    if (kith_tick_clock_create(&params, nullptr, &clock) != 0)
+    {
+        return 2;
+    }
+    failed += legacy_elapsed_ms(clock, &value) != 0 || value != 0u;
+    failed += legacy_elapsed_ns(clock, &value) != 0 || value != 0u;
+    failed += kith_tick_clock_elapsed_ms_precise(clock, &value) != 0 || value != 1000u;
+    failed += kith_tick_clock_elapsed_ns_precise(clock, &value) != 0 || value != 1'000'000'000u;
+    kith_tick_clock_destroy(clock);
+    return failed != 0;
+}
+
 int main(void)
 {
-    int rc = test_creation_validation();
+    int rc = test_creation_validation() + test_precise_conversions() + test_precise_large_ticks();
     if (rc == 0)
     {
         rc = 10 * test_advance_and_conversions();

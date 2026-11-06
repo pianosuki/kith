@@ -14,6 +14,7 @@ struct kith_tick_clock
     uint64_t tick;
     uint64_t ns_per_tick;
     uint64_t ms_per_tick;
+    uint32_t tick_hz;
 };
 
 /* Returns KITH_OK when the params are usable, otherwise the error enumerator
@@ -38,6 +39,22 @@ static kith_error_t params_error(const kith_tick_clock_params_t *params)
         return KITH_EINVAL;
     }
     return KITH_OK;
+}
+
+static int elapsed_precise(const kith_tick_clock_t *clock, uint64_t unit, uint64_t *out)
+{
+    if (clock == nullptr || out == nullptr)
+    {
+        return kith_error_return(KITH_EINVAL);
+    }
+    uint64_t whole = 0u;
+    const uint64_t fraction = (clock->tick % clock->tick_hz) * unit / clock->tick_hz;
+    if (ckd_mul(&whole, clock->tick / clock->tick_hz, unit) || ckd_add(&whole, whole, fraction))
+    {
+        return kith_error_return(KITH_ERANGE);
+    }
+    *out = whole;
+    return 0;
 }
 
 [[nodiscard]] KITH_API int kith_tick_clock_create(const kith_tick_clock_params_t *params,
@@ -70,8 +87,8 @@ static kith_error_t params_error(const kith_tick_clock_params_t *params)
     }
     clock->allocator = allocator;
     clock->tick = params->initial_tick;
-    /* Floors are the contract: conversions report exact multiples of the
-     * floored period instead of drifting through accumulated rounding. */
+    clock->tick_hz = params->tick_hz;
+    /* Legacy conversions retain the integral-period contract. */
     clock->ns_per_tick = 1'000'000'000ULL / params->tick_hz;
     clock->ms_per_tick = 1'000ULL / params->tick_hz;
     *out_clock = clock;
@@ -154,4 +171,16 @@ static int elapsed(const struct kith_tick_clock *clock, uint64_t period, uint64_
         return kith_error_return(KITH_EINVAL);
     }
     return elapsed(clock, clock->ns_per_tick, out_ns);
+}
+
+[[nodiscard]] KITH_API int kith_tick_clock_elapsed_ms_precise(const kith_tick_clock_t *clock,
+                                                              uint64_t *out_ms)
+{
+    return elapsed_precise(clock, 1'000u, out_ms);
+}
+
+[[nodiscard]] KITH_API int kith_tick_clock_elapsed_ns_precise(const kith_tick_clock_t *clock,
+                                                              uint64_t *out_ns)
+{
+    return elapsed_precise(clock, 1'000'000'000u, out_ns);
 }
