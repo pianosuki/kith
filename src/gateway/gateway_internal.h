@@ -1,8 +1,10 @@
 #pragma once
 
 #include <stdatomic.h>
+#include <stdckdint.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <time.h>
 
 #include <pthread.h>
@@ -38,6 +40,45 @@
  */
 
 struct gateway_compose_entry;
+
+/*---------------------------------------------------------------------------
+ * object allocation
+ *-------------------------------------------------------------------------*/
+
+/** Allocate zeroed storage with extended alignment through the owning allocator.
+ *  The original callback pointer precedes the aligned interior object so its
+ *  paired free preserves the allocator's ordinary malloc/free contract. */
+static inline void *
+gateway_aligned_alloc_zero(const kith_allocator_t *allocator, size_t size, size_t alignment)
+{
+    size_t total = 0u;
+    if (alignment == 0u || ckd_add(&total, size, alignment - 1u) ||
+        ckd_add(&total, total, sizeof(void *)))
+    {
+        return nullptr;
+    }
+    void *raw = kith_alloc_zero(allocator, 1u, total);
+    if (!raw)
+    {
+        return nullptr;
+    }
+    unsigned char *object = (unsigned char *)raw + sizeof(raw);
+    const size_t remainder = (size_t)((uintptr_t)object % alignment);
+    object += (alignment - remainder) % alignment;
+    memcpy(object - sizeof(raw), &raw, sizeof(raw));
+    return object;
+}
+
+/** Release an aligned object through the allocator that supplied its raw storage. */
+static inline void gateway_aligned_free(const kith_allocator_t *allocator, void *object)
+{
+    if (object)
+    {
+        void *raw = nullptr;
+        memcpy(&raw, (unsigned char *)object - sizeof(raw), sizeof(raw));
+        kith_free(allocator, raw);
+    }
+}
 
 /*---------------------------------------------------------------------------
  * mutex helpers
@@ -681,9 +722,11 @@ struct kith_gateway_session
      *  pass's attempt count so a saturated stripe does not pin the
      *  queue's front. */
     size_t pending_head;
-    /** Delivery strategy bound at creation (points into the gateway
-     *  registry's stable entry storage). Never NULL: sessions always bind
-     *  a strategy (the factory default when params select none). */
+    /** Callback table owned by the session through its final release. */
+    kith_gateway_delivery_vtable_t delivery_vtable;
+    /** Delivery strategy bound at creation; points to the session's own
+     *  callback table. Never NULL: sessions always bind a strategy (the
+     *  factory default when params select none). */
     const kith_gateway_delivery_vtable_t *delivery_strategy;
     /** Strategy-owned per-session encode state (the strategy's session_init
      *  output; NULL for stateless strategies). Created and destroyed

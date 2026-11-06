@@ -1,4 +1,5 @@
 #include <stdatomic.h>
+#include <stdckdint.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -901,7 +902,8 @@ build_mock_sessions(kith_net_conn_t **conns, struct kith_gateway_session **sessi
 {
     for (size_t i = 0u; i < chain; ++i)
     {
-        sessions[i] = calloc(1, sizeof(*sessions[i]));
+        sessions[i] = gateway_aligned_alloc_zero(
+            nullptr, sizeof(*sessions[i]), alignof(struct kith_gateway_session));
         if (!sessions[i])
         {
             return 1;
@@ -986,7 +988,7 @@ static int test_session_table_remove_preserves_chain(void)
 
     for (size_t i = 0u; i < TABLE_CHAIN; ++i)
     {
-        free(sessions[i]);
+        gateway_aligned_free(nullptr, sessions[i]);
     }
     gateway_session_table_fini(&t);
     return failures;
@@ -1025,15 +1027,438 @@ static int test_session_table_remove_repairs_wrapped_chain(void)
 
     for (size_t i = 0u; i < TABLE_CHAIN; ++i)
     {
-        free(sessions[i]);
+        gateway_aligned_free(nullptr, sessions[i]);
     }
     gateway_session_table_fini(&t);
+    return failures;
+}
+
+/** Callback pointers retain fundamental alignment without promising cache-line alignment. */
+struct fundamental_allocator
+{
+    struct
+    {
+        void *pointer;
+        void *raw;
+        size_t size;
+    } slots[64u];
+    size_t calls;
+    size_t zero_calls;
+    size_t fail_at;
+    size_t live;
+    size_t bad_frees;
+};
+
+static void *fundamental_alloc(void *context, size_t size)
+{
+    struct fundamental_allocator *state = context;
+    state->calls += 1u;
+    size_t bytes = 0u;
+    if (state->calls == state->fail_at || ckd_add(&bytes, size, alignof(max_align_t)))
+    {
+        return nullptr;
+    }
+    for (size_t i = 0u; i < 64u; ++i)
+    {
+        if (state->slots[i].pointer)
+        {
+            continue;
+        }
+        void *raw = malloc(bytes);
+        if (!raw)
+        {
+            return nullptr;
+        }
+        unsigned char *pointer = raw;
+        if ((uintptr_t)raw % 64u == 0u)
+        {
+            pointer += alignof(max_align_t);
+        }
+        state->slots[i].pointer = pointer;
+        state->slots[i].raw = raw;
+        state->slots[i].size = size;
+        state->live += 1u;
+        return pointer;
+    }
+    return nullptr;
+}
+
+static void fundamental_free(void *context, void *pointer)
+{
+    if (!pointer)
+    {
+        return;
+    }
+    struct fundamental_allocator *state = context;
+    for (size_t i = 0u; i < 64u; ++i)
+    {
+        if (state->slots[i].pointer == pointer)
+        {
+            free(state->slots[i].raw);
+            state->slots[i].pointer = nullptr;
+            state->live -= 1u;
+            return;
+        }
+    }
+    state->bad_frees += 1u;
+}
+
+static void *fundamental_alloc_zero(void *context, size_t count, size_t size)
+{
+    struct fundamental_allocator *state = context;
+    state->zero_calls += 1u;
+    size_t bytes = 0u;
+    if (ckd_mul(&bytes, count, size))
+    {
+        return nullptr;
+    }
+    void *pointer = fundamental_alloc(context, bytes);
+    if (pointer)
+    {
+        memset(pointer, 0, bytes);
+    }
+    return pointer;
+}
+
+static void *fundamental_realloc(void *context, void *pointer, size_t size)
+{
+    if (!pointer)
+    {
+        return fundamental_alloc(context, size);
+    }
+    if (size == 0u)
+    {
+        fundamental_free(context, pointer);
+        return nullptr;
+    }
+    struct fundamental_allocator *state = context;
+    for (size_t i = 0u; i < 64u; ++i)
+    {
+        if (state->slots[i].pointer == pointer)
+        {
+            void *fresh = fundamental_alloc(context, size);
+            if (fresh)
+            {
+                const size_t old = state->slots[i].size;
+                memcpy(fresh, pointer, old < size ? old : size);
+                fundamental_free(context, pointer);
+            }
+            return fresh;
+        }
+    }
+    state->bad_frees += 1u;
+    return nullptr;
+}
+
+static kith_allocator_t fundamental_vtable(struct fundamental_allocator *state)
+{
+    return (kith_allocator_t)
+    {
+        .size = sizeof(kith_allocator_t), .abi_version = KITH_ABI_VERSION
+        , .user_data = state, .alloc = fundamental_alloc, .alloc_zero = fundamental_alloc_zero,
+            .realloc = fundamental_realloc, .free = fundamental_free
+    };
+}
+
+// Aligned private storage stays zeroed and releases the exact callback pointer;
+// overflow and callback failure acquire no resource.
+static int test_aligned_storage_failure_and_ownership(void)
+{
+    int failures = 0;
+    struct fundamental_allocator state = {0};
+    const kith_allocator_t allocator = fundamental_vtable(&state);
+    CHECK(gateway_aligned_alloc_zero(&allocator, SIZE_MAX, 64u) == nullptr);
+    CHECK(gateway_aligned_alloc_zero(&allocator, SIZE_MAX - 63u, 64u) == nullptr);
+    CHECK(gateway_aligned_alloc_zero(&allocator, 73u, 0u) == nullptr);
+    CHECK(state.calls == 0u && state.zero_calls == 0u);
+    state.fail_at = 1u;
+    CHECK(gateway_aligned_alloc_zero(&allocator, 73u, alignof(kith_gateway_t)) == nullptr);
+    CHECK(state.live == 0u && state.zero_calls == 1u);
+    state.fail_at = 0u;
+    unsigned char *object = gateway_aligned_alloc_zero(&allocator, 73u, alignof(kith_gateway_t));
+    CHECK(object != nullptr);
+    if (object)
+    {
+        CHECK((uintptr_t)object % alignof(kith_gateway_t) == 0u);
+        CHECK((uintptr_t)state.slots[0].pointer % alignof(max_align_t) == 0u);
+        CHECK(alignof(max_align_t) >= 64u || (uintptr_t)state.slots[0].pointer % 64u != 0u);
+        for (size_t i = 0u; i < 73u; ++i)
+        {
+            CHECK(object[i] == 0u);
+        }
+    }
+    gateway_aligned_free(&allocator, nullptr);
+    gateway_aligned_free(&allocator, object);
+    CHECK(state.live == 0u && state.bad_frees == 0u && state.zero_calls == 2u);
+    return failures;
+}
+
+// The public gateway constructor honors ordinary allocator alignment through
+// early allocation failure, core initialization rollback and late setup rollback.
+static int test_gateway_allocator_alignment_and_rollback(void)
+{
+    int failures = 0;
+    struct fixture fx;
+    CHECK(fixture_init(&fx) == 0);
+    struct fundamental_allocator state = {0};
+    const kith_allocator_t allocator = fundamental_vtable(&state);
+    kith_gateway_t *gateway = nullptr;
+    for (size_t fail = 1u; fail <= 2u; ++fail)
+    {
+        state.calls = 0u;
+        state.fail_at = fail;
+        CHECK(kith_gateway_create(nullptr, fx.net, fx.fabric, fx.proto, &allocator, &gateway) ==
+              kith_error_return(KITH_ENOMEM));
+        CHECK(gateway == nullptr);
+        kith_gateway_destroy(gateway);
+        CHECK(state.live == 0u && state.bad_frees == 0u);
+    }
+    state.fail_at = 0u;
+    const uint32_t invalid_size = 0u;
+    const kith_gateway_params_t params = {
+        .size = sizeof(params), .abi_version = KITH_ABI_VERSION, .delivery_config = &invalid_size};
+    CHECK(kith_gateway_create(&params, fx.net, fx.fabric, fx.proto, &allocator, &gateway) ==
+          kith_error_return(KITH_EINVAL));
+    CHECK(gateway == nullptr);
+    kith_gateway_destroy(gateway);
+    CHECK(state.live == 0u && state.bad_frees == 0u);
+    CHECK(kith_gateway_create(nullptr, fx.net, fx.fabric, fx.proto, &allocator, &gateway) == 0);
+    CHECK(gateway != nullptr);
+    CHECK((uintptr_t)gateway % alignof(kith_gateway_t) == 0u);
+    CHECK(kith_gateway_session_count(gateway) == 0u);
+    kith_gateway_destroy(gateway);
+    CHECK(state.live == 0u && state.bad_frees == 0u);
+    fixture_fini(&fx);
+    return failures;
+}
+
+// A separately owned session allocator covers object and strategy-init failures;
+// the last reference returns its exact raw allocation after owner destruction.
+static int test_session_allocator_alignment_and_rollback(void)
+{
+    int failures = 0;
+    struct fixture fx;
+    CHECK(fixture_init(&fx) == 0);
+    const kith_gateway_params_t params = {
+        .size = sizeof(params), .abi_version = KITH_ABI_VERSION, .delivery_strategy = "tiered"};
+    kith_gateway_t *gateway = nullptr;
+    CHECK(kith_gateway_create(&params, fx.net, fx.fabric, fx.proto, nullptr, &gateway) == 0);
+    int client_fd = connect_to_listener(fx.net);
+    CHECK(client_fd >= 0);
+    kith_net_conn_t *conn = nullptr;
+    CHECK(kith_net_accept(fx.net, &conn) == 0);
+    struct fundamental_allocator state = {0};
+    const kith_allocator_t allocator = fundamental_vtable(&state);
+    kith_gateway_session_t *session = nullptr;
+    for (size_t fail = 1u; fail <= 2u; ++fail)
+    {
+        state.calls = 0u;
+        state.fail_at = fail;
+        CHECK(kith_gateway_session_create(
+                  gateway, conn, KITH_GATEWAY_SESSION_APP, 5u, &allocator, &session) ==
+              kith_error_return(KITH_ENOMEM));
+        CHECK(session == nullptr);
+        CHECK(state.live == 0u && state.bad_frees == 0u);
+        CHECK(kith_gateway_session_count(gateway) == 0u);
+    }
+    state.fail_at = 0u;
+    CHECK(kith_gateway_session_create(
+              gateway, conn, KITH_GATEWAY_SESSION_APP, 5u, &allocator, &session) == 0);
+    CHECK(session != nullptr);
+    CHECK((uintptr_t)session % alignof(kith_gateway_session_t) == 0u);
+    kith_gateway_session_acquire(session);
+    kith_gateway_session_destroy(session);
+    CHECK(state.live > 0u);
+    kith_gateway_destroy(gateway);
+    kith_gateway_session_info_t info = {0};
+    CHECK(kith_gateway_session_info(session, &info) == 0 && info.principal_id == 5u);
+    kith_gateway_session_release(session);
+    CHECK(state.live == 0u && state.bad_frees == 0u);
+    kith_net_conn_close(conn);
+    kith_net_conn_release(conn);
+    (void)close(client_fd);
+    fixture_fini(&fx);
+    return failures;
+}
+
+struct lifetime_capture
+{
+    kith_gateway_t *gateway;
+    const void *original_config;
+    size_t init_calls;
+    size_t deliver_calls;
+    size_t fini_calls;
+    size_t registry_moves;
+    bool config_copied;
+};
+
+struct lifetime_config
+{
+    uint32_t size;
+    struct lifetime_capture *capture;
+};
+
+struct lifetime_state
+{
+    struct lifetime_capture *capture;
+};
+
+static int lifetime_grow_registry(struct lifetime_capture *capture, const char *prefix);
+
+static int
+lifetime_session_init(const kith_gateway_session_t *session, const void *config, void **out_state)
+{
+    (void)session;
+    const struct lifetime_config *cfg = config;
+    if (!cfg || cfg->size != sizeof(*cfg))
+    {
+        return kith_error_return(KITH_EINVAL);
+    }
+    struct lifetime_capture *capture = cfg->capture;
+    capture->init_calls += 1u;
+    capture->config_copied = config != capture->original_config;
+    const int rc = lifetime_grow_registry(capture, "init");
+    if (rc != 0)
+    {
+        return rc;
+    }
+    struct lifetime_state *state = malloc(sizeof(*state));
+    if (!state)
+    {
+        return kith_error_return(KITH_ENOMEM);
+    }
+    state->capture = capture;
+    *out_state = state;
+    return 0;
+}
+
+static void lifetime_session_fini(void *pointer)
+{
+    struct lifetime_state *state = pointer;
+    state->capture->fini_calls += 1u;
+    free(state);
+}
+
+static int lifetime_deliver(void *pointer,
+                            kith_gateway_t *gateway,
+                            kith_gateway_session_t *session,
+                            const kith_gateway_view_subject_t *subjects,
+                            size_t subject_count,
+                            uint64_t now_ms,
+                            kith_gateway_delivery_stats_t *stats)
+{
+    (void)gateway;
+    (void)session;
+    (void)subjects;
+    (void)now_ms;
+    struct lifetime_state *state = pointer;
+    state->capture->deliver_calls += 1u;
+    stats->enqueued = (uint32_t)subject_count;
+    return 0;
+}
+
+/** Public registrations force the allocator to relocate the registry's live array. */
+static int lifetime_grow_registry(struct lifetime_capture *capture, const char *prefix)
+{
+    kith_gateway_t *gateway = capture->gateway;
+    const size_t registrations = gateway->deliveries.cap - gateway->deliveries.count + 1u;
+    if (registrations > 32u)
+    {
+        return kith_error_return(KITH_EOVERFLOW);
+    }
+    const uintptr_t previous = (uintptr_t)gateway->deliveries.entries;
+    const kith_gateway_delivery_vtable_t vtable = {.size = sizeof(vtable),
+                                                   .abi_version = KITH_ABI_VERSION,
+                                                   .session_init = lifetime_session_init,
+                                                   .session_fini = lifetime_session_fini,
+                                                   .deliver = lifetime_deliver};
+    for (size_t i = 0u; i < registrations; ++i)
+    {
+        char name[32u];
+        const int length = snprintf(name, sizeof(name), "%s-%zu", prefix, i);
+        if (length < 0 || (size_t)length >= sizeof(name))
+        {
+            return kith_error_return(KITH_EINVAL);
+        }
+        const int rc = kith_gateway_register_delivery(gateway, name, &vtable);
+        if (rc != 0)
+        {
+            return rc;
+        }
+    }
+    if ((uintptr_t)gateway->deliveries.entries == previous)
+    {
+        return kith_error_return(KITH_ESTATE);
+    }
+    capture->registry_moves += 1u;
+    return 0;
+}
+
+// Callback ownership survives registry movement both inside init and after bind;
+// the pinned final release invokes fini exactly once after the gateway is gone.
+static int test_session_strategy_callbacks_outlive_registry(void)
+{
+    int failures = 0;
+    struct fixture fx;
+    CHECK(fixture_init(&fx) == 0);
+    struct fundamental_allocator owner = {0};
+    const kith_allocator_t allocator = fundamental_vtable(&owner);
+    struct lifetime_capture capture = {0};
+    const struct lifetime_config config = {.size = sizeof(config), .capture = &capture};
+    capture.original_config = &config;
+    const kith_gateway_params_t params = {.size = sizeof(params),
+                                          .abi_version = KITH_ABI_VERSION,
+                                          .delivery_strategy = "lifetime",
+                                          .delivery_config = &config};
+    kith_gateway_t *gateway = nullptr;
+    CHECK(kith_gateway_create(&params, fx.net, fx.fabric, fx.proto, &allocator, &gateway) == 0);
+    capture.gateway = gateway;
+    const kith_gateway_delivery_vtable_t selected = {.size = sizeof(selected),
+                                                     .abi_version = KITH_ABI_VERSION,
+                                                     .session_init = lifetime_session_init,
+                                                     .session_fini = lifetime_session_fini,
+                                                     .deliver = lifetime_deliver};
+    CHECK(kith_gateway_register_delivery(gateway, "lifetime", &selected) == 0);
+    kith_net_conn_t *conn = nullptr;
+    CHECK(make_conn(fx.net, &conn) == 0);
+    kith_gateway_session_t *session = nullptr;
+    CHECK(kith_gateway_session_create(
+              gateway, conn, KITH_GATEWAY_SESSION_SUBSCRIBER, 5u, nullptr, &session) == 0);
+    CHECK(capture.init_calls == 1u && capture.config_copied && capture.registry_moves == 1u);
+    const kith_fabric_cell_key_t home = make_key(14u, 0, 0, 0, 0u);
+    const kith_sim_artifact_key_t key = make_skey(&home, 1u);
+    const kith_sim_actor_t actor = make_actor(1u, 0, 0, 5u);
+    CHECK(kith_gateway_session_bind_actor(session, 1u) == 0);
+    CHECK(kith_gateway_session_window_add(session, &home) == 0);
+    CHECK(kith_sim_publish_artifact(fx.sim, &key, &actor, nullptr) == 0);
+    CHECK(kith_fabric_publish(fx.fabric, &home, 1u, nullptr) == 0);
+    CHECK(kith_gateway_cache_refresh(gateway, 1000u) == 0);
+    CHECK(kith_gateway_view_refresh(gateway, session, 1100u) == 0);
+    kith_gateway_delivery_stats_t stats = {0};
+    CHECK(kith_gateway_deliver(gateway, session, 1100u, &stats) == 0 && stats.enqueued == 1u);
+    CHECK(lifetime_grow_registry(&capture, "live") == 0 && capture.registry_moves == 2u);
+    CHECK(kith_gateway_deliver(gateway, session, 1101u, &stats) == 0 && stats.enqueued == 1u);
+    CHECK(capture.deliver_calls == 2u && capture.fini_calls == 0u);
+    kith_gateway_session_acquire(session);
+    kith_gateway_session_destroy(session);
+    CHECK(capture.fini_calls == 0u);
+    kith_gateway_destroy(gateway);
+    CHECK(capture.fini_calls == 0u);
+    kith_gateway_session_release(session);
+    CHECK(capture.fini_calls == 1u && owner.live == 0u && owner.bad_frees == 0u);
+    kith_net_conn_close(conn);
+    kith_net_conn_release(conn);
+    fixture_fini(&fx);
     return failures;
 }
 
 int main(void)
 {
     int rc = 0;
+    rc |= test_aligned_storage_failure_and_ownership();
+    rc |= test_gateway_allocator_alignment_and_rollback();
+    rc |= test_session_allocator_alignment_and_rollback();
+    rc |= test_session_strategy_callbacks_outlive_registry();
     rc |= test_session_arg_validation();
     rc |= test_session_lifecycle();
     rc |= test_session_bind_actor_concurrent_refresh();

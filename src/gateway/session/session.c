@@ -248,7 +248,7 @@ void gateway_session_release(struct kith_gateway_session *session)
     kith_free(session->allocator, session->pending);
     pthread_mutex_destroy(&session->window_lock);
     kith_net_conn_release(session->conn);
-    kith_free(session->allocator, session);
+    gateway_aligned_free(session->allocator, session);
 }
 
 /*---------------------------------------------------------------------------
@@ -260,14 +260,14 @@ void gateway_session_release(struct kith_gateway_session *session)
 static void session_discard(struct kith_gateway_session *s)
 {
     pthread_mutex_destroy(&s->window_lock);
-    kith_free(s->allocator, s);
+    gateway_aligned_free(s->allocator, s);
 }
 
 /** Bind the delivery strategy before the session becomes visible in the
  *  table: an unknown name fails creation (ENOENT) rather than surfacing
  *  as a per-tick deliver error, and a failing strategy init rolls the
- *  whole create back. The vtable pointer targets the registry's stable
- *  entry storage, so it outlives every subsequent registration. */
+ *  whole create back. A value copy keeps the callbacks valid through
+ *  registry growth and the session's final release after gateway teardown. */
 static int session_bind_strategy(struct kith_gateway_session *s, kith_gateway_t *gateway)
 {
     const kith_gateway_delivery_vtable_t *strategy =
@@ -276,13 +276,15 @@ static int session_bind_strategy(struct kith_gateway_session *s, kith_gateway_t 
     {
         return kith_error_return(KITH_ENOENT);
     }
+    const kith_gateway_delivery_vtable_t bound = *strategy;
     void *strategy_state = nullptr;
-    const int drc = strategy->session_init(s, gateway->delivery_config, &strategy_state);
+    const int drc = bound.session_init(s, gateway->delivery_config, &strategy_state);
     if (drc != 0)
     {
         return drc;
     }
-    s->delivery_strategy = strategy;
+    s->delivery_vtable = bound;
+    s->delivery_strategy = &s->delivery_vtable;
     s->delivery_state = strategy_state;
     return 0;
 }
@@ -327,7 +329,8 @@ static void session_init_delivery_totals(struct kith_gateway_session *s)
     }
     const kith_allocator_t *allocator = (alloc != nullptr) ? alloc : gateway->allocator;
 
-    struct kith_gateway_session *s = kith_alloc_zero(allocator, 1, sizeof(*s));
+    struct kith_gateway_session *s =
+        gateway_aligned_alloc_zero(allocator, sizeof(*s), alignof(struct kith_gateway_session));
     if (!s)
     {
         return kith_error_return(KITH_ENOMEM);

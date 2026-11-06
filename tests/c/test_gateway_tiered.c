@@ -5,6 +5,7 @@
  * manually over a loopback connection so every timestamp is controlled. */
 
 #include <signal.h>
+#include <stdckdint.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -934,6 +935,179 @@ static int test_tiered_payload_equivalence_randomized(void)
     return failures;
 }
 
+/** Moving session allocations expose references retained across delivery growth. */
+struct moving_allocator
+{
+    size_t live;
+    size_t moves;
+};
+
+union moving_header
+{
+    alignas(64) size_t size;
+};
+
+static void *moving_alloc(void *context, size_t size)
+{
+    struct moving_allocator *state = context;
+    size_t total = 0u;
+    if (ckd_add(&total, sizeof(union moving_header), size) || ckd_add(&total, total, 63u))
+    {
+        return nullptr;
+    }
+    total -= total % 64u;
+    union moving_header *header = aligned_alloc(64u, total);
+    if (!header)
+    {
+        return nullptr;
+    }
+    header->size = size;
+    state->live += 1u;
+    return header + 1u;
+}
+
+static void moving_free(void *context, void *pointer)
+{
+    if (pointer)
+    {
+        struct moving_allocator *state = context;
+        state->live -= 1u;
+        free((union moving_header *)pointer - 1u);
+    }
+}
+
+static void *moving_alloc_zero(void *context, size_t count, size_t size)
+{
+    size_t bytes = 0u;
+    if (ckd_mul(&bytes, count, size))
+    {
+        return nullptr;
+    }
+    void *pointer = moving_alloc(context, bytes);
+    if (pointer)
+    {
+        memset(pointer, 0, bytes);
+    }
+    return pointer;
+}
+
+static void *moving_realloc(void *context, void *pointer, size_t size)
+{
+    if (!pointer)
+    {
+        return moving_alloc(context, size);
+    }
+    if (size == 0u)
+    {
+        moving_free(context, pointer);
+        return nullptr;
+    }
+    const union moving_header *header = (union moving_header *)pointer - 1u;
+    void *fresh = moving_alloc(context, size);
+    if (fresh)
+    {
+        memcpy(fresh, pointer, header->size < size ? header->size : size);
+        moving_free(context, pointer);
+        struct moving_allocator *state = context;
+        state->moves += 1u;
+    }
+    return fresh;
+}
+
+/** Compare the ordered state frame to the composed view or its self-only prefix. */
+static int tiered_assert_ordered_states(struct fixture *fx,
+                                        kith_gateway_session_t *session,
+                                        uint64_t now_ms,
+                                        size_t expected_subjects,
+                                        bool self_only)
+{
+    int failures = 0;
+    kith_gateway_view_snapshot_t snapshot = {0};
+    kith_gateway_view_subject_t subjects[17u];
+    size_t subject_count = 0u;
+    const int rc =
+        kith_gateway_view_snapshot(fx->gw, session, &snapshot, subjects, 17u, &subject_count);
+    CHECK(rc == 0);
+    if (rc != 0)
+    {
+        return failures;
+    }
+    CHECK(subject_count == expected_subjects);
+    uint8_t wire[17u * GATEWAY_DELIVERY_PAYLOAD_SIZE] = {0};
+    uint16_t count = 0u;
+    uint32_t events = 0u;
+    uint32_t suppressed = 0u;
+    CHECK(deliver_and_capture(
+              fx, session, now_ms, &events, &suppressed, &count, wire, sizeof(wire)) == 0);
+    const size_t expected_count = self_only ? 1u : subject_count;
+    CHECK((size_t)count == expected_count);
+    CHECK(events == 0u);
+    CHECK((size_t)suppressed == subject_count - expected_count);
+    for (size_t i = 0u; i < expected_count; ++i)
+    {
+        uint8_t expected[GATEWAY_DELIVERY_PAYLOAD_SIZE];
+        gateway_delivery_serialize(&subjects[i], expected);
+        CHECK(memcmp(wire + i * sizeof(expected), expected, sizeof(expected)) == 0);
+    }
+    return failures;
+}
+
+// A new self id inserts between known ledger keys before the known records
+// commit. The ordered frame and next-pass suppression survive moving growth.
+static int test_tiered_insert_preserves_order_and_suppression(void)
+{
+    int failures = 0;
+    struct fixture fx;
+    CHECK(fixture_init(&fx, nullptr) == 0);
+    fx.client_fd = connect_to_listener(fx.net);
+    CHECK(fx.client_fd >= 0);
+    CHECK(kith_net_accept(fx.net, &fx.conn) == 0);
+    struct moving_allocator state = {0};
+    const kith_allocator_t allocator = {.size = sizeof(allocator),
+                                        .abi_version = KITH_ABI_VERSION,
+                                        .user_data = &state,
+                                        .alloc = moving_alloc,
+                                        .alloc_zero = moving_alloc_zero,
+                                        .realloc = moving_realloc,
+                                        .free = moving_free};
+    kith_gateway_session_t *session = nullptr;
+    CHECK(kith_gateway_session_create(
+              fx.gw, fx.conn, KITH_GATEWAY_SESSION_SUBSCRIBER, 1u, &allocator, &session) == 0);
+    CHECK(kith_gateway_session_bind_actor(session, 100u) == 0);
+    const kith_fabric_cell_key_t home = make_key(13u, 0, 0, 0, 0u);
+    const kith_sim_artifact_key_t key = make_skey(&home, 1u);
+    CHECK(kith_gateway_session_window_add(session, &home) == 0);
+    kith_sim_actor_t actors[17u];
+    for (size_t i = 0u; i < 16u; ++i)
+    {
+        actors[i] = make_actor((i + 1u) * 100u, (int64_t)i << 15, 5u);
+        CHECK(kith_sim_publish_artifact(fx.sim, &key, &actors[i], nullptr) == 0);
+    }
+    CHECK(kith_fabric_publish(fx.fabric, &home, 1u, nullptr) == 0);
+    CHECK(kith_gateway_cache_refresh(fx.gw, 1000u) == 0);
+    CHECK(kith_gateway_view_refresh(fx.gw, session, 1100u) == 0);
+    CHECK(tiered_assert_ordered_states(&fx, session, 1100u, 16u, false) == 0);
+    actors[16] = make_actor(850u, 0, 5u);
+    for (size_t i = 0u; i < 17u; ++i)
+    {
+        actors[i].pos_y += 1;
+        actors[i].input_tick += 1u;
+        CHECK(kith_sim_publish_artifact(fx.sim, &key, &actors[i], nullptr) == 0);
+    }
+    CHECK(kith_fabric_publish(fx.fabric, &home, 1u, nullptr) == 0);
+    CHECK(kith_gateway_session_bind_actor(session, 850u) == 0);
+    CHECK(kith_gateway_cache_refresh(fx.gw, 1200u) == 0);
+    CHECK(kith_gateway_view_refresh(fx.gw, session, 1300u) == 0);
+    state.moves = 0u;
+    CHECK(tiered_assert_ordered_states(&fx, session, 1300u, 17u, false) == 0);
+    CHECK(state.moves >= 2u);
+    CHECK(tiered_assert_ordered_states(&fx, session, 1301u, 17u, true) == 0);
+    kith_gateway_session_destroy(session);
+    CHECK(state.live == 0u);
+    fixture_fini(&fx);
+    return failures;
+}
+
 int main(void)
 {
     (void)signal(SIGPIPE, SIG_IGN);
@@ -946,6 +1120,7 @@ int main(void)
     rc |= test_tiered_tier_upgrade_rediffers_unchanged_artifact();
     rc |= test_tiered_rebind_sweeps_old_self_entry();
     rc |= test_tiered_payload_equivalence_randomized();
+    rc |= test_tiered_insert_preserves_order_and_suppression();
     if (rc == 0)
     {
         (void)printf("gateway tiered: all tests passed\n");

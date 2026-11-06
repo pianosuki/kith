@@ -281,7 +281,7 @@ static void gateway_handle_teardown(kith_gateway_t *g)
     gateway_session_table_fini(&g->sessions);
     pthread_mutex_destroy(&g->destroyed.lock);
     gateway_broadcast_fini(g);
-    kith_free(g->allocator, g);
+    gateway_aligned_free(g->allocator, g);
 }
 
 [[nodiscard]] KITH_API int kith_gateway_create(const kith_gateway_params_t *params,
@@ -317,7 +317,7 @@ static void gateway_handle_teardown(kith_gateway_t *g)
     }
     const kith_allocator_t *allocator = (alloc != nullptr) ? alloc : kith_allocator_default();
 
-    kith_gateway_t *g = kith_alloc_zero(allocator, 1, sizeof(*g));
+    kith_gateway_t *g = gateway_aligned_alloc_zero(allocator, sizeof(*g), alignof(kith_gateway_t));
     if (!g)
     {
         return kith_error_return(KITH_ENOMEM);
@@ -326,7 +326,7 @@ static void gateway_handle_teardown(kith_gateway_t *g)
     rc = gateway_core_init(g, net, fabric, proto, &resolved);
     if (rc != 0)
     {
-        kith_free(allocator, g);
+        gateway_aligned_free(allocator, g);
         return rc;
     }
     rc = gateway_delivery_setup(g, resolved.delivery_strategy, resolved.delivery_config);

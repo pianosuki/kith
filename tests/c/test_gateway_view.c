@@ -512,6 +512,59 @@ static int test_view_budget_bound(void)
     return failures;
 }
 
+// A bounded window admits a distant individual while excluding closer actors
+// in another cell; selection remains within the configured subject capacity.
+static int test_view_window_bounds_candidates(void)
+{
+    int failures = 0;
+    struct fixture fx;
+    CHECK(fixture_init_budget(&fx, 3u, KITH_GATEWAY_DEFAULT_VIEW_REFRESH_MS) == 0);
+
+    kith_fabric_cell_key_t cell = make_key(2u, 0, 0, 0, 0u);
+
+    kith_net_conn_t *conn = nullptr;
+    CHECK(make_conn(fx.net, &conn) == 0);
+    kith_gateway_session_t *s = nullptr;
+    CHECK(kith_gateway_session_create(
+              fx.gw, conn, KITH_GATEWAY_SESSION_SUBSCRIBER, 1u, nullptr, &s) == 0);
+    CHECK(kith_gateway_session_bind_actor(s, 200u) == 0);
+    CHECK(kith_gateway_session_window_add(s, &cell) == 0);
+
+    kith_sim_artifact_key_t sk = make_skey(&cell, 1u);
+    kith_sim_actor_t sub = make_actor(200u, 0, 0, 0u);
+    CHECK(kith_sim_publish_artifact(fx.sim, &sk, &sub, nullptr) == 0);
+    kith_fabric_cell_key_t excluded = make_key(2u, 1, 0, 0, 0u);
+    kith_sim_artifact_key_t excluded_key = make_skey(&excluded, 1u);
+    kith_sim_actor_t important = make_actor(99u, 100LL << KITH_SIM_FIX_SHIFT, 0, 0u);
+    CHECK(kith_sim_publish_artifact(fx.sim, &sk, &important, nullptr) == 0);
+    for (uint64_t id = 1u; id <= 5u; ++id)
+    {
+        kith_sim_actor_t a = make_actor(id, (int64_t)id << KITH_SIM_FIX_SHIFT, 0, 0u);
+        CHECK(kith_sim_publish_artifact(fx.sim, &excluded_key, &a, nullptr) == 0);
+    }
+    CHECK(kith_fabric_publish(fx.fabric, &cell, 1u, nullptr) == 0);
+    CHECK(kith_fabric_publish(fx.fabric, &excluded, 1u, nullptr) == 0);
+    CHECK(kith_gateway_cache_refresh(fx.gw, 100u) == 0);
+
+    CHECK(kith_gateway_view_refresh(fx.gw, s, 200u) == 0);
+
+    kith_gateway_view_snapshot_t meta = {0};
+    kith_gateway_view_subject_t out[8] = {0};
+    size_t n = 99u;
+    CHECK(kith_gateway_view_snapshot(fx.gw, s, &meta, out, 8u, &n) == 0);
+    CHECK(n == 2u);
+    CHECK(out[0].actor_id == 200u);
+    CHECK(out[1].actor_id == 99u);
+    CHECK(meta.selected_count == 2u);
+    CHECK(meta.candidate_count == 1u);
+
+    kith_gateway_session_destroy(s);
+    kith_net_conn_close(conn);
+    kith_net_conn_release(conn);
+    fixture_fini(&fx);
+    return failures;
+}
+
 static kith_fabric_product_level_t
 tier_of(const kith_gateway_view_subject_t *out, size_t n, uint64_t actor_id)
 {
@@ -769,13 +822,13 @@ static int test_view_crowd_aggregate(void)
 
 // A dense cell whose actor count is within the view budget produces individual
 // subjects for every actor — no crowd aggregate, whatever the cell's raw
-// count. With the default budget (512) and 23 candidates, all 23 are
+// count. With a configured budget of 24 and 23 candidates, all 23 are
 // delivered individually.
 static int test_view_dense_cell_within_budget(void)
 {
     int failures = 0;
     struct fixture fx;
-    CHECK(fixture_init(&fx) == 0);
+    CHECK(fixture_init_budget(&fx, 24u, KITH_GATEWAY_DEFAULT_VIEW_REFRESH_MS) == 0);
 
     kith_fabric_cell_key_t cell = make_key(6u, 0, 0, 0, 0u);
 
@@ -2075,6 +2128,7 @@ int main(void)
     rc |= test_view_self_echo_stamping();
     rc |= test_view_self_echo_stamping_disabled();
     rc |= test_view_budget_bound();
+    rc |= test_view_window_bounds_candidates();
     rc |= test_view_tier_selection();
     rc |= test_view_crowd_aggregate();
     rc |= test_view_crowd_hysteresis();

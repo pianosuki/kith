@@ -39,6 +39,10 @@
 /** No membership event pending on a ledger entry. */
 #define TIERED_EVENT_NONE 0xFFu
 
+/** Per-subject decision words reserve the two values above valid ledger indices. */
+#define TIERED_DECISION_SUPPRESSED SIZE_MAX
+#define TIERED_DECISION_MISSING    (SIZE_MAX - 1u)
+
 static void put_be_u16(uint8_t *p, uint16_t v)
 {
     p[0] = (uint8_t)(v >> 8u);
@@ -106,11 +110,11 @@ struct tiered_state
     size_t pending_events;
     /** Monotonic pass counter; @p seen_pass stamps compare against it. */
     uint64_t pass;
-    /** Per-pass decision + assembly scratch (grow-only): inclusion flag
+    /** Per-pass decision + assembly scratch (grow-only): inclusion and ledger index
      *  per composed subject, the serialized record of each included
      *  subject, and the final payload buffer. Steady-state passes perform
      *  no allocation. */
-    uint8_t *include;
+    size_t *decisions;
     uint8_t *staging;
     size_t scratch_cap;
     uint8_t *frame;
@@ -121,7 +125,8 @@ struct tiered_state
  * ledger helpers
  *-------------------------------------------------------------------------*/
 
-static struct tiered_entry *tiered_entry_get(struct tiered_state *st, uint64_t actor_id)
+static struct tiered_entry *
+tiered_entry_get_index(struct tiered_state *st, uint64_t actor_id, size_t *out_index)
 {
     size_t lo = 0u;
     size_t hi = st->count;
@@ -139,9 +144,18 @@ static struct tiered_entry *tiered_entry_get(struct tiered_state *st, uint64_t a
     }
     if (lo < st->count && st->entries[lo].actor_id == actor_id)
     {
+        if (out_index)
+        {
+            *out_index = lo;
+        }
         return &st->entries[lo];
     }
     return nullptr;
+}
+
+static struct tiered_entry *tiered_entry_get(struct tiered_state *st, uint64_t actor_id)
+{
+    return tiered_entry_get_index(st, actor_id, nullptr);
 }
 
 /** Find the entry for @p actor_id, inserting a zeroed one when absent.
@@ -258,18 +272,21 @@ static int tiered_scratch_ensure(struct tiered_state *st, size_t subject_count)
     {
         return 0;
     }
-    const size_t new_cap = subject_count * 2u;
-    uint8_t *inc = kith_realloc(st->allocator, st->include, new_cap * sizeof(*inc));
-    if (!inc)
-    {
-        return kith_error_return(KITH_ENOMEM);
-    }
-    st->include = inc;
+    size_t new_cap = 0u;
+    size_t decision_bytes = 0u;
     size_t staging_bytes = 0u;
-    if (ckd_mul(&staging_bytes, new_cap, GATEWAY_DELIVERY_PAYLOAD_SIZE))
+    if (ckd_mul(&new_cap, subject_count, 2u) ||
+        ckd_mul(&decision_bytes, new_cap, sizeof(*st->decisions)) ||
+        ckd_mul(&staging_bytes, new_cap, GATEWAY_DELIVERY_PAYLOAD_SIZE))
     {
         return kith_error_return(KITH_EOVERFLOW);
     }
+    size_t *decisions = kith_realloc(st->allocator, st->decisions, decision_bytes);
+    if (!decisions)
+    {
+        return kith_error_return(KITH_ENOMEM);
+    }
+    st->decisions = decisions;
     uint8_t *stag = kith_realloc(st->allocator, st->staging, staging_bytes);
     if (!stag)
     {
@@ -353,9 +370,10 @@ static size_t tiered_decide(struct tiered_state *st,
     for (size_t i = 0u; i < subject_count; ++i)
     {
         const bool is_self = i == 0u || subjects[i].subject_class == KITH_GATEWAY_VIEW_CLASS_SELF;
-        struct tiered_entry *e = tiered_entry_get(st, subjects[i].actor_id);
+        size_t entry_index = TIERED_DECISION_MISSING;
+        struct tiered_entry *e = tiered_entry_get_index(st, subjects[i].actor_id, &entry_index);
         const bool due = is_self || tiered_due(st, &subjects[i], e, now_ms);
-        st->include[i] = due ? 1u : 0u;
+        st->decisions[i] = due ? entry_index : TIERED_DECISION_SUPPRESSED;
         if (due)
         {
             gateway_delivery_serialize(&subjects[i],
@@ -402,7 +420,7 @@ static void tiered_assemble(uint8_t *payload,
     }
     for (size_t i = 0u; i < subject_count; ++i)
     {
-        if (st->include[i])
+        if (st->decisions[i] != TIERED_DECISION_SUPPRESSED)
         {
             memcpy(payload + off,
                    st->staging + i * GATEWAY_DELIVERY_PAYLOAD_SIZE,
@@ -439,13 +457,21 @@ static void tiered_commit(struct tiered_state *st,
     }
     for (size_t i = 0u; i < subject_count; ++i)
     {
-        if (!st->include[i])
+        if (st->decisions[i] == TIERED_DECISION_SUPPRESSED)
         {
             continue;
         }
-        // Ensure (not just lookup): a subject delivered on its first send
-        // has no entry until its record commits.
-        struct tiered_entry *e = tiered_entry_ensure(st, subjects[i].actor_id);
+        // Earlier inserts can shift indices or move the ledger allocation.
+        const size_t index = st->decisions[i];
+        struct tiered_entry *e = nullptr;
+        if (index < st->count && st->entries[index].actor_id == subjects[i].actor_id)
+        {
+            e = &st->entries[index];
+        }
+        else
+        {
+            e = tiered_entry_ensure(st, subjects[i].actor_id);
+        }
         if (!e)
         {
             continue;
@@ -674,7 +700,7 @@ static void tiered_session_fini(void *state)
     if (st)
     {
         kith_free(st->allocator, st->entries);
-        kith_free(st->allocator, st->include);
+        kith_free(st->allocator, st->decisions);
         kith_free(st->allocator, st->staging);
         kith_free(st->allocator, st->frame);
         kith_free(st->allocator, st);
