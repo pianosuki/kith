@@ -21,6 +21,7 @@ from examples.spatial.client import (
     encode_actor_state,
     is_membership_record,
     iter_actor_state_ids,
+    iter_actor_states_for,
 )
 
 
@@ -170,3 +171,48 @@ class TestActorStateIdExtractor:
             list(iter_actor_state_ids(spatial_messages.ACTOR_STATE_BATCH_TYPE, b"\x00\x01")) == []
         )
         assert list(iter_actor_state_ids(spatial_messages.ACTOR_STATE_TYPE, b"\x00" * 67)) == []
+
+
+def test_actor_selector_matches_full_decoding_at_record_boundaries() -> None:
+    """Selection preserves order, duplicates, membership and partial-record rules."""
+    views = [
+        _view(actor_id=7, pos_x=-123, vel_z=456, input_tick=1, update_seq=9),
+        _view(actor_id=0, input_tick=2**32 - 1, update_seq=2**32 - 1),
+        _view(actor_id=7, product_level=MEMBERSHIP_EVENT_MARKER | 4),
+        _view(actor_id=2**64 - 1, product_level=3),
+        _view(actor_id=7, input_tick=2, update_seq=10),
+        _view(actor_id=7, input_tick=2, update_seq=11),
+    ]
+    records = b"".join(encode_actor_state(view) for view in views)
+    batch = struct.pack(">HH", len(views), 65535) + records
+    singles = encode_actor_state(views[0]) + b"tail"
+    cases = [(spatial_messages.ACTOR_STATE_TYPE, singles[:n]) for n in range(len(singles) + 1)]
+    cases.extend(
+        (spatial_messages.ACTOR_STATE_BATCH_TYPE, batch[:n]) for n in range(len(batch) + 1)
+    )
+    cases.extend(
+        (spatial_messages.ACTOR_STATE_BATCH_TYPE, struct.pack(">HH", count, 0) + records)
+        for count in (0, 2, len(views) + 1)
+    )
+    cases.append((0, batch))
+    for type_id, payload in cases:
+        try:
+            decoded = (
+                decode_actor_state_batch(payload)
+                if type_id == spatial_messages.ACTOR_STATE_BATCH_TYPE
+                else [decode_actor_state(payload)]
+                if type_id == spatial_messages.ACTOR_STATE_TYPE
+                else []
+            )
+        except ValueError:
+            decoded = []
+        assert list(iter_actor_state_ids(type_id, payload)) == [
+            view.actor_id for view in decoded if not is_membership_record(view)
+        ]
+        for actor_id in (0, 7, 42, 2**64 - 1):
+            expected = [
+                view
+                for view in decoded
+                if view.actor_id == actor_id and not is_membership_record(view)
+            ]
+            assert list(iter_actor_states_for(type_id, payload, actor_id)) == expected

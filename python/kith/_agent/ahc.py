@@ -34,7 +34,7 @@ import struct
 import threading
 import time
 from collections import deque
-from collections.abc import Callable, Coroutine, Iterable, Mapping, Sequence
+from collections.abc import Callable, Coroutine, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -47,6 +47,7 @@ KITH_PROTO_HDR_SIZE: int = 10
 KITH_CLIENT_EVENT_PAYLOAD_MAX: int = 1024
 
 KITH_EAGAIN: int = 7
+KITH_EOVERFLOW: int = 10
 
 _PROTO_LIB_BASENAME = "libkith_proto.so.1"
 _CLIENT_LIB_BASENAME = "libkith_client.so.1"
@@ -476,7 +477,8 @@ def _load_client(path: Path) -> ctypes.CDLL:
 
 _IPC_BUFFER_SIZE = 65536
 _HTTP_MAX_BODY = 1 << 20
-_MAX_OUTBOUND_FRAME = KITH_PROTO_HDR_SIZE + (1 << 20)
+_OUTBOUND_INITIAL_BUFFER_SIZE = 4096
+_UINT32_MAX = (1 << 32) - 1
 
 _OUTBOUND_IDLE_PROBE_S = 1.0
 
@@ -485,11 +487,8 @@ _OUTBOUND_IDLE_PROBE_S = 1.0
 # callback instead of migrating queue bulk into the transport buffer.
 _OUTBOUND_HIGH_WATER = 256 * 1024
 
-# Scratch buffer for the stalled-outbound probe: the asyncio loop runs
-# the probe synchronously, so one buffer serves every connection.
-_PROBE_SCRATCH = (_U8 * _MAX_OUTBOUND_FRAME)()
-
 _PROTO_DEFAULT_MAX_PAYLOAD = 1 << 20
+_CLIENT_DEFAULT_PING_INTERVAL_MS = 1000
 
 _PROTO_MAGIC0 = 0x4B
 _PROTO_MAGIC1 = 0x54
@@ -545,6 +544,61 @@ class WindowEvidence:
     deque_distinct_ids: frozenset[int] = frozenset()
 
 
+@dataclass(frozen=True, slots=True)
+class WindowSnapshot:
+    """Immutable retained frames and counting bounds captured on the client loop.
+
+    Payload bytes are shared with retention. The extractor runs on the calling
+    thread; cooperative evaluation yields between bounded batches of frames.
+    """
+
+    frames: tuple[tuple[int, int, bytes], ...]
+    start_ns: int | None
+    deadline_ns: int | None
+    incomplete: bool
+    extractor: Callable[[int, bytes], Iterable[int]] | None
+
+    def evaluate(self) -> WindowEvidence:
+        """Reduce captured frames synchronously into frozen window evidence."""
+        for result in self._batches():
+            if result is not None:
+                return result
+        raise AssertionError("window reduction produced no evidence")
+
+    async def evaluate_async(self) -> WindowEvidence:
+        """Reduce captured frames while yielding between bounded frame batches."""
+        await asyncio.sleep(0)
+        for result in self._batches():
+            if result is not None:
+                return result
+            await asyncio.sleep(0)
+        raise AssertionError("window reduction produced no evidence")
+
+    def _batches(self) -> Iterator[WindowEvidence | None]:
+        ids: set[int] = set()
+        deque_ids: set[int] = set()
+        frame_ts: list[int] = []
+        for index, (ts_ns, type_id, payload) in enumerate(self.frames, 1):
+            in_window = (self.start_ns is None or ts_ns >= self.start_ns) and (
+                self.deadline_ns is None or ts_ns <= self.deadline_ns
+            )
+            if in_window:
+                frame_ts.append(ts_ns)
+            want_deque = len(deque_ids) < _VIEW_WINDOW_ID_CAP
+            want_window = in_window and len(ids) < _VIEW_WINDOW_ID_CAP
+            if self.extractor is not None and (want_deque or want_window):
+                extracted = list(self.extractor(type_id, payload))
+                if want_deque:
+                    deque_ids.update(
+                        itertools.islice(extracted, _VIEW_WINDOW_ID_CAP - len(deque_ids))
+                    )
+                if want_window:
+                    ids.update(itertools.islice(extracted, _VIEW_WINDOW_ID_CAP - len(ids)))
+            if index % 64 == 0:
+                yield None
+        yield WindowEvidence(frozenset(ids), tuple(frame_ts), self.incomplete, frozenset(deque_ids))
+
+
 # Exception groups caught in multiple sites. Defined once as tuples so
 # ruff format does not strip the grouping (it removes parentheses from
 # `except (A, B):` because Python 3.14 accepts the bare-comma tuple form,
@@ -554,6 +608,79 @@ _JSON_DECODE_ERRORS = (json.JSONDecodeError, UnicodeDecodeError)
 _CONN_RESET_ERRORS = (ConnectionResetError, BrokenPipeError)
 _HTTP_READ_ERRORS = (asyncio.IncompleteReadError, ConnectionError, OSError)
 _INTERRUPT_ERRORS = (KeyboardInterrupt, asyncio.CancelledError)
+
+
+class _EvidenceFrames:
+    """Retain frame values in flat FIFOs without per-record wrappers."""
+
+    __slots__ = ("_metadata", "_payloads")
+
+    def __init__(self) -> None:
+        self._metadata: deque[int] = deque()
+        self._payloads: deque[bytes] = deque()
+
+    def __len__(self) -> int:
+        return len(self._payloads)
+
+    def append_values(self, ts_ns: int, type_id: int, payload: bytes) -> None:
+        """Append values while preserving both FIFO lengths on failure."""
+        metadata, payloads = self._metadata, self._payloads
+        metadata_length, payload_length = len(metadata), len(payloads)
+        try:
+            metadata.append(ts_ns)
+            metadata.append(type_id)
+            payloads.append(payload)
+        except BaseException:
+            while len(payloads) > payload_length:
+                payloads.pop()
+            while len(metadata) > metadata_length:
+                metadata.pop()
+            raise
+
+    def append(self, frame: tuple[int, int, bytes]) -> None:
+        """Append a cold compatibility record using the same value path."""
+        self.append_values(*frame)
+
+    def extend(self, frames: Iterable[tuple[int, int, bytes]]) -> None:
+        """Append ordered cold compatibility records."""
+        for frame in frames:
+            self.append_values(*frame)
+
+    def popleft(self) -> tuple[int, int, bytes]:
+        """Remove and return the oldest frame."""
+        if not self._payloads:
+            raise IndexError("pop from empty evidence")
+        result = (self._metadata[0], self._metadata[1], self._payloads[0])
+        self.discard_oldest()
+        return result
+
+    def oldest_timestamp(self) -> int:
+        """Read the oldest timestamp."""
+        return self._metadata[0]
+
+    def discard_oldest(self) -> bytes:
+        """Remove the oldest frame and return only its shared payload."""
+        if not self._payloads:
+            raise IndexError("pop from empty evidence")
+        self._metadata.popleft()
+        self._metadata.popleft()
+        return self._payloads.popleft()
+
+    def clear(self) -> None:
+        """Release live metadata and payload references."""
+        self._metadata.clear()
+        self._payloads.clear()
+
+    def span_ns(self) -> int | None:
+        """Return the oldest-to-newest timestamp span, or None when empty."""
+        if not self._payloads:
+            return None
+        return self._metadata[-2] - self._metadata[0]
+
+    def __iter__(self) -> Iterator[tuple[int, int, bytes]]:
+        metadata = iter(self._metadata)
+        for payload in self._payloads:
+            yield next(metadata), next(metadata), payload
 
 
 class _ClientProtocol(asyncio.Protocol):
@@ -595,6 +722,10 @@ class AgenticHeadlessClient:
     inbound frames decode inside ``data_received`` and outbound frames
     drain inline on enqueue triggers, so the connection itself costs no
     per-batch task wakes.
+
+    ``outbound_buffer_initial_bytes`` sets the starting scratch allocation.
+    Storage grows with queued frames, bounded by the configured frame size.
+    A zero ping type disables keepalive; a zero interval selects 1000 ms.
     """
 
     def __init__(
@@ -607,6 +738,7 @@ class AgenticHeadlessClient:
         client_lib: str | None = None,
         max_payload: int = 0,
         outbound_cap: int = 0,
+        outbound_buffer_initial_bytes: int = _OUTBOUND_INITIAL_BUFFER_SIZE,
         event_cap: int = 0,
         ping_type_id: int = 0,
         pong_type_id: int = 0,
@@ -632,6 +764,13 @@ class AgenticHeadlessClient:
         evidence_budget_bytes: int = 0,
         window_id_extractor: Callable[[int, bytes], Iterable[int]] | None = None,
     ) -> None:
+        if not 0 <= max_payload <= _UINT32_MAX:
+            raise ValueError("max_payload must fit uint32_t")
+        if (
+            not isinstance(outbound_buffer_initial_bytes, int)
+            or not 0 < outbound_buffer_initial_bytes <= _UINT32_MAX
+        ):
+            raise ValueError("outbound_buffer_initial_bytes must be a positive uint32_t")
         self.instance_id = instance_id
         self.host = host
         self.port = port
@@ -642,6 +781,17 @@ class AgenticHeadlessClient:
         # Captured in start(); submit() routes foreign threads through it.
         self._loop: asyncio.AbstractEventLoop | None = None
         self._loop_thread_id = 0
+
+        # Allocate scratch before native handles acquire ownership.
+        self._direct_wire_limit = max_payload if max_payload else _PROTO_DEFAULT_MAX_PAYLOAD
+        self._out_limit = min(KITH_PROTO_HDR_SIZE + self._direct_wire_limit, _UINT32_MAX)
+        self._out_buf = (_U8 * min(outbound_buffer_initial_bytes, self._out_limit))()
+        self._out_len = ctypes.c_uint32(0)
+        # Only an EAGAIN pop proves the native queue empty.
+        self._outbound_empty = False
+        effective_ping_interval_ms = (
+            ctypes.c_uint32(ping_interval_ms).value or _CLIENT_DEFAULT_PING_INTERVAL_MS
+        )
 
         proto_path = _find_lib(_PROTO_LIB_BASENAME, "KITH_PROTO_LIB", proto_lib)
         client_path = _find_lib(_CLIENT_LIB_BASENAME, "KITH_CLIENT_LIB", client_lib)
@@ -654,12 +804,13 @@ class AgenticHeadlessClient:
             event_cap=event_cap,
             ping_type_id=ping_type_id,
             pong_type_id=pong_type_id,
-            ping_interval_ms=ping_interval_ms,
+            ping_interval_ms=effective_ping_interval_ms,
             reconnect_base_ms=reconnect_base_ms,
             reconnect_max_ms=reconnect_max_ms,
             reconnect_max_attempts=reconnect_max_attempts,
         )
 
+        self._registered_type_ids: set[int] = set()
         if message_types:
             for name, type_id in message_types.items():
                 self.register_type(name, type_id)
@@ -685,13 +836,14 @@ class AgenticHeadlessClient:
         # replying without ever closing (hung mid-shutdown, silent
         # partition) otherwise holds the client in a phantom-live
         # state forever — RST and FIN are the only shapes the transport
-        # notices. 0 selects 3x the ping interval; with pings disabled
-        # (ping_interval_ms=0) no liveness probe exists and detection is
-        # off.
-        self._ping_interval_ms = ping_interval_ms
-        self._pong_timeout_ms = pong_timeout_ms or (3 * ping_interval_ms)
+        # notices. A zero timeout selects 3x the effective ping interval;
+        # a zero ping type leaves the default probe disabled.
+        self._ping_interval_ms = (
+            effective_ping_interval_ms if ctypes.c_uint16(ping_type_id).value else 0
+        )
+        self._pong_timeout_ms = pong_timeout_ms or (3 * self._ping_interval_ms)
         self._direct_type_ids = direct_type_ids
-        self._direct_wire_limit = max_payload if max_payload else _PROTO_DEFAULT_MAX_PAYLOAD
+        self._pong_type_id = ctypes.c_uint16(pong_type_id).value
         # Direct-type frames bypass the engine until the bootstrap FSM is
         # READY: the login handshake awaits a replication frame, so early
         # arrivals of a direct type must still reach feed_frame. Re-armed
@@ -706,48 +858,21 @@ class AgenticHeadlessClient:
         self._summary_mode = summary_mode
         self._summary_slot: ClientEvent | None = None
         self._summary_last_keep_ns: int | None = None
-        # Breadth-evidence window: summary retention keeps one periodic
-        # frame, which under change-suppression delivery is usually a
-        # self-only view. When evidence_budget_bytes is positive, every
-        # direct frame's payload is also retained here (raw, no decode)
-        # in a recency deque bounded by that byte budget. The deque is a
-        # forensic record: O(1) span reads render its retention margin,
-        # and census-class post-mortem tooling decodes its payloads after
-        # a run to reconstruct what a client's stream actually carried.
-        # The breadth probe's counting basis is the movement-window
-        # accumulator below, not this deque — the deque evicts
-        # oldest-first under its byte budget, so at probe time its span
-        # stops short of the movement window's start.
+        # The byte budget bounds raw direct payloads shared with retained events.
+        # Snapshot references can outlive oldest-first live eviction.
         self._evidence_budget_bytes = evidence_budget_bytes
-        self._evidence: deque[tuple[int, int, bytes]] = deque()
+        self._evidence = _EvidenceFrames()
         self._evidence_bytes = 0
         self._evidence_evictions = 0
-        # Movement-window view evidence: while the driver's breadth window
-        # is open, the counting basis is this client's evidence deque —
-        # every direct replication frame is retained there (arrival
-        # timestamp, type, payload) under the byte budget, so the first
-        # post-seal read can walk the in-window frames and extract the
-        # non-membership actor ids without any per-frame work on the
-        # ingest path. The ingest loop is the load driver's single
-        # contended event loop, and even a small per-frame hook there
-        # perturbs the driver/server cadence enough to shift the round
-        # pace, so the window keeps zero ingest cost. The read applies
-        # the window bounds (arrival timestamp within [window start,
-        # seal deadline]) and reports whether the basis is provably
-        # complete: any deque eviction while the window was open means
-        # the oldest in-window frames may be gone, and the evidence
-        # says so instead of undercounting silently. The driver opens
-        # the window at movement start and seals it after the movement
-        # end stamp, so the set answers "what did this client receive
-        # during the movement window" deterministically. The window
-        # survives reconnection (unlike a probe-moment read): the
-        # connection arm leaves the deque in place while the window is
-        # open, so frames delivered before a reconnect still count.
+        self._evidence_retired = False
+        # Reads apply frozen time bounds and decode retained payloads off ingest.
+        # In-window eviction marks the basis incomplete; generations guard caching.
         self._window_id_extractor = window_id_extractor
         self._window_start_ns: int | None = None
         self._window_open = False
         self._window_deadline_ns: int | None = None
         self._window_evidence: WindowEvidence | None = None
+        self._window_generation = 0
         self._window_evicted_in_window = False
         self._last_frame_ts_ns: int | None = None
         self._replication_count = 0
@@ -773,10 +898,6 @@ class AgenticHeadlessClient:
         # Inbound bytes accumulate across data_received calls; complete
         # frames are consumed from the front after every batch.
         self._inbuf = bytearray()
-        # Reused outbound pop buffer: one allocation per connection beats
-        # one per flush or per frame.
-        self._out_buf = (_U8 * _MAX_OUTBOUND_FRAME)()
-        self._out_len = ctypes.c_uint32(0)
 
         self._ipc_server: asyncio.AbstractServer | None = None
         self._ipc_peers: set[tuple[asyncio.StreamReader, asyncio.StreamWriter]] = set()
@@ -865,14 +986,16 @@ class AgenticHeadlessClient:
 
     def register_type(self, name: str, type_id: int) -> None:
         """Register a message type by name and numeric id with the proto codec."""
+        wire_type_id = type_id & 0xFFFF
         _check(
             int(
                 self._proto_lib.kith_proto_register_type_id(
-                    self._proto, name.encode("utf-8"), type_id & 0xFFFF
+                    self._proto, name.encode("utf-8"), wire_type_id
                 )
             ),
             f"register_type {name}",
         )
+        self._registered_type_ids.add(wire_type_id)
 
     def submit(
         self,
@@ -915,18 +1038,23 @@ class AgenticHeadlessClient:
             type_id=type_id & 0xFFFF,
             flags=flags & 0xFF,
             correlation_id=correlation_id & 0xFFFFFFFFFFFFFFFF,
-            payload=ctypes.cast(buf, ctypes.c_void_p),
+            # The encoder borrows this local buffer only for the synchronous call.
+            payload=ctypes.addressof(buf),
             payload_len=len(payload),
         )
         cmd_id = ctypes.c_uint64(0)
-        _check(
-            int(
-                self._client_lib.kith_client_submit_interactive(
-                    self._client, ctypes.byref(cmd), ctypes.byref(cmd_id)
-                )
-            ),
-            "submit_interactive",
-        )
+        self._outbound_empty = False
+        try:
+            _check(
+                int(
+                    self._client_lib.kith_client_submit_interactive(
+                        self._client, ctypes.byref(cmd), ctypes.byref(cmd_id)
+                    )
+                ),
+                "submit_interactive",
+            )
+        finally:
+            self._outbound_empty = False
         self._request_flush()
         return int(cmd_id.value)
 
@@ -1004,14 +1132,14 @@ class AgenticHeadlessClient:
 
     def evidence_span_ns(self) -> int | None:
         """Return the evidence deque's oldest-to-newest span, or None when empty."""
-        if not self._evidence:
-            return None
-        return self._evidence[-1][0] - self._evidence[0][0]
+        return self._evidence.span_ns()
 
     def begin_view_window(self) -> None:
-        """Open the movement-window view accumulator, discarding prior evidence."""
+        """Open a movement window and resume raw evidence retention."""
+        self._window_generation += 1
         self._window_start_ns = time.monotonic_ns()
         self._window_open = True
+        self._evidence_retired = False
         self._window_deadline_ns = None
         self._window_evidence = None
         self._window_evicted_in_window = False
@@ -1024,75 +1152,86 @@ class AgenticHeadlessClient:
         deadline keep their contributions, so a frame in flight at
         window end counts while the post-drain backstop waves do not.
         """
+        self._window_generation += 1
+        self._window_evidence = None
         self._window_deadline_ns = deadline_ns
 
-    def view_window(self) -> WindowEvidence | None:
-        """Return the movement-window view evidence, or None when never opened.
+    def snapshot_view_window(self) -> WindowSnapshot | None:
+        """Capture retained frames, bounds and completeness without decoding.
 
-        The first call after the seal walks the evidence deque once and
-        caches the result; the deadline has passed by then, so no frame
-        can join and the cache is final. Before the seal the call
-        walks a live snapshot without caching, keeping the growing
-        window readable. The counting basis is the deque itself, so the
-        ingest path carries no per-frame window work.
+        Thread safety:
+            Runs on the client event-loop thread, alongside frame ingestion.
         """
         if not self._window_open:
             return None
+        return WindowSnapshot(
+            tuple(self._evidence),
+            self._window_start_ns,
+            self._window_deadline_ns,
+            self._window_evicted_in_window or self._evidence_budget_bytes == 0,
+            self._window_id_extractor,
+        )
+
+    def retire_view_window(self) -> None:
+        """Release live raw evidence and pause it until a new window begins.
+
+        Captured snapshots retain their payloads. Event history, summary
+        retention and replication counters continue independently.
+
+        Thread safety:
+            Runs on the client event loop, alongside frame ingestion.
+        """
+        if self._evidence_retired:
+            return
+        self._window_generation += 1
+        self._window_open = False
+        self._window_evidence = None
+        self._evidence_retired = True
+        self._evidence.clear()
+        self._evidence_bytes = 0
+
+    def view_window(self) -> WindowEvidence | None:
+        """Return window evidence, caching only captures after the sealed deadline.
+
+        Reads before the deadline remain provisional and admit subsequent frames.
+        """
         if self._window_evidence is not None:
             return self._window_evidence
-        if self._window_deadline_ns is None:
-            return self._build_window_evidence(cache=False)
-        self._window_evidence = self._build_window_evidence(cache=True)
-        return self._window_evidence
-
-    def _build_window_evidence(self, cache: bool) -> WindowEvidence:
-        """Walk the evidence deque within the window bounds into the frozen shape.
-
-        Frames the window must count are the retained direct frames
-        whose arrival timestamp falls in ``[window start, seal
-        deadline]``.         Ids join the set in arrival order under the
-        saturation cap, so the result matches what per-frame extraction
-        would have produced. The same extraction runs unbounded by the
-        window over every retained frame into ``deque_distinct_ids``.
-        ``incomplete`` is conservative in the loud
-        direction: any frame evicted from the deque while the window was
-        open whose arrival fell inside the window, or no byte budget at
-        all, marks the basis unable to prove completeness — the counts
-        are then a floor the breadth probe reports as unfounded rather
-        than trusting.
-        """
-        start_ns = self._window_start_ns
-        deadline_ns = self._window_deadline_ns
-        ids: set[int] = set()
-        deque_ids: set[int] = set()
-        frame_ts: list[int] = []
-        extractor = self._window_id_extractor
-        for ts_ns, type_id, payload in self._evidence:
-            in_window = (start_ns is None or ts_ns >= start_ns) and (
-                deadline_ns is None or ts_ns <= deadline_ns
-            )
-            if in_window:
-                frame_ts.append(ts_ns)
-            if extractor is None:
-                continue
-            want_deque = len(deque_ids) < _VIEW_WINDOW_ID_CAP
-            want_window = in_window and len(ids) < _VIEW_WINDOW_ID_CAP
-            if not want_deque and not want_window:
-                continue
-            extracted = list(extractor(type_id, payload))
-            if want_deque:
-                deque_ids.update(itertools.islice(extracted, _VIEW_WINDOW_ID_CAP - len(deque_ids)))
-            if want_window:
-                ids.update(itertools.islice(extracted, _VIEW_WINDOW_ID_CAP - len(ids)))
-        incomplete = self._window_evicted_in_window or self._evidence_budget_bytes == 0
-        evidence = WindowEvidence(frozenset(ids), tuple(frame_ts), incomplete, frozenset(deque_ids))
-        if cache:
-            self._window_evidence = evidence
+        generation = self._window_generation
+        captured_ns = time.monotonic_ns()
+        snapshot = self.snapshot_view_window()
+        if snapshot is None:
+            return None
+        final = snapshot.deadline_ns is not None and captured_ns >= snapshot.deadline_ns
+        evidence = snapshot.evaluate()
+        self._cache_window_evidence(generation, final, evidence)
         return evidence
 
-    def _append_evidence(
-        self, ts_ns: int, type_id: int, buf: bytearray, start: int, end: int
+    async def view_window_async(self) -> WindowEvidence | None:
+        """Return window evidence with cooperative decoding on the client loop.
+
+        Captures before the sealed deadline remain provisional. Opening or
+        resealing a window while decoding prevents the result entering its cache.
+        """
+        if self._window_evidence is not None:
+            return self._window_evidence
+        generation = self._window_generation
+        captured_ns = time.monotonic_ns()
+        snapshot = self.snapshot_view_window()
+        if snapshot is None:
+            return None
+        final = snapshot.deadline_ns is not None and captured_ns >= snapshot.deadline_ns
+        evidence = await snapshot.evaluate_async()
+        self._cache_window_evidence(generation, final, evidence)
+        return evidence
+
+    def _cache_window_evidence(
+        self, generation: int, final: bool, evidence: WindowEvidence
     ) -> None:
+        if final and generation == self._window_generation and self._window_evidence is None:
+            self._window_evidence = evidence
+
+    def _append_evidence(self, ts_ns: int, type_id: int, payload: bytes) -> None:
         """Retain one raw frame payload in the breadth-evidence window.
 
         Direct frames are replication frames by construction (the direct
@@ -1102,18 +1241,33 @@ class AgenticHeadlessClient:
         larger than the whole budget leaves an empty window rather than
         an over-budget one.
         """
-        payload = bytes(buf[start:end])
-        self._evidence.append((ts_ns, type_id, payload))
+        # Direct deque writes avoid another Python call for every retained frame.
+        metadata, payloads = self._evidence._metadata, self._evidence._payloads
+        metadata_length, payload_length = len(metadata), len(payloads)
+        try:
+            metadata.append(ts_ns)
+            metadata.append(type_id)
+            payloads.append(payload)
+        except BaseException:
+            while len(payloads) > payload_length:
+                payloads.pop()
+            while len(metadata) > metadata_length:
+                metadata.pop()
+            raise
         self._evidence_bytes += len(payload)
-        while self._evidence_bytes > self._evidence_budget_bytes and self._evidence:
-            dropped_ts, _, dropped = self._evidence.popleft()
-            self._evidence_bytes -= len(dropped)
-            self._evidence_evictions += 1
-            if (
+        while self._evidence_bytes > self._evidence_budget_bytes and payloads:
+            dropped_in_window = (
                 self._window_open
                 and self._window_start_ns is not None
-                and dropped_ts >= self._window_start_ns
-            ):
+                and not self._window_evicted_in_window
+                and metadata[0] >= self._window_start_ns
+            )
+            metadata.popleft()
+            metadata.popleft()
+            dropped = payloads.popleft()
+            self._evidence_bytes -= len(dropped)
+            self._evidence_evictions += 1
+            if dropped_in_window:
                 self._window_evicted_in_window = True
 
     def last_frame_age_ns(self) -> int | None:
@@ -1268,10 +1422,14 @@ class AgenticHeadlessClient:
             self._transport = transport
             self._protocol = protocol
 
-            _check(
-                int(self._client_lib.kith_client_on_connected(self._client, _now_ms())),
-                "on_connected",
-            )
+            self._outbound_empty = False
+            try:
+                _check(
+                    int(self._client_lib.kith_client_on_connected(self._client, _now_ms())),
+                    "on_connected",
+                )
+            finally:
+                self._outbound_empty = False
             self._connected = True
             self._arm_connection()
             self._request_flush()
@@ -1347,7 +1505,28 @@ class AgenticHeadlessClient:
 
     def _request_flush(self) -> None:
         """Drain queued outbound frames toward the socket."""
+        self._outbound_empty = False
         self._flush_outbound()
+
+    def _pop_outbound(self) -> bytes | None:
+        """Copy the next frame, growing scratch while the queue retains ownership."""
+        self._outbound_empty = False
+        while True:
+            out = self._out_buf
+            capacity = ctypes.sizeof(out)
+            rc = int(
+                self._client_lib.kith_client_pop_outbound(
+                    self._client, out, capacity, ctypes.byref(self._out_len)
+                )
+            )
+            if rc == -KITH_EAGAIN:
+                self._outbound_empty = True
+                return None
+            if rc == -KITH_EOVERFLOW and capacity < self._out_limit:
+                self._out_buf = (_U8 * min(capacity * 2, self._out_limit))()
+                continue
+            _check(rc, "pop_outbound")
+            return ctypes.string_at(out, int(self._out_len.value))
 
     def _flush_outbound(self) -> None:
         """Pop encoded outbound frames and write them without suspending.
@@ -1365,20 +1544,13 @@ class AgenticHeadlessClient:
         transport = self._transport
         if transport is None or transport.is_closing():
             return
-        out = self._out_buf
-        out_len = self._out_len
         self._draining = True
         try:
             while True:
-                rc = int(
-                    self._client_lib.kith_client_pop_outbound(
-                        self._client, out, ctypes.sizeof(out), ctypes.byref(out_len)
-                    )
-                )
-                if rc == -KITH_EAGAIN:
+                frame = self._pop_outbound()
+                if frame is None:
                     return
-                _check(rc, "pop_outbound")
-                transport.write(bytes(out[: int(out_len.value)]))
+                transport.write(frame)
                 if transport.get_write_buffer_size() >= _OUTBOUND_HIGH_WATER:
                     return
         finally:
@@ -1412,7 +1584,8 @@ class AgenticHeadlessClient:
         """Consume one socket batch: append the bytes, dispatch frames."""
         self._inbuf.extend(data)
         self._consume_inbound()
-        self._request_flush()
+        if not self._outbound_empty:
+            self._request_flush()
 
     def _consume_inbound(self) -> None:
         """Decode and dispatch all complete frames at the front of the buffer.
@@ -1446,26 +1619,36 @@ class AgenticHeadlessClient:
                     self._last_frame_ts_ns = event_ts
                     payload_start = pos + _HEADER.size
                     payload_len = payload_end - payload_start
-                    if self._evidence_budget_bytes and payload_len:
-                        self._append_evidence(event_ts, type_id, buf, payload_start, payload_end)
+                    retain_evidence = bool(
+                        self._evidence_budget_bytes and payload_len and not self._evidence_retired
+                    )
                     keep = not self._summary_mode or (
                         self._summary_last_keep_ns is None
                         or event_ts - self._summary_last_keep_ns
                         >= int(_SUMMARY_MIN_INTERVAL_S * 1e9)
                     )
-                    if keep:
-                        event = ClientEvent(
-                            ts_mono_ns=event_ts,
-                            type_id=type_id,
-                            correlation_id=correlation_id,
-                            payload=bytes(buf[payload_start:payload_end]),
-                        )
-                        if self._summary_mode:
-                            self._summary_slot = event
-                            self._summary_last_keep_ns = event_ts
-                        else:
-                            self._event_history.append(event)
-                            self._pending_push.append(event)
+                    if retain_evidence or keep:
+                        # Retention shares immutable bytes after receive-buffer compaction.
+                        with (
+                            memoryview(buf) as inbound,
+                            inbound[payload_start:payload_end] as payload_view,
+                        ):
+                            payload = bytes(payload_view)
+                        if retain_evidence:
+                            self._append_evidence(event_ts, type_id, payload)
+                        if keep:
+                            event = ClientEvent(
+                                ts_mono_ns=event_ts,
+                                type_id=type_id,
+                                correlation_id=correlation_id,
+                                payload=payload,
+                            )
+                            if self._summary_mode:
+                                self._summary_slot = event
+                                self._summary_last_keep_ns = event_ts
+                            else:
+                                self._event_history.append(event)
+                                self._pending_push.append(event)
                     self._replication_count += 1
                     pos = end
                     continue
@@ -1490,16 +1673,21 @@ class AgenticHeadlessClient:
                         eagain = True
                     else:
                         _check(rc, "proto_decode")
-                        _check(
-                            int(
-                                self._client_lib.kith_client_feed_frame(
-                                    self._client,
-                                    ctypes.byref(frame),
-                                    _now_ms(),
-                                )
-                            ),
-                            "feed_frame",
-                        )
+                        self._outbound_empty = False
+                        try:
+                            _check(
+                                int(
+                                    self._client_lib.kith_client_feed_frame(
+                                        self._client,
+                                        ctypes.byref(frame),
+                                        _now_ms(),
+                                    )
+                                ),
+                                "feed_frame",
+                            )
+                        finally:
+                            # A bootstrap callback can drain before C queues its next step.
+                            self._outbound_empty = False
                         pos += int(consumed.value)
                 finally:
                     del view
@@ -1532,10 +1720,9 @@ class AgenticHeadlessClient:
         whenever anything about the frame is not — bootstrap still in
         progress, unknown type, bad magic or version, wire length over
         the configured payload bound, or an incomplete tail — deferring
-        the frame to the C decoder. The C path never rejects a frame this
-        function accepts: type membership in the direct set implies
-        registration, and the bound mirrors the decoder's own payload
-        limit.
+        the frame to the C decoder. Accepted frames use registered types and
+        satisfy the decoder's payload and correlation-trailer bounds. Pong
+        frames always pass through the engine's keepalive handler.
         """
         if not self._direct_ready or not self._direct_type_ids:
             return None
@@ -1545,7 +1732,9 @@ class AgenticHeadlessClient:
         m0, m1, version, flags, type_id, wire_len = _HEADER.unpack_from(buf, pos)
         if m0 != _PROTO_MAGIC0 or m1 != _PROTO_MAGIC1 or version != _PROTO_VERSION:
             return None
-        if type_id not in self._direct_type_ids:
+        if type_id not in self._direct_type_ids or type_id not in self._registered_type_ids:
+            return None
+        if self._pong_type_id and type_id == self._pong_type_id:
             return None
         if wire_len > self._direct_wire_limit:
             return None
@@ -1553,6 +1742,8 @@ class AgenticHeadlessClient:
         if end > len(buf):
             return None
         trailer = _CORR_TRAILER_SIZE if flags & KITH_PROTO_FLAG_CORRELATION else 0
+        if wire_len < trailer:
+            return None
         payload_end = end - trailer
         correlation_id = int.from_bytes(buf[payload_end:end], "big") if trailer else 0
         return type_id, correlation_id, payload_end, end
@@ -1573,29 +1764,15 @@ class AgenticHeadlessClient:
         transport = self._transport
         if transport is None or transport.is_closing():
             return
-        out_len = ctypes.c_uint32(0)
         try:
-            rc = int(
-                self._client_lib.kith_client_pop_outbound(
-                    self._client,
-                    _PROBE_SCRATCH,
-                    ctypes.sizeof(_PROBE_SCRATCH),
-                    ctypes.byref(out_len),
-                )
-            )
-            if rc == -KITH_EAGAIN:
+            frame = self._pop_outbound()
+            if frame is None:
                 return
-            _check(rc, "pop_outbound")
-        except (KithClientError, ConnectionError, OSError) as exc:
+            _log.warning("ahc %s outbound queued without a flush trigger", self.instance_id)
+            transport.write(frame)
+            self._request_flush()
+        except (KithClientError, ConnectionError, OSError, MemoryError) as exc:
             _log.warning("ahc %s outbound probe failed: %s", self.instance_id, exc)
-            return
-        _log.warning("ahc %s outbound queued without a flush trigger", self.instance_id)
-        try:
-            transport.write(bytes(_PROBE_SCRATCH[: int(out_len.value)]))
-        except (ConnectionError, OSError) as exc:
-            _log.warning("ahc %s outbound probe write: %s", self.instance_id, exc)
-            return
-        self._request_flush()
 
     def tick_engine(self) -> None:
         """Advance engine timers once and flush anything they queue.
@@ -1606,6 +1783,7 @@ class AgenticHeadlessClient:
         """
         if not self._running:
             return
+        self._outbound_empty = False
         try:
             _check(
                 int(self._client_lib.kith_client_tick(self._client, _now_ms())),
@@ -1613,6 +1791,8 @@ class AgenticHeadlessClient:
             )
         except KithClientError as exc:
             _log.warning("ahc %s tick: %s", self.instance_id, exc)
+        finally:
+            self._outbound_empty = False
         self._check_pong_staleness()
         self._request_flush()
 
@@ -2194,12 +2374,21 @@ async def main() -> int:
     parser.add_argument(
         "--http-port", type=int, default=int(os.environ.get("KITH_AHC_HTTP_PORT", "0"))
     )
+    parser.add_argument(
+        "--outbound-buffer-initial-bytes",
+        type=int,
+        default=_OUTBOUND_INITIAL_BUFFER_SIZE,
+        help="initial outbound scratch bytes (default: %(default)s); grows for larger frames",
+    )
     args = parser.parse_args()
+    if not 0 < args.outbound_buffer_initial_bytes <= _UINT32_MAX:
+        parser.error("--outbound-buffer-initial-bytes must be a positive uint32_t")
 
     ahc = AgenticHeadlessClient(
         instance_id=args.id,
         host=args.host,
         port=args.port,
+        outbound_buffer_initial_bytes=args.outbound_buffer_initial_bytes,
         ipc_socket_path=args.ipc,
         http_port=args.http_port,
     )

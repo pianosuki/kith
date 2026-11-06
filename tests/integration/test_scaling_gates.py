@@ -37,14 +37,19 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import cast
+from unittest.mock import Mock
 
 import pytest
 from _helpers import needs_build
 from examples._common.query_state import QUERY_STATE_DEFAULT_PAGE_SIZE
 from examples.spatial import messages as spatial_messages
 from examples.spatial.client import (
+    MEMBERSHIP_EVENT_MARKER,
     ActorStateView,
+    decode_actor_state,
+    decode_actor_state_batch,
     encode_actor_state,
+    is_membership_record,
     iter_actor_state_ids,
 )
 from examples.spatial.handlers import CELL_SIZE_Q16
@@ -105,6 +110,8 @@ from tools.agent.load_harness import (
     InstanceGateMetrics,
     LoadHarness,
     LoadHostFactory,
+    MovementRound,
+    OfferedLoad,
     PhaseCounters,
     ScalingProfile,
     SparseBreadthRow,
@@ -121,6 +128,7 @@ from tools.agent.load_harness import (
     _ClientRecord,
     _collect_breadth,
     _collect_depth_metrics,
+    _collect_window_evidence,
     _DriveOutcome,
     _echo_delta_histogram,
     _env_python_workers,
@@ -173,6 +181,7 @@ from kith._agent.ahc import (
     ClientEvent,
     ClientStatus,
     WindowEvidence,
+    WindowSnapshot,
 )
 
 
@@ -246,7 +255,7 @@ class TestScalingGateHarness:
             report.metrics.publish_rate_skew <= SMOKE_DISTRIBUTED_THRESHOLDS.publish_rate_skew_max
         )
 
-    def test_subprocess_cluster_smoke_profile_passes(self) -> None:
+    def test_subprocess_cluster_smoke_profile_passes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """The reduced distributed profile passes against a subprocess cluster.
 
         Exercises the out-of-process distributed host (one embedded-server OS
@@ -259,13 +268,23 @@ class TestScalingGateHarness:
         smoke profile validates its machinery every commit without the
         2000-connection wall-clock cost of the full gate.
         """
+        started: list[list[SamplerTarget]] = []
+        factory_pids: list[int] = []
+        sampler_start = ProcSampler.start
+
+        def spy_start(targets: Sequence[SamplerTarget], *, interval_s: float = 0.1) -> ProcSampler:
+            started.append(list(targets))
+            return sampler_start(targets, interval_s=interval_s)
+
+        monkeypatch.setattr(ProcSampler, "start", staticmethod(spy_start))
         factory: LoadHostFactory = subprocess_cluster_factory(
             ahc_event_history_size=8192,
             instance_count=2,
             replication_batch_type_id=spatial_messages.ACTOR_STATE_BATCH_TYPE,
             evidence_budget_bytes=_BREADTH_EVIDENCE_BUDGET_BYTES,
+            server_pids_out=factory_pids,
         )
-        report = asyncio.run(run_profile(SMOKE_DISTRIBUTED, factory))
+        report = asyncio.run(run_profile(SMOKE_DISTRIBUTED, factory, server_pids=factory_pids))
         assert report.profile is SMOKE_DISTRIBUTED
         assert report.thresholds is SMOKE_DISTRIBUTED_THRESHOLDS
         assert report.metrics.actor_count == SMOKE_DISTRIBUTED.actor_count
@@ -274,6 +293,15 @@ class TestScalingGateHarness:
         assert (
             report.metrics.publish_rate_skew <= SMOKE_DISTRIBUTED_THRESHOLDS.publish_rate_skew_max
         )
+        assert len(started) == 1
+        assert sorted(target.name for target in started[0]) == [
+            "harness",
+            "instance-0",
+            "instance-1",
+        ]
+        sampled = {target.pid for target in started[0] if target.name != "harness"}
+        assert factory_pids, "the factory appended no server pids"
+        assert sampled == set(factory_pids)
 
     def test_smoke_distributed_tiered_strategy_passes(self) -> None:
         """The reduced distributed profile passes with the tiered strategy.
@@ -319,51 +347,6 @@ class TestScalingGateHarness:
         assert report.thresholds is SMOKE_DISTRIBUTED_THRESHOLDS
         assert report.passed, _format_failure(report)
         assert report.metrics.session_ok_ratio >= SMOKE_DISTRIBUTED_THRESHOLDS.session_ok_min
-
-    def test_subprocess_cluster_drive_samples_server_pids(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """The drive samples every server subprocess, not only the harness.
-
-        The host factory appends the subprocess pids to the out-list when
-        the drive invokes it — after ``LoadHarness`` construction, before
-        the sampler starts — so the sampler must resolve its targets from
-        the live sequence at start time. A constructor-time snapshot of
-        the still-empty list silently reduces every gap-window attribution
-        to the harness process alone.
-        """
-        started: list[list[SamplerTarget]] = []
-        factory_pids: list[int] = []
-
-        class _StubSampler:
-            def stop(self) -> ProcTrace:
-                return ProcTrace(interval_s=0.1, clk_tck=100, samples=())
-
-        def _spy_start(
-            targets: Sequence[SamplerTarget], *, interval_s: float = 0.1
-        ) -> _StubSampler:
-            del interval_s
-            started.append(list(targets))
-            return _StubSampler()
-
-        monkeypatch.setattr(ProcSampler, "start", staticmethod(_spy_start))
-
-        factory: LoadHostFactory = subprocess_cluster_factory(
-            ahc_event_history_size=8192,
-            instance_count=2,
-            replication_batch_type_id=spatial_messages.ACTOR_STATE_BATCH_TYPE,
-            server_pids_out=factory_pids,
-            evidence_budget_bytes=_BREADTH_EVIDENCE_BUDGET_BYTES,
-        )
-        report = asyncio.run(run_profile(SMOKE_DISTRIBUTED, factory, server_pids=factory_pids))
-
-        assert report.passed, _format_failure(report)
-        assert len(started) == 1
-        names = sorted(target.name for target in started[0])
-        assert names == ["harness", "instance-0", "instance-1"]
-        sampled = {target.pid for target in started[0] if target.name != "harness"}
-        assert factory_pids, "the factory appended no server pids"
-        assert sampled == set(factory_pids)
 
     def test_report_rendering(self) -> None:
         """A constructed report renders to JSON and Markdown without raising.
@@ -443,7 +426,13 @@ class TestScalingGateHarness:
         assert "< 10.00%" in dist_rendered
         assert "forbidden" in dist_rendered
 
-    def test_report_renders_submit_round_completion(self) -> None:
+    @pytest.mark.parametrize(
+        ("duration_s", "input_hz", "planned"),
+        [(5.0, 20, 100), (1.0, 30, 30), (0.101, 30, 4), (2.4e-9, 500_000_000, 1)],
+    )
+    def test_report_renders_submit_round_completion(
+        self, duration_s: float, input_hz: float, planned: int
+    ) -> None:
         """The rounds row derives from profile cadence and pooled totals.
 
         Planned rounds are the movement window's cadence integral; the
@@ -463,16 +452,16 @@ class TestScalingGateHarness:
             inputs_submitted=88_000,
         )
         report = GateReport(
-            profile=DISTRIBUTED_2000,
+            profile=replace(DISTRIBUTED_2000, duration_s=duration_s, input_hz=input_hz),
             metrics=metrics,
             thresholds=DISTRIBUTED_THRESHOLDS,
             started_at="2026-08-20T00:00:00+00:00",
             duration_s=6.0,
         )
         rendered = report.to_markdown()
-        # 88000 / 2000 clients = 44.0 completed of ceil(5 * 20) planned.
+        # The completed numerator stays 88000 / 2000 clients at every cadence.
         assert "submit_rounds_per_client" in rendered
-        assert "44.0 / 100 planned" in rendered
+        assert f"44.0 / {planned} planned" in rendered
         payload = report.to_dict()["metrics"]
         assert cast("dict[str, object]", payload)["inputs_submitted"] == 88_000
 
@@ -963,6 +952,7 @@ class TestViewSetHealthFromMovementWindow:
         batch_type = spatial_messages.ACTOR_STATE_BATCH_TYPE
         client = AgenticHeadlessClient(
             name,
+            message_types={"actor_state_batch": batch_type},
             direct_type_ids=frozenset({batch_type}),
             http_enabled=False,
             ipc_enabled=False,
@@ -1142,6 +1132,96 @@ class TestViewSetHealthFromMovementWindow:
         assert stalled is False
         assert incomplete is False
 
+    def test_cohort_snapshot_freezes_observations_while_reception_continues(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Cooperative reduction observes one cut despite new live delivery."""
+        client, orch = self._window_client("snapshot")
+        client.begin_view_window()
+        payload = self._batch_payload([201])
+        for _ in range(130):
+            self._drain_batch(client, payload)
+        client.seal_view_window(time.monotonic_ns())
+        status = ClientStatus(True, _BOOTSTRAP_READY, 0, 0, 0, 0)
+        monkeypatch.setattr(client, "query_status", lambda: status)
+        events = tuple(client.recent_events(100_000))
+        span = client.evidence_span_ns()
+        count = client.replication_count()
+
+        async def exercise() -> None:
+            snapshot = orch.snapshot_clients(["snapshot"], event_clients=frozenset({"snapshot"}))
+            retiring = orch.snapshot_clients(["snapshot"], retire_windows=True)
+            assert client.evidence_frames() == []
+
+            def forbidden_history(count: int = 64) -> list[ClientEvent]:
+                raise AssertionError("unexpected live history read")
+
+            monkeypatch.setattr(client, "recent_events", forbidden_history)
+            without_history = orch.snapshot_clients(["snapshot"])
+            assert await without_history.recent_events("snapshot") == ()
+            task = asyncio.create_task(snapshot.view_window("snapshot"))
+            await asyncio.sleep(0)
+            assert not task.done()
+            monkeypatch.setattr(client, "query_status", lambda: replace(status, connected=False))
+            self._drain_batch(client, self._batch_payload([202]))
+            assert client.evidence_frames() == []
+            window = await task
+            assert window is not None and window.distinct_ids == frozenset({201})
+            assert len(window.frame_ts_ns) == 130
+            assert await snapshot.client_state("snapshot") == status
+            assert tuple(await snapshot.recent_events("snapshot", 100_000)) == events
+            assert await snapshot.replication_frame_count("snapshot") == count
+            assert await snapshot.evidence_span_ns("snapshot") == span
+            assert client.replication_count() == count + 1
+            assert client.query_status().connected is False
+            assert await snapshot.view_window("snapshot") is window
+            assert await retiring.view_window("snapshot") == window
+
+        asyncio.run(exercise())
+
+    def test_common_collection_rebinds_before_freezing_breadth_and_depth(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Late binding attributes both breadth and depth to one captured stream."""
+        client, orch = self._window_client("late-cut")
+        control = _CensusControl(
+            [(201, 0, 0, 0), (202, 0, 0, 0)],
+            [{"principal_id": 101, "actor_id": 201}],
+        )
+        monkeypatch.setattr(orch, "_server_control", control)
+        monkeypatch.setattr(
+            client, "query_status", lambda: ClientStatus(True, _BOOTSTRAP_READY, 0, 0, 0, 0)
+        )
+        client.begin_view_window()
+        self._drain_batch(client, self._batch_payload([201, 202]))
+        end = time.monotonic_ns()
+        client.seal_view_window(end)
+        rec = _ClientRecord(
+            name="late-cut",
+            principal_id=101,
+            instrumented=True,
+            inputs_submitted=1,
+            movement_start_ns=client._window_start_ns or 0,
+            movement_end_ns=end,
+        )
+
+        async def exercise() -> None:
+            breadth, evidence = await _collect_window_evidence(orch, [rec], 1)
+            assert rec.own_actor_id == 201
+            assert breadth.late_bootstrapped_clients == 1
+            assert breadth.eligible_clients == breadth.selected_count == 1
+            window = await evidence.view_window(rec.name)
+            assert window is not None and window.distinct_ids == frozenset({201, 202})
+            client._summary_slot = _self_state_event(201, 2)
+            client._evidence.clear()
+            submitted, observed, series, rows = await _collect_depth_metrics(evidence, [rec], 0.5)
+            assert submitted == observed == 1
+            assert rows[0].certified_missing == 0
+            assert tuple(frame.input_tick for frame in series[0].frames) == (1,)
+            assert await evidence.view_window(rec.name) is window
+
+        asyncio.run(exercise())
+
 
 class TestPublishRateCountsFromDispatchCounters:
     """``_publish_rate_counts`` reads per-client dispatch counters.
@@ -1205,6 +1285,11 @@ class TestPublishRateCountsFromDispatchCounters:
             def seal_view_window(self, deadline_ns: int) -> None:
                 del deadline_ns
 
+            def snapshot_view_window(self) -> WindowSnapshot | None:
+                return None
+
+            def retire_view_window(self) -> None: ...
+
             def view_window(self) -> WindowEvidence | None:
                 return None
 
@@ -1263,9 +1348,147 @@ class TestMovementPhaseInlineDrive:
     driven, and the per-round walk yields so inbound processing breathes.
     """
 
-    def test_each_movable_client_submits_every_round(self) -> None:
+    @pytest.mark.parametrize(
+        (
+            "work_ns",
+            "ready_offset_ns",
+            "wake_lateness_ns",
+            "starts",
+            "missed",
+            "complete",
+            "scrape_work_ns",
+            "input_hz",
+            "duration_s",
+        ),
+        [
+            (
+                10_000_000,
+                0,
+                0,
+                [0, 50_000_000, 100_000_000, 150_000_000, 200_000_000],
+                0,
+                True,
+                0,
+                20,
+                0.25,
+            ),
+            (
+                10_000_000,
+                0,
+                1_000_000,
+                [0, 51_000_000, 101_000_000, 151_000_000, 201_000_000],
+                0,
+                True,
+                0,
+                20,
+                0.25,
+            ),
+            (120_000_000, 0, 0, [0, 150_000_000], 3, False, 0, 20, 0.25),
+            (
+                60_000_000,
+                0,
+                0,
+                [0, 60_000_000, 120_000_000, 180_000_000, 240_000_000],
+                0,
+                False,
+                0,
+                20,
+                0.25,
+            ),
+            (
+                10_000_000,
+                120_000_000,
+                0,
+                [150_000_000, 200_000_000],
+                3,
+                False,
+                120_000_000,
+                20,
+                0.25,
+            ),
+            (10_000_000, 250_000_000, 0, [], 5, False, 250_000_000, 20, 0.25),
+            (
+                10_000_000,
+                -30_000_000,
+                0,
+                [10_000_000, 50_000_000, 100_000_000, 150_000_000, 200_000_000],
+                0,
+                True,
+                10_000_000,
+                20,
+                0.25,
+            ),
+            (1_000_000, 0, 0, [i * 100_000_000 // 3 for i in range(30)], 0, True, 0, 30, 1.0),
+            (1_000_000, 0, 0, [i * 50_000_000 // 3 for i in range(60)], 0, True, 0, 60, 1.0),
+            (1_000_000, 0, 0, [i * 25_000_000 // 3 for i in range(120)], 0, True, 0, 120, 1.0),
+            (1_000_000, 0, 0, [0], 0, True, 0, 20, 0.025),
+            (
+                1_000_000,
+                0,
+                0,
+                [0, 50_000_000, 100_000_000, 150_000_000, 200_000_000, 250_000_000],
+                0,
+                True,
+                0,
+                20,
+                0.251,
+            ),
+            (1_000_000, 0, 0, [0, 33_333_333, 66_666_666, 100_000_000], 0, True, 0, 30, 0.101),
+            (1_000_000, 0, 0, [0, 16_666_666, 33_333_333, 50_000_000], 0, True, 0, 60, 0.051),
+            (1_000_000, 0, 0, [0, 8_333_333, 16_666_666, 25_000_000], 0, True, 0, 120, 0.026),
+            (80_000_000, 0, 0, [0, 100_000_000, 200_000_000], 5, False, 0, 30, 0.25),
+            (66_666_666, 0, 0, [0, 100_000_000], 2, False, 0, 30, 0.12),
+            (1_000_000, 0, 0, [0, 33_333_333, 66_666_666], 0, True, 0, 30, 0.1),
+            (1_000_000, 0, 0, [0, 16_666_666, 33_333_333], 0, True, 0, 60, 0.05),
+            (1_000_000, 0, 0, [0, 8_333_333, 16_666_666], 0, True, 0, 120, 0.025),
+            (0, 0, 0, [0, 1, 2, 3], 0, True, 0, 1e9, 4e-9),
+            (0, 0, 0, [0], 0, True, 0, 500_000_000, 2.4e-9),
+        ],
+    )
+    def test_each_movable_client_submits_every_round(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        work_ns: int,
+        ready_offset_ns: int,
+        wake_lateness_ns: int,
+        starts: list[int],
+        missed: int,
+        complete: bool,
+        scrape_work_ns: int,
+        input_hz: float,
+        duration_s: float,
+    ) -> None:
+        from tools.agent import load_harness
+
+        anchor_ns = 1_000_000_000
+        clock_ns = anchor_ns + ready_offset_ns - scrape_work_ns
+        scrape_calls: list[int] = []
+        original_sleep = asyncio.sleep
+
+        async def sleep(delay: float) -> None:
+            nonlocal clock_ns
+            clock_ns += round(delay * 1e9) + (wake_lateness_ns if delay > 0 else 0)
+            await original_sleep(0)
+
+        async def scrape(orch: Orchestrator) -> list[object]:
+            nonlocal clock_ns
+            del orch
+            scrape_calls.append(clock_ns)
+            clock_ns += scrape_work_ns
+            return []
+
+        async def sample(orch: Orchestrator, samples: list[CounterSample], start: int) -> None:
+            del orch, samples, start
+
+        monkeypatch.setattr(time, "monotonic_ns", lambda: clock_ns)
+        monkeypatch.setattr(asyncio, "sleep", sleep)
+        monkeypatch.setattr(load_harness, "_scrape_phase_counters", scrape)
+        monkeypatch.setattr(load_harness, "_run_counter_sampler", sample)
+        monkeypatch.setattr(load_harness, "_SUBMIT_YIELD_EVERY", 1)
         harness = LoadHarness(
-            replace(DISTRIBUTED_2000, duration_s=0.25), cast(LoadHostFactory, lambda: None)
+            replace(DISTRIBUTED_2000, duration_s=duration_s, input_hz=input_hz),
+            cast(LoadHostFactory, lambda: None),
+            movement_anchor_ns=anchor_ns,
         )
 
         class _CountingSubmitClient:
@@ -1288,6 +1511,8 @@ class TestMovementPhaseInlineDrive:
                 correlation_id: int = 0,
             ) -> int:
                 del type_id, payload, flags, correlation_id
+                nonlocal clock_ns
+                clock_ns += work_ns // 2
                 self.count += 1
                 return 1
 
@@ -1318,6 +1543,11 @@ class TestMovementPhaseInlineDrive:
 
             def seal_view_window(self, deadline_ns: int) -> None:
                 del deadline_ns
+
+            def snapshot_view_window(self) -> WindowSnapshot | None:
+                return None
+
+            def retire_view_window(self) -> None: ...
 
             def view_window(self) -> WindowEvidence | None:
                 return None
@@ -1352,9 +1582,146 @@ class TestMovementPhaseInlineDrive:
             return (clients["a"].count, clients["b"].count, records[2].inputs_submitted)
 
         count_a, count_b, unbooted = asyncio.run(drive())
-        assert count_a >= 3
+        assert count_a == len(starts)
         assert count_a == count_b
         assert unbooted == 0
+
+        load = harness._offered_load
+        assert load.complete is complete
+        assert load.ready_ns == anchor_ns + ready_offset_ns
+        if ready_offset_ns < 0:
+            assert scrape_calls[1] == anchor_ns
+            assert len(scrape_calls) == 3
+        else:
+            assert len(scrape_calls) == 2
+        assert load.anchor_ns == anchor_ns
+        assert load.deadline_ns == anchor_ns + round(duration_s * 1e9)
+        assert load.period_ns == int(1e9 / input_hz)
+        assert load.planned_rounds == len(starts) + missed
+        assert load.missed_slots == missed
+        assert [r.start_ns - anchor_ns for r in load.rounds] == starts
+        assert all(r.end_ns - r.start_ns == work_ns for r in load.rounds)
+        assert all(r.submits == 2 and r.yields == 2 for r in load.rounds)
+        assert all(r.lateness_ns == r.start_ns - r.due_ns for r in load.rounds)
+        if input_hz == 20:
+            assert all(r.due_ns == anchor_ns + (r.input_tick - 1) * 50_000_000 for r in load.rounds)
+        assert all(r.due_ns < load.deadline_ns for r in load.rounds)
+
+    @pytest.mark.parametrize("cancel", [False, True], ids=["submit-failure", "cancellation"])
+    def test_sampler_finalized_before_phase_exit(
+        self, monkeypatch: pytest.MonkeyPatch, cancel: bool
+    ) -> None:
+        from tools.agent import load_harness
+
+        async def drive() -> None:
+            started = asyncio.Event()
+            yielding = asyncio.Event()
+            stopping = asyncio.Event()
+            finish_cleanup = asyncio.Event()
+            finalized = asyncio.Event()
+            blocked = asyncio.Event()
+            failure = RuntimeError("submit failed")
+            submits = 0
+
+            async def sample(orch: Orchestrator, samples: list[CounterSample], start: int) -> None:
+                del orch, samples, start
+                try:
+                    started.set()
+                    await blocked.wait()
+                finally:
+                    stopping.set()
+                    await finish_cleanup.wait()
+                    finalized.set()
+
+            async def sleep(delay: float) -> None:
+                del delay
+                await started.wait()
+                yielding.set()
+                if cancel:
+                    await blocked.wait()
+
+            async def scrape(orch: Orchestrator) -> list[object]:
+                del orch
+                return []
+
+            def submit(client: object, record: _ClientRecord, tick: int) -> None:
+                del client, record, tick
+                nonlocal submits
+                submits += 1
+                if submits == 2:
+                    raise failure
+
+            monkeypatch.setattr(time, "monotonic_ns", lambda: 1_000_000_000)
+            monkeypatch.setattr(asyncio, "sleep", sleep)
+            monkeypatch.setattr(load_harness, "_scrape_phase_counters", scrape)
+            monkeypatch.setattr(load_harness, "_run_counter_sampler", sample)
+            monkeypatch.setattr(load_harness, "_submit_input", submit)
+            monkeypatch.setattr(load_harness, "_SUBMIT_YIELD_EVERY", 1)
+            harness = LoadHarness(
+                replace(DISTRIBUTED_2000, duration_s=0.25, input_hz=20),
+                cast(LoadHostFactory, lambda: None),
+            )
+            records = [
+                _ClientRecord(name, index, True, own_actor_id=index, started_ns=1, ready_ns=2)
+                for index, name in enumerate(("a", "b"), start=1)
+            ]
+            orch = Mock(spec=Orchestrator)
+
+            async def phase() -> None:
+                try:
+                    await harness._movement_phase(orch, records)
+                finally:
+                    assert finalized.is_set()
+
+            task = asyncio.create_task(phase())
+            cleanup_started = asyncio.create_task(stopping.wait())
+            try:
+                await yielding.wait()
+                if cancel:
+                    task.cancel()
+                await asyncio.wait((task, cleanup_started), return_when=asyncio.FIRST_COMPLETED)
+                assert stopping.is_set()
+                assert not task.done()
+                finish_cleanup.set()
+                if cancel:
+                    with pytest.raises(asyncio.CancelledError):
+                        await task
+                else:
+                    with pytest.raises(RuntimeError) as caught:
+                        await task
+                    assert caught.value is failure
+            finally:
+                finish_cleanup.set()
+                task.cancel()
+                cleanup_started.cancel()
+                await asyncio.gather(task, cleanup_started, return_exceptions=True)
+
+        asyncio.run(asyncio.wait_for(drive(), timeout=5))
+
+    @pytest.mark.parametrize(
+        ("input_hz", "duration_s", "field"),
+        [
+            (0, 1, "input_hz"),
+            (-1, 1, "input_hz"),
+            (float("nan"), 1, "input_hz"),
+            (float("inf"), 1, "input_hz"),
+            (1_000_000_001, 1, "input_hz"),
+            (3e9, 1, "input_hz"),
+            (20, 0, "duration_s"),
+            (20, -1, "duration_s"),
+            (20, float("nan"), "duration_s"),
+            (20, float("inf"), "duration_s"),
+            (20, 0.4e-9, "duration_s"),
+        ],
+    )
+    def test_invalid_schedule_rejected_before_drive(
+        self, input_hz: float, duration_s: float, field: str
+    ) -> None:
+        with pytest.raises(ValueError, match=field):
+            LoadHarness(
+                replace(DISTRIBUTED_2000, input_hz=input_hz, duration_s=duration_s),
+                cast(LoadHostFactory, lambda: None),
+            )
 
 
 class TestDeliveryOverride:
@@ -1864,6 +2231,97 @@ class TestMetricCounts:
         """The ratio is 1 - observed/submitted over the depth counts."""
         assert _move_missing_ratio(4, 2) == pytest.approx(0.5)
 
+    def test_depth_selector_preserves_full_decoder_metrics(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Mixed batches preserve full-history counts and inclusive certification bounds."""
+        records = [
+            _ClientRecord(
+                name=name,
+                principal_id=100 + actor,
+                instrumented=True,
+                own_actor_id=actor,
+                inputs_submitted=8,
+                movement_start_ns=100,
+                movement_end_ns=200,
+            )
+            for name, actor in (("a", 7), ("b", 8))
+        ]
+        events: dict[str, list[ClientEvent]] = {}
+        for rec in records:
+            events[rec.name] = []
+            for index, (stamp, tick, seq) in enumerate(
+                (
+                    (99, 100, 0),
+                    (100, 1, 10),
+                    (101, 1, 10),
+                    (200, 2, 11),
+                    (201, 3, 12),
+                    (300, 4, 14),
+                    (301, 200, 999),
+                )
+            ):
+                own = ActorStateView(
+                    actor_id=rec.own_actor_id,
+                    pos_x=0,
+                    pos_y=0,
+                    pos_z=0,
+                    vel_x=0,
+                    vel_y=0,
+                    vel_z=0,
+                    input_tick=tick,
+                    update_seq=seq if rec.name == "a" else 0,
+                )
+                views = [
+                    replace(own, actor_id=99),
+                    replace(own, product_level=MEMBERSHIP_EVENT_MARKER),
+                    own,
+                ]
+                if index == 1:
+                    views.append(own)
+                payload = struct.pack(">HH", len(views), 0) + b"".join(
+                    encode_actor_state(view) for view in views
+                )
+                events[rec.name].append(
+                    ClientEvent(
+                        ts_mono_ns=stamp,
+                        type_id=spatial_messages.ACTOR_STATE_BATCH_TYPE,
+                        correlation_id=0,
+                        payload=payload,
+                    )
+                )
+
+        def full_decoder(type_id: int, payload: bytes, actor_id: int) -> Iterator[ActorStateView]:
+            try:
+                views = (
+                    decode_actor_state_batch(payload)
+                    if type_id == spatial_messages.ACTOR_STATE_BATCH_TYPE
+                    else [decode_actor_state(payload)]
+                    if type_id == spatial_messages.ACTOR_STATE_TYPE
+                    else []
+                )
+            except ValueError:
+                return
+            yield from (
+                view
+                for view in views
+                if view.actor_id == actor_id and not is_membership_record(view)
+            )
+
+        actual = asyncio.run(_collect_depth_metrics(_counting_orch(events), records, 1e-7))
+        monkeypatch.setattr("tools.agent.load_harness.iter_actor_states_for", full_decoder)
+        expected = asyncio.run(_collect_depth_metrics(_counting_orch(events), records, 1e-7))
+        assert actual == expected
+        submitted, observed, series, rows = actual
+        assert (submitted, observed) == (16, 12)
+        assert all(
+            [frame.ts_ns for frame in entry.frames] == [100, 100, 101, 200] for entry in series
+        )
+        assert [(row.certified_missing, row.certified_fallback) for row in rows] == [
+            (4, False),
+            (2, True),
+        ]
+
     def test_move_missing_empty_sample_is_zero(self) -> None:
         """No submitted inputs yield a 0.0 ratio, not a division error."""
         assert _move_missing_ratio(0, 0) == 0.0
@@ -2122,6 +2580,11 @@ class TestPrincipalBindingResolution:
 
         def seal_view_window(self, deadline_ns: int) -> None:
             del deadline_ns
+
+        def snapshot_view_window(self) -> WindowSnapshot | None:
+            return None
+
+        def retire_view_window(self) -> None: ...
 
         def view_window(self) -> WindowEvidence | None:
             return None
@@ -3362,6 +3825,16 @@ def _driver_result(
         series=series or [],
         movement_start_ns=movement_start_ns,
         movement_end_ns=movement_end_ns,
+        offered_load=OfferedLoad(
+            1,
+            1,
+            50_000_001,
+            50_000_000,
+            clients_total,
+            1,
+            0,
+            (MovementRound(1, 1, 1, 2, 0, clients_total, 0),),
+        ),
         isolated_clients=isolated_clients,
         classified_clients=(
             classified_clients if classified_clients is not None else clients_total
@@ -3605,6 +4078,38 @@ class TestDriverSplitArithmetic:
 class TestDriverResultPayload:
     """The worker payload round-trips through JSON intact."""
 
+    def test_incomplete_load_survives_pooling_and_fails_report(self, tmp_path: Path) -> None:
+        result = _driver_result(0)
+        result = replace(result, offered_load=replace(result.offered_load, missed_slots=1))
+        path = tmp_path / "driver-0.json"
+        dump_driver_result(result, str(path))
+        loaded = load_driver_result(str(path))
+        assert loaded.offered_load == result.offered_load
+        report = merge_driver_results(
+            DISTRIBUTED_2000,
+            [loaded, _driver_result(1)],
+            ProcTrace(interval_s=0.1, clk_tck=100, samples=()),
+            started_at="now",
+            duration_s=5.0,
+            invocation=None,
+        )
+        report = replace(report, observation=None)
+        assert replace(report, offered_load=(_driver_result(0).offered_load,)).passed
+        assert not report.passed
+        assert report.to_dict()["offered_load_complete"] is False
+        assert "INCOMPLETE" in report.to_markdown()
+
+        first = _driver_result(0).offered_load
+        second = replace(
+            first,
+            ready_ns=2,
+            anchor_ns=3,
+            rounds=(MovementRound(1, 3, 3, 4, 0, first.movable_clients, 0),),
+        )
+        assert second.complete
+        assert replace(report, offered_load=(first, second)).offered_load_complete is False
+        assert replace(report, offered_load=(first, replace(second, ready_ns=1))).passed
+
     def test_round_trip_preserves_nested_values(self, tmp_path: Path) -> None:
         """Counters, per-instance maps, and frame series survive a dump/load."""
         result = _driver_result(
@@ -3617,7 +4122,7 @@ class TestDriverResultPayload:
                     instance_index=1,
                     window_start_ns=1_000_000_000,
                     window_end_ns=1_100_000_000,
-                    frames=(SeriesFrame(ts_ns=1_010_000_000, input_tick=7),),
+                    frames=(SeriesFrame(ts_ns=1_010_000_000, input_tick=7, update_seq=42),),
                 )
             ],
         )
@@ -3625,6 +4130,27 @@ class TestDriverResultPayload:
         dump_driver_result(result, str(path))
         loaded = load_driver_result(str(path))
         assert loaded == result
+
+    def test_legacy_payload_without_update_seq_loads(self, tmp_path: Path) -> None:
+        """An unstamped frame payload carries the reserved zero counter."""
+        result = _driver_result(
+            0,
+            series=[
+                ClientSeries(
+                    name="load-0",
+                    instance_index=0,
+                    window_start_ns=1_000_000_000,
+                    window_end_ns=1_100_000_000,
+                    frames=(SeriesFrame(ts_ns=1_010_000_000, input_tick=7),),
+                )
+            ],
+        )
+        path = tmp_path / "driver-0.json"
+        dump_driver_result(result, str(path))
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        del payload["series"][0]["frames"][0]["update_seq"]
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        assert load_driver_result(str(path)) == result
 
     def test_round_trip_preserves_absent_counters(self, tmp_path: Path) -> None:
         """A failed-scrape payload reloads with its presence flag still False."""
@@ -5566,10 +6092,12 @@ class TestMergedObservation:
     """
 
     @staticmethod
-    def merge(results: list[DriverResult]) -> GateReport:
+    def merge(
+        results: list[DriverResult], profile: ScalingProfile = DISTRIBUTED_2000
+    ) -> GateReport:
         """Pool results through the parent's merge path."""
         return merge_driver_results(
-            DISTRIBUTED_2000,
+            profile,
             results,
             ProcTrace(interval_s=0.1, clk_tck=100, samples=()),
             started_at="2026-08-26T00:00:00+00:00",
@@ -5582,6 +6110,34 @@ class TestMergedObservation:
         report = self.merge([_driver_result(0), _driver_result(1)])
         assert report.observation is not None
         assert report.observation.klass == "ok"
+        assert report.passed
+
+    def test_smoke_profile_omits_full_point_observation(self) -> None:
+        """Short-run counters have no calibrated full-point phase bands."""
+        results = []
+        for index, dispatches in enumerate((84, 96)):
+            result = _driver_result(
+                index,
+                clients_total=12,
+                session_ok_count=12,
+                selected_count=12,
+                sampled_clients=12,
+                move_missing_submitted=96,
+                move_missing_observed=96,
+            )
+            results.append(
+                replace(
+                    result,
+                    phase_counter=replace(
+                        result.phase_counter,
+                        dispatches=dispatches,
+                        compose_ns=143_371,
+                        deliver_ns=114_963,
+                    ),
+                )
+            )
+        report = self.merge(results, SMOKE_DISTRIBUTED)
+        assert report.observation is None
         assert report.passed
 
     def test_absent_child_counters_report_inconclusive_without_failing(self) -> None:
@@ -5662,3 +6218,34 @@ class TestGateReportObservationGate:
     def test_absent_observation_preserves_legacy_semantics(self) -> None:
         """Reports built without an observation keep their old verdict."""
         assert self.report(None).passed
+
+
+def test_post_window_drain_waits_only_for_remaining_absolute_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Short echo overrides preserve breadth drain without restarting its clock."""
+    harness = LoadHarness(SMOKE_DENSE, _dead_host_factory, echo_settle_s=0.1)
+    rec = _ClientRecord(name="drain", principal_id=1, instrumented=False)
+    now = [1_000_000_000]
+    sleeps: list[float] = []
+    monkeypatch.setattr("tools.agent.load_harness.time.monotonic_ns", lambda: now[0])
+
+    async def sleep(delay: float) -> None:
+        sleeps.append(delay)
+
+    monkeypatch.setattr("tools.agent.load_harness.asyncio.sleep", sleep)
+
+    async def exercise() -> None:
+        await harness._post_window_echo_drain([rec])
+        assert sleeps == []
+        rec.movement_end_ns = now[0]
+        await harness._post_window_echo_drain([rec])
+        assert sleeps == [0.5]
+        now[0] += 300_000_000
+        await harness._post_window_echo_drain([rec])
+        assert sleeps == [0.5, 0.2]
+        now[0] += 300_000_000
+        await harness._post_window_echo_drain([rec])
+        assert sleeps == [0.5, 0.2]
+
+    asyncio.run(exercise())

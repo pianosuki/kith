@@ -2,8 +2,8 @@
 
 Drives one subprocess-cluster run with two driver processes instead of
 one: each driver carries exactly one instance's client cohort, and a
-fixed CLOCK_MONOTONIC anchor holds a constant offset between the two
-movement windows for the whole run, immune to bootstrap jitter. The
+fixed CLOCK_MONOTONIC anchor defines each movement schedule. Late
+preparation and missed slots make the offered load incomplete. The
 single-driver layout interleaves both instances' input submits in one
 event-loop pass, which correlates the instances' handler-worker dispatch
 bursts; splitting the drivers and holding the offset de-correlates them
@@ -48,13 +48,15 @@ from tools.agent.load_harness import (
     GateReport,
     InstanceGateMetrics,
     LoadHarness,
+    MovementRound,
+    OfferedLoad,
     PhaseCounters,
     RunShape,
     ScalingProfile,
     SparseBreadthRow,
-    _collect_breadth,
     _collect_depth_metrics,
     _collect_run_envelope,
+    _collect_window_evidence,
     _echo_delta_histogram,
     _flicker_breakdown_from_series,
     _move_missing_ratio,
@@ -110,7 +112,8 @@ __all__ = [
 # ``classified_clients`` rather than from ``clients_total`` — a v3
 # child's uncontained numerator pools into a denominator it can exceed.
 # Mixed generations are rejected for the same reason as v3.
-_SCHEMA_VERSION = 4
+# Version 5 requires offered-load timing so an underloaded run cannot pass.
+_SCHEMA_VERSION = 5
 
 # Each realized movement window must open within this bound of its own
 # nominal anchor: a child that anchored on the wrong clock or never waited
@@ -163,6 +166,7 @@ class DriverResult:
     series: list[ClientSeries]
     movement_start_ns: int
     movement_end_ns: int
+    offered_load: OfferedLoad
     # Booted-cohort clients whose own actor lacked the end-of-window
     # neighborhood required to ever observe min_distinct_others others.
     # The parent drops this count from the pooled selected_clients
@@ -322,12 +326,21 @@ def load_driver_result(path: str) -> DriverResult:
             window_start_ns=int(s["window_start_ns"]),
             window_end_ns=int(s["window_end_ns"]),
             frames=tuple(
-                SeriesFrame(ts_ns=int(f["ts_ns"]), input_tick=int(f["input_tick"]))
+                SeriesFrame(
+                    ts_ns=int(f["ts_ns"]),
+                    input_tick=int(f["input_tick"]),
+                    update_seq=int(f.get("update_seq", 0)),
+                )
                 for f in s["frames"]
             ),
         )
         for s in data.pop("series")
     ]
+    raw_load = data.pop("offered_load")
+    data["offered_load"] = OfferedLoad(
+        **{key: int(value) for key, value in raw_load.items() if key != "rounds"},
+        rounds=tuple(MovementRound(**row) for row in raw_load["rounds"]),
+    )
     data["bootstrap_latencies_ms"] = [int(v) for v in data.pop("bootstrap_latencies_ms")]
     raw_cpus = data.pop("driver_cpus", None)
     data["driver_cpus"] = [int(v) for v in raw_cpus] if raw_cpus is not None else None
@@ -407,10 +420,10 @@ def merge_driver_results(
     the parent-collected /proc trace, anchored at the earliest series
     start exactly as the single drive anchors it. Phase counters
     concatenate in instance order because each child scraped its own
-    instance at its own window bounds. The observer verdict classifies the
-    run's measurement health from the same pooled material — the children's
-    submitted-input counts and counter reads against the parent's trace,
-    with the two driver rows as the instrument's cpu evidence.
+    instance at its own window bounds. Profiles with calibrated observer
+    bands classify measurement health from the same pooled material — the
+    children's submitted-input counts and counter reads against the parent's
+    trace, with the two driver rows as the instrument's cpu evidence.
     """
     ordered = sorted(results, key=lambda r: r.instance_index)
     totals = sum(r.clients_total for r in ordered)
@@ -522,27 +535,30 @@ def merge_driver_results(
                 continuity_flicker=cohort_flicker.total_gaps > 0,
             )
         )
-    observation = evaluate_observation(
-        limits,
-        trace=trace,
-        driver_rows=("driver-a", "driver-b"),
-        window_start_ns=min(r.movement_start_ns for r in ordered),
-        window_end_ns=max(r.movement_end_ns for r in ordered),
-        tick_spreads=ledger.tick_spreads,
-        instances=[
-            InstanceServerSample(
-                instance_index=r.instance_index,
-                inputs_submitted=r.inputs_submitted,
-                counters_present=r.counters_present,
-                dispatches=r.phase_counter.dispatches,
-                write_deferrals=r.phase_counter.write_deferrals,
-                view_locate_failures=r.phase_counter.view_locate_failures,
-                deliver_ns=r.phase_counter.deliver_ns,
-                compose_ns=r.phase_counter.compose_ns,
-            )
-            for r in ordered
-        ],
-    )
+    thresholds = thresholds_for(profile)
+    observation = None
+    if thresholds.observer_gates:
+        observation = evaluate_observation(
+            limits,
+            trace=trace,
+            driver_rows=("driver-a", "driver-b"),
+            window_start_ns=min(r.movement_start_ns for r in ordered),
+            window_end_ns=max(r.movement_end_ns for r in ordered),
+            tick_spreads=ledger.tick_spreads,
+            instances=[
+                InstanceServerSample(
+                    instance_index=r.instance_index,
+                    inputs_submitted=r.inputs_submitted,
+                    counters_present=r.counters_present,
+                    dispatches=r.phase_counter.dispatches,
+                    write_deferrals=r.phase_counter.write_deferrals,
+                    view_locate_failures=r.phase_counter.view_locate_failures,
+                    deliver_ns=r.phase_counter.deliver_ns,
+                    compose_ns=r.phase_counter.compose_ns,
+                )
+                for r in ordered
+            ],
+        )
     metrics = GateMetrics(
         actor_count=profile.actor_count,
         sampled_clients=sampled,
@@ -581,11 +597,12 @@ def merge_driver_results(
     return GateReport(
         profile=profile,
         metrics=metrics,
-        thresholds=thresholds_for(profile),
+        thresholds=thresholds,
         started_at=started_at,
         duration_s=duration_s,
         invocation=invocation,
         observation=observation,
+        offered_load=tuple(r.offered_load for r in ordered),
     )
 
 
@@ -762,21 +779,20 @@ async def _collect_cohort_result(
     # no sampler payload, so the in-window samples are dropped here.
     counters, _counter_samples = await harness._movement_phase(orch, records)
     thresholds = thresholds_for(profile)
-    breadth = await _collect_breadth(orch, records, thresholds.min_distinct_others)
+    await harness._post_window_echo_drain(records)
+    breadth, evidence = await _collect_window_evidence(
+        orch, records, thresholds.min_distinct_others
+    )
     total = breadth.total
     selected = breadth.selected_count
     selected_head = breadth.selected_head_count
     instrumented = [r for r in records if r.instrumented and r.own_actor_id != 0]
-    # The pooled child holds the same post-window echo drain the single
-    # drive holds before its depth fetch, so its observed and certified
-    # readings measure the same interval the single drive's do.
-    await harness._post_window_echo_drain(counters)
     submitted, observed, series, cert_rows = await _collect_depth_metrics(
-        orch, instrumented, harness._echo_settle_s
+        evidence, instrumented, harness._echo_settle_s
     )
     certified_missing = sum(r.certified_missing for r in cert_rows)
     certified_fallbacks = sum(1 for r in cert_rows if r.certified_fallback)
-    delivered = await _publish_rate_counts(orch, records)
+    delivered = await _publish_rate_counts(evidence, records)
     await harness._stop_clients(orch, records)
     return DriverResult(
         schema_version=_SCHEMA_VERSION,
@@ -803,6 +819,7 @@ async def _collect_cohort_result(
         series=list(series),
         movement_start_ns=records[0].movement_start_ns if records else 0,
         movement_end_ns=records[0].movement_end_ns if records else 0,
+        offered_load=harness._offered_load,
         isolated_clients=0 if breadth.isolated_clients is None else breadth.isolated_clients,
         classified_clients=breadth.classified_clients,
         observed_but_isolated_fresh_clients=breadth.observed_but_isolated_fresh_clients,

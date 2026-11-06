@@ -234,10 +234,24 @@ static int test_submit_interactive(void)
 
     // A frame was enqueued.
     uint8_t buf[256];
-    uint32_t frame_len = 0;
+    uint32_t frame_len = 99u;
+    rc = kith_client_pop_outbound(client, buf, 1u, &frame_len);
+    CHECK(rc == -(int)KITH_EOVERFLOW);
+    CHECK(frame_len == 0u);
     rc = kith_client_pop_outbound(client, buf, sizeof(buf), &frame_len);
     CHECK_RC(rc == 0, rc);
     CHECK(frame_len > 0u);
+    uint8_t expected[256];
+    size_t expected_len = kith_proto_encode(proto,
+                                            cmd.type_id,
+                                            cmd.flags,
+                                            cmd.correlation_id,
+                                            cmd.payload,
+                                            cmd.payload_len,
+                                            expected,
+                                            sizeof(expected));
+    CHECK(expected_len == frame_len);
+    CHECK(memcmp(buf, expected, frame_len) == 0);
 
     // Queue is now empty.
     rc = kith_client_pop_outbound(client, buf, sizeof(buf), &frame_len);

@@ -35,8 +35,10 @@ import contextlib
 import inspect
 import time
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+from kith._agent.ahc import WindowSnapshot
 from tools.agent.ahc import (
     AgenticHeadlessClient,
     ClientEvent,
@@ -96,6 +98,10 @@ class ManagedClient(Protocol):
 
     def view_window(self) -> WindowEvidence | None: ...
 
+    def snapshot_view_window(self) -> WindowSnapshot | None: ...
+
+    def retire_view_window(self) -> None: ...
+
     def last_frame_age_ns(self) -> int | None: ...
 
     def replication_count(self) -> int: ...
@@ -106,6 +112,71 @@ class ManagedClient(Protocol):
 _AhcFactory = Callable[[str, str, int], ManagedClient]
 
 _ServerEventExtractor = Callable[[Mapping[str, object]], Sequence[Mapping[str, object]]]
+
+
+class EvidenceReader(Protocol):
+    """Client observations consumed by the scaling metric reducers."""
+
+    async def client_state(self, client: str) -> ClientStatus: ...
+
+    async def recent_events(self, client: str, count: int = 64) -> Sequence[ClientEvent]: ...
+
+    async def view_window(self, client: str) -> WindowEvidence | None: ...
+
+    async def evidence_span_ns(self, client: str) -> int | None: ...
+
+    async def replication_frame_count(self, client: str) -> int: ...
+
+
+@dataclass(frozen=True, slots=True)
+class _ClientEvidence:
+    status: ClientStatus
+    window: WindowSnapshot | None
+    events: tuple[ClientEvent, ...]
+    span_ns: int | None
+    replication_count: int
+
+
+class EvidenceSnapshot:
+    """Read one cohort's immutable observations while reception continues.
+
+    Window decoding yields between frame batches on the owning event loop;
+    configured extractors are never invoked from another thread.
+    """
+
+    def __init__(self, clients: Mapping[str, _ClientEvidence]) -> None:
+        self._clients = dict(clients)
+        self._windows: dict[str, WindowEvidence | None] = {}
+
+    async def client_state(self, client: str) -> ClientStatus:
+        """Return the status observed at capture."""
+        return self._clients[client].status
+
+    async def recent_events(self, client: str, count: int = 64) -> Sequence[ClientEvent]:
+        """Return retained events observed at capture, newest last."""
+        events = self._clients[client].events
+        return events[-count:] if count < len(events) else events
+
+    async def view_window(self, client: str) -> WindowEvidence | None:
+        """Reduce and reuse this capture's raw window evidence."""
+        if client not in self._windows:
+            raw = self._clients[client].window
+            self._windows[client] = None if raw is None else await raw.evaluate_async()
+            # Release the raw payload references after their reduction. The
+            # live client's deque remains independently bounded by its budget.
+            observed = self._clients[client]
+            self._clients[client] = _ClientEvidence(
+                observed.status, None, observed.events, observed.span_ns, observed.replication_count
+            )
+        return self._windows[client]
+
+    async def evidence_span_ns(self, client: str) -> int | None:
+        """Return the retained deque span observed at capture."""
+        return self._clients[client].span_ns
+
+    async def replication_frame_count(self, client: str) -> int:
+        """Return the delivered-frame count observed at capture."""
+        return self._clients[client].replication_count
 
 
 def _default_server_extractor(
@@ -238,6 +309,54 @@ class Orchestrator:
 
     async def client_state(self, client: str) -> ClientStatus:
         return self._require_client(client).query_status()
+
+    def snapshot_clients(
+        self,
+        clients: Sequence[str],
+        *,
+        event_clients: frozenset[str] = frozenset(),
+        retire_windows: bool = False,
+    ) -> EvidenceSnapshot:
+        """Capture a cohort without yielding or decoding raw frame payloads.
+
+        Call on the clients' event loop after the collection deadlines and
+        control-plane queries. Immutable payloads are retained by reference;
+        only depth clients retain event-history references as well.
+
+        ``retire_windows`` releases live raw retention after the entire capture
+        is constructed and validated. Each captured window must have a sealed
+        deadline at or before capture start. Retirement errors propagate;
+        clients already retired remain retired and no snapshot is returned.
+
+        Raises:
+            ValueError: Retirement requests an unsealed or not-yet-final window.
+        """
+        capture_ns = time.monotonic_ns() if retire_windows else 0
+        resolved = {name: self._require_client(name) for name in clients}
+        observed: dict[str, _ClientEvidence] = {}
+        for name in clients:
+            client = resolved[name]
+            observed[name] = _ClientEvidence(
+                status=client.query_status(),
+                window=client.snapshot_view_window(),
+                events=tuple(client.recent_events(_EVENT_POLL_COUNT))
+                if name in event_clients
+                else (),
+                span_ns=client.evidence_span_ns(),
+                replication_count=client.replication_count(),
+            )
+        if retire_windows:
+            for observation in observed.values():
+                window = observation.window
+                if window is not None and (
+                    window.deadline_ns is None or window.deadline_ns > capture_ns
+                ):
+                    raise ValueError("retirement requires sealed windows final at capture start")
+        snapshot = EvidenceSnapshot(observed)
+        if retire_windows:
+            for client in resolved.values():
+                client.retire_view_window()
+        return snapshot
 
     async def recent_events(self, client: str, count: int = 64) -> list[ClientEvent]:
         return self._require_client(client).recent_events(count)

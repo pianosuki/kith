@@ -45,6 +45,7 @@ __all__ = [
     "decode_actor_state",
     "decode_actor_state_batch",
     "encode_actor_state",
+    "iter_actor_states_for",
     "login_bootstrap_step",
     "make_ahc",
 ]
@@ -107,8 +108,12 @@ def decode_actor_state(payload: bytes) -> ActorStateView:
         raise ValueError(
             f"actor_state payload too short: {len(payload)} < {ACTOR_STATE_PAYLOAD_SIZE}"
         )
+    return _decode_actor_state_at(payload, 0)
+
+
+def _decode_actor_state_at(payload: bytes, offset: int) -> ActorStateView:
     actor_id, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, input_tick, update_seq, product_level = (
-        struct.unpack(_ACTOR_STATE_FMT, payload[:ACTOR_STATE_PAYLOAD_SIZE])
+        struct.unpack_from(_ACTOR_STATE_FMT, payload, offset)
     )
     return ActorStateView(
         actor_id=int(actor_id),
@@ -193,6 +198,38 @@ def decode_actor_state_batch(payload: bytes) -> list[ActorStateView]:
 
 _STATE_ID_FIELD = struct.Struct(">Q")  # actor_id at record offset 0
 _STATE_MARKER_FIELD = struct.Struct(">I")  # membership marker word at offset 64
+_STATE_ID_RECORD = struct.Struct(">Q56xI")
+
+
+def iter_actor_states_for(type_id: int, payload: bytes, actor_id: int) -> Iterator[ActorStateView]:
+    """Yield one actor's non-membership states in wire order.
+
+    Args:
+        type_id: Single-state or batch replication type; other types yield nothing.
+        payload: Wire payload; incomplete trailing records are ignored.
+        actor_id: Actor whose records are decoded, including duplicate matches.
+
+    Returns:
+        Iterator of matching views. Batch count bounds the records considered;
+        complete records beyond that count and single-state trailing bytes are ignored.
+    """
+    if type_id == messages.ACTOR_STATE_TYPE:
+        start = 0
+        count = int(len(payload) >= ACTOR_STATE_PAYLOAD_SIZE)
+    elif type_id == messages.ACTOR_STATE_BATCH_TYPE:
+        if len(payload) < ACTOR_STATE_BATCH_HEADER_SIZE:
+            return
+        declared, _reserved = struct.unpack_from(_BATCH_HEADER_FMT, payload)
+        start = ACTOR_STATE_BATCH_HEADER_SIZE
+        count = min(declared, (len(payload) - start) // _BATCH_RECORD_SIZE)
+    else:
+        return
+    for offset in range(start, start + count * _BATCH_RECORD_SIZE, _BATCH_RECORD_SIZE):
+        if _STATE_ID_FIELD.unpack_from(payload, offset)[0] != actor_id:
+            continue
+        marker = _STATE_MARKER_FIELD.unpack_from(payload, offset + 64)[0]
+        if not marker & MEMBERSHIP_EVENT_MARKER:
+            yield _decode_actor_state_at(payload, offset)
 
 
 def iter_actor_state_ids(type_id: int, payload: bytes) -> Iterator[int]:
@@ -202,10 +239,8 @@ def iter_actor_state_ids(type_id: int, payload: bytes) -> Iterator[int]:
     ``ACTOR_STATE_BATCH_TYPE``) and yields nothing for any other type.
     Membership records are skipped: their ``actor_id`` names a
     subscription subject or the crowd aggregate, not a state record.
-    Reads only the two fields the id needs, so a full-view wave frame
-    costs two unpacks per record instead of a view construction — the
-    load driver's ingest path calls this per frame while its breadth
-    window is open. Truncated trailing records are ignored, matching
+    Reads only identity and membership fields without constructing full
+    actor views. Truncated trailing records are ignored, matching
     decode_actor_state_batch.
     """
     if type_id == messages.ACTOR_STATE_TYPE:
@@ -219,14 +254,15 @@ def iter_actor_state_ids(type_id: int, payload: bytes) -> Iterator[int]:
     if len(payload) < ACTOR_STATE_BATCH_HEADER_SIZE:
         return
     count, _reserved = struct.unpack_from(_BATCH_HEADER_FMT, payload)
-    base = ACTOR_STATE_BATCH_HEADER_SIZE
-    for _i in range(count):
-        if base + ACTOR_STATE_PAYLOAD_SIZE > len(payload):
-            return
-        (marker,) = _STATE_MARKER_FIELD.unpack_from(payload, base + 64)
-        if not marker & MEMBERSHIP_EVENT_MARKER:
-            yield _STATE_ID_FIELD.unpack_from(payload, base)[0]
-        base += _BATCH_RECORD_SIZE
+    count = min(count, (len(payload) - ACTOR_STATE_BATCH_HEADER_SIZE) // _BATCH_RECORD_SIZE)
+    end = ACTOR_STATE_BATCH_HEADER_SIZE + count * _BATCH_RECORD_SIZE
+    with (
+        memoryview(payload) as wire,
+        wire[ACTOR_STATE_BATCH_HEADER_SIZE:end] as records,
+    ):
+        for actor_id, marker in _STATE_ID_RECORD.iter_unpack(records):
+            if not marker & MEMBERSHIP_EVENT_MARKER:
+                yield actor_id
 
 
 def login_bootstrap_step(principal_id: int, *, await_type_id: int | None = None) -> BootstrapStep:
@@ -311,10 +347,8 @@ def make_ahc(
     deque bounded by that byte budget, so the breadth probe can union the
     distinct actor ids across many delivery passes under
     change-suppression delivery; 0 disables the window. The client also
-    carries iter_actor_state_ids as its view-window id extractor:
-    while the load driver's breadth window is open, each replication
-    frame's state-record ids accumulate into the client's movement-window
-    evidence set, which the probe reads instead of walking the deque.
+    uses iter_actor_state_ids to decode retained frames when window evidence
+    is read.
     """
     await_type = (
         messages.ACTOR_STATE_BATCH_TYPE

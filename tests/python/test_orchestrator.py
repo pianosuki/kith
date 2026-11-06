@@ -15,6 +15,8 @@ from tools.agent.orchestrator import Orchestrator
 from tools.agent.scenario import ScenarioHost
 from tools.agent.server_control import ServerControlError
 
+from kith._agent.ahc import WindowSnapshot
+
 
 def _event(
     type_id: int,
@@ -110,6 +112,11 @@ class _FakeClient:
     def seal_view_window(self, deadline_ns: int) -> None:
         del deadline_ns
 
+    def snapshot_view_window(self) -> WindowSnapshot | None:
+        return None
+
+    def retire_view_window(self) -> None: ...
+
     def view_window(self) -> WindowEvidence | None:
         return None
 
@@ -182,6 +189,70 @@ def _ingest_task(orch: Orchestrator) -> asyncio.Task[None] | None:
 
 def _run(coro: Coroutine[None, None, None]) -> None:
     asyncio.run(coro)
+
+
+@pytest.mark.parametrize("deadline", [None, 2])
+def test_retirement_validates_the_whole_cohort_at_capture_start(
+    monkeypatch: pytest.MonkeyPatch, deadline: int | None
+) -> None:
+    """A capture crossing a deadline cannot retire an early or unsealed window."""
+    orch = _new_orchestrator()
+    clock = [1]
+    retired: list[str] = []
+
+    async def register() -> None:
+        for name in ("a", "b"):
+            await orch.register_client(name, host="127.0.0.1", port=1)
+
+    _run(register())
+    monkeypatch.setattr("tools.agent.orchestrator.time.monotonic_ns", lambda: clock[0])
+    monkeypatch.setattr(
+        _client(orch, "a"), "snapshot_view_window", lambda: WindowSnapshot((), 0, 0, False, None)
+    )
+
+    def later_capture() -> WindowSnapshot:
+        clock[0] = 3
+        return WindowSnapshot((), 0, deadline, False, None)
+
+    monkeypatch.setattr(_client(orch, "b"), "snapshot_view_window", later_capture)
+    for name in ("a", "b"):
+        monkeypatch.setattr(
+            _client(orch, name), "retire_view_window", lambda name=name: retired.append(name)
+        )
+    with pytest.raises(ValueError, match="capture start"):
+        orch.snapshot_clients(["a", "b"], retire_windows=True)
+    assert retired == []
+    ordinary = orch.snapshot_clients(["a", "b"])
+    assert ordinary is not None and retired == []
+
+
+def test_retirement_failures_return_no_partial_snapshot(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Capture failure leaves all clients live; commit failure propagates after progress."""
+    orch = _new_orchestrator()
+    retired: list[str] = []
+
+    async def register() -> None:
+        for name in ("a", "b"):
+            await orch.register_client(name, host="127.0.0.1", port=1)
+
+    _run(register())
+    monkeypatch.setattr(_client(orch, "a"), "retire_view_window", lambda: retired.append("a"))
+
+    def stop_retirement() -> None:
+        raise RuntimeError("retire stop")
+
+    def stop_capture(count: int = 64) -> list[ClientEvent]:
+        raise MemoryError("capture stop")
+
+    monkeypatch.setattr(_client(orch, "b"), "retire_view_window", stop_retirement)
+    with monkeypatch.context() as scope:
+        scope.setattr(_client(orch, "b"), "recent_events", stop_capture)
+        with pytest.raises(MemoryError, match="capture stop"):
+            orch.snapshot_clients(["a", "b"], event_clients=frozenset({"b"}), retire_windows=True)
+    assert retired == []
+    with pytest.raises(RuntimeError, match="retire stop"):
+        orch.snapshot_clients(["a", "b"], retire_windows=True)
+    assert retired == ["a"]
 
 
 # ---------------------------------------------------------------------------

@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-import ast
 import asyncio
 import ctypes
+import gc
 import inspect
 import itertools
 import logging
 import socket
-import textwrap
+import sys
 import time
+import weakref
+from collections import deque
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Never, SupportsIndex, overload
 
 import pytest
 
@@ -77,6 +79,8 @@ def build_ahc() -> Callable[..., AgenticHeadlessClient]:
         auto_connect: bool = False,
         reconnect_enabled: bool = True,
         tick_interval_s: float = 0.02,
+        max_payload: int = 0,
+        outbound_buffer_initial_bytes: int = 4096,
         direct_type_ids: frozenset[int] = frozenset(),
         summary_mode: bool = False,
         evidence_budget_bytes: int = 0,
@@ -94,6 +98,8 @@ def build_ahc() -> Callable[..., AgenticHeadlessClient]:
             auto_connect=auto_connect,
             reconnect_enabled=reconnect_enabled,
             tick_interval_s=tick_interval_s,
+            max_payload=max_payload,
+            outbound_buffer_initial_bytes=outbound_buffer_initial_bytes,
             direct_type_ids=direct_type_ids,
             summary_mode=summary_mode,
             evidence_budget_bytes=evidence_budget_bytes,
@@ -331,6 +337,46 @@ def test_request_flush_drains_queued_frames_inline(
     assert len(transport.chunks[0]) > 0
 
 
+def test_submit_releases_borrowed_buffer_without_cyclic_collection(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Submission keeps its buffer through encoding and releases it on return."""
+    client = build_ahc(http_enabled=False, ipc_enabled=False)
+    payload = b"binary\x00payload\xff"
+    buffer_type = ctypes.c_uint8 * len(payload)
+    copy_buffer = buffer_type.from_buffer_copy
+    references: list[weakref.ReferenceType[Any]] = []
+
+    def observe_buffer(data: bytes) -> Any:
+        buffer = copy_buffer(data)
+        references.append(weakref.ref(buffer))
+        return buffer
+
+    submit_native = client._client_lib.kith_client_submit_interactive
+
+    def encode(handle: Any, command_ptr: Any, command_id: Any) -> int:
+        command = command_ptr._obj
+        if command.payload_len:
+            gc.collect()
+            assert references[-1]() is not None
+            assert ctypes.string_at(command.payload, command.payload_len) == payload
+        return int(submit_native(handle, command_ptr, command_id))
+
+    monkeypatch.setattr(buffer_type, "from_buffer_copy", staticmethod(observe_buffer))
+    monkeypatch.setattr(client._client_lib, "kith_client_submit_interactive", encode)
+    try:
+        client.register_type("state", _DIRECT_TYPE)
+        assert client.submit(_DIRECT_TYPE, payload) == 1
+        assert len(references) == 1 and references[0]() is None
+        assert client._pop_outbound() == _encode_frame(client, _DIRECT_TYPE, payload)
+        assert client.submit(_DIRECT_TYPE) == 2
+        assert client._pop_outbound() == _encode_frame(client, _DIRECT_TYPE, b"")
+        assert client._pop_outbound() is None
+    finally:
+        client._destroy_engine()
+
+
 _DIRECT_TYPE = 7
 _UNREGISTERED_TYPE = 999
 
@@ -366,16 +412,70 @@ def test_direct_frames_become_events_without_engine_feed(
         return 0
 
     monkeypatch.setattr(client._client_lib, "kith_client_feed_frame", no_feed)
+    transport = _RecordingTransport()
+    client._transport = transport  # type: ignore[assignment]
+    assert client._pop_outbound() is None
+    native_pop = client._client_lib.kith_client_pop_outbound
+    pops: list[int] = []
+
+    def count_pop(*args: Any) -> int:
+        pops.append(1)
+        return int(native_pop(*args))
+
+    monkeypatch.setattr(client._client_lib, "kith_client_pop_outbound", count_pop)
     buf = bytearray(
         _encode_frame(client, _DIRECT_TYPE, b"abc") + _encode_frame(client, _DIRECT_TYPE, b"de")
     )
     client._direct_ready = True
     _drain(client, buf)
     assert not feeds
+    assert not pops
     assert not buf
     assert [event.payload for event in client._event_history] == [b"abc", b"de"]
     assert all(event.type_id == _DIRECT_TYPE for event in client._event_history)
     assert all(event.ts_mono_ns > 0 for event in client._event_history)
+    client.register_type("control", 8)
+    _drain(client, bytearray(_encode_frame(client, 8, b"control")))
+    assert feeds == [1] and pops == [1]
+
+
+def test_bootstrap_reentrant_submit_preserves_followup_flush(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """A nested drain cannot hide the next frame queued by native bootstrap."""
+    client = build_ahc(http_enabled=False, ipc_enabled=False)
+    transport = _RecordingTransport()
+    client._transport = transport  # type: ignore[assignment]
+    client._running = True
+
+    def advance(frame: ahc.DecodedFrame) -> int:
+        assert frame.type_id == 9
+        assert client.submit(7, b"nested") == 1
+        assert client._outbound_empty
+        return 1
+
+    try:
+        for type_id in (7, 8, 9, 10):
+            client.register_type(f"type-{type_id}", type_id)
+        client._configure_bootstrap(
+            [
+                ahc.BootstrapStep(9, lambda: (7, b"hello"), advance),
+                ahc.BootstrapStep(10, lambda: (8, b"next")),
+            ]
+        )
+        assert client._client_lib.kith_client_on_connected(client._client, 100) == 0
+        client._request_flush()
+        client._on_socket_data(_encode_frame(client, 9, b"reply"))
+        assert transport.chunks == [
+            _encode_frame(client, 7, b"hello"),
+            _encode_frame(client, 7, b"nested"),
+            _encode_frame(client, 8, b"next"),
+        ]
+        assert client._outbound_empty
+        assert client._pop_outbound() is None
+    finally:
+        client._running = False
+        client._destroy_engine()
 
 
 def test_mixed_fast_and_fallback_frames_share_one_consume(
@@ -383,6 +483,7 @@ def test_mixed_fast_and_fallback_frames_share_one_consume(
 ) -> None:
     """Fallback re-enters at the advanced position; a bad frame keeps the tail."""
     client = build_ahc(direct_type_ids=frozenset({_DIRECT_TYPE}))
+    client.register_type("state", _DIRECT_TYPE)
     direct = _encode_frame(client, _DIRECT_TYPE, b"ok")
     garbage = _encode_frame(client, _UNREGISTERED_TYPE, b"?")
     trailing = _encode_frame(client, _DIRECT_TYPE, b"tail")
@@ -402,6 +503,7 @@ def test_correlation_trailer_parsed_on_direct_frames(
 ) -> None:
     """A flagged trailer lands in correlation_id; the payload excludes it."""
     client = build_ahc(direct_type_ids=frozenset({_DIRECT_TYPE}))
+    client.register_type("state", _DIRECT_TYPE)
     frame = _encode_frame(
         client,
         _DIRECT_TYPE,
@@ -418,11 +520,102 @@ def test_correlation_trailer_parsed_on_direct_frames(
     assert not buf
 
 
+def test_short_correlation_trailer_matches_native_rejection(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """Direct candidates retain the native decoder's trailer validation."""
+    outcomes: list[tuple[int, bytes, int]] = []
+    for direct_types in (frozenset(), frozenset({_DIRECT_TYPE})):
+        client = build_ahc(direct_type_ids=direct_types)
+        try:
+            client.register_type("state", _DIRECT_TYPE)
+            frame = bytearray(_encode_frame(client, _DIRECT_TYPE, b"", flags=0x02))
+            frame[6:10] = (7).to_bytes(4, "big")
+            frame.pop()
+            original = bytes(frame)
+            client._direct_ready = True
+            with pytest.raises(KithClientError) as error:
+                _drain(client, frame)
+            outcomes.append((error.value.code, bytes(frame), len(client._event_history)))
+            assert bytes(frame) == original
+        finally:
+            client._running = False
+            client._destroy_engine()
+    assert outcomes[0] == outcomes[1]
+    assert outcomes[0][2] == 0
+
+
+def test_direct_type_requires_successful_registration(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """Deferred registration retains the native unknown-type boundary."""
+    client = build_ahc(direct_type_ids=frozenset({_DIRECT_TYPE}))
+    try:
+        frame = bytearray(_encode_frame(client, _DIRECT_TYPE, b"payload"))
+        original = bytes(frame)
+        client._direct_ready = True
+        with pytest.raises(KithClientError):
+            _drain(client, frame)
+        assert bytes(frame) == original and not client._event_history
+        with pytest.raises(KithClientError):
+            client.register_type("", _DIRECT_TYPE)
+        with pytest.raises(KithClientError):
+            _drain(client, frame)
+        client.register_type("state", (1 << 16) + _DIRECT_TYPE)
+        _drain(client, frame)
+        assert not frame and [event.payload for event in client._event_history] == [b"payload"]
+    finally:
+        client._running = False
+        client._destroy_engine()
+
+
+@pytest.mark.parametrize("ping_type_id", [0, 7])
+def test_direct_pong_stays_on_native_client_path(
+    ping_type_id: int,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The configured pong is handled by the engine with or without ping."""
+    client = AgenticHeadlessClient(
+        "direct-pong",
+        http_enabled=False,
+        ipc_enabled=False,
+        auto_connect=False,
+        ping_type_id=ping_type_id,
+        pong_type_id=(1 << 16) + 8,
+        message_types={"ping": 7, "pong": 8},
+        direct_type_ids=frozenset({8}),
+    )
+    client._running = True
+    client._direct_ready = True
+    monkeypatch.setattr(ahc, "_now_ms", lambda: 1107)
+    try:
+        assert client._client_lib.kith_client_on_connected(client._client, 100) == 0
+        assert client._client_lib.kith_client_tick(client._client, 1100) == 0
+        status = ahc.ClientRuntimeStatus(
+            size=ctypes.sizeof(ahc.ClientRuntimeStatus), abi_version=ahc.KITH_ABI_VERSION
+        )
+        assert (
+            client._client_lib.kith_client_runtime_status(client._client, ctypes.byref(status)) == 0
+        )
+        assert bool(status.awaiting_pong) is bool(ping_type_id)
+        client._on_socket_data(_encode_frame(client, 8, (1100).to_bytes(8, "big")))
+        assert (
+            client._client_lib.kith_client_runtime_status(client._client, ctypes.byref(status)) == 0
+        )
+        assert not status.awaiting_pong
+        assert status.rtt_samples == (1 if ping_type_id else 0)
+        assert not client._event_history and client.replication_count() == 0
+    finally:
+        client._running = False
+        client._destroy_engine()
+
+
 def test_incomplete_direct_tail_waits_for_more_bytes(
     build_ahc: Callable[..., AgenticHeadlessClient],
 ) -> None:
     """A truncated direct frame stays buffered with no event emitted."""
     client = build_ahc(direct_type_ids=frozenset({_DIRECT_TYPE}))
+    client.register_type("state", _DIRECT_TYPE)
     whole = _encode_frame(client, _DIRECT_TYPE, b"whole")
     buf = bytearray(whole[:-3])
     client._direct_ready = True
@@ -469,6 +662,7 @@ def test_bad_magic_defers_to_decoder_and_keeps_bytes(
 ) -> None:
     """Corrupted header bytes fall to the C decoder and fail loudly there."""
     client = build_ahc(direct_type_ids=frozenset({_DIRECT_TYPE}))
+    client.register_type("state", _DIRECT_TYPE)
     frame = bytearray(_encode_frame(client, _DIRECT_TYPE, b"x"))
     frame[0] ^= 0xFF
     buf = bytearray(frame)
@@ -562,6 +756,7 @@ def test_summary_mode_gates_on_bootstrap_and_rearms(
 
 def test_summary_mode_evidence_window_retains_every_frame(
     build_ahc: Callable[..., AgenticHeadlessClient],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The evidence window keeps every direct frame; no length gate applies."""
     client = build_ahc(
@@ -571,6 +766,8 @@ def test_summary_mode_evidence_window_retains_every_frame(
     )
     client.register_type("state", _DIRECT_TYPE)
     client._direct_ready = True
+    clock = iter((1000, 1100, 1200))
+    monkeypatch.setattr("kith._agent.ahc.time.monotonic_ns", lambda: next(clock))
     frames = b"".join(
         _encode_frame(client, _DIRECT_TYPE, payload)
         for payload in (b"short", b"0123456789a", b"0123456789b")
@@ -578,6 +775,8 @@ def test_summary_mode_evidence_window_retains_every_frame(
     _drain(client, bytearray(frames))
     payloads = [event.payload for event in client.evidence_frames()]
     assert payloads == [b"short", b"0123456789a", b"0123456789b"]
+    assert client.recent_events()[0].payload is client.evidence_frames()[0].payload
+    assert not client._inbuf
 
     client._arm_connection()
     assert client.evidence_frames() == []
@@ -614,9 +813,25 @@ def test_evidence_window_rides_the_budget_not_summary_mode(
     )
     client.register_type("state", _DIRECT_TYPE)
     client._direct_ready = True
+    client.begin_view_window()
     frames = _encode_frame(client, _DIRECT_TYPE, b"0123456789a")
     _drain(client, bytearray(frames))
     assert [event.payload for event in client.evidence_frames()] == [b"0123456789a"]
+    first = client.recent_events()[0]
+    assert first.payload is client.evidence_frames()[0].payload
+    snapshot = client.snapshot_view_window()
+    assert snapshot is not None and snapshot.frames[0][2] is first.payload
+    client._inbuf.extend(b"overwrite")
+    client._inbuf.clear()
+    oversized = b"large" * 20
+    _drain(client, bytearray(_encode_frame(client, _DIRECT_TYPE, oversized)))
+    assert client.evidence_frames() == []
+    assert client._evidence_bytes == 0
+    assert [event.payload for event in client.recent_events()] == [b"0123456789a", oversized]
+    assert snapshot.frames[0][2] == b"0123456789a"
+    assert snapshot.evaluate().incomplete is False
+    live = client.view_window()
+    assert live is not None and live.incomplete is True
 
 
 def test_view_window_reads_none_until_opened(
@@ -966,6 +1181,60 @@ class _RecordingTransport:
     def is_closing(self) -> bool:
         return self.closing
 
+    def close(self) -> None:
+        self.closing = True
+
+
+def test_ping_defaults_match_native_deadline_and_pong_watchdog(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Native zero defaults and explicit settings share the same watchdog clock."""
+    clock = [100]
+    monkeypatch.setattr(ahc, "_now_ms", lambda: clock[0])
+    cases = [
+        (0, 0, 0, 0),
+        (7, 0, 0, 1000),
+        (7, 250, 0, 250),
+        (7, 0, 70, 1000),
+        (1 << 16, 0, 0, 0),
+        (7, 1 << 32, 0, 1000),
+    ]
+    for index, (type_id, interval, timeout, expected_interval) in enumerate(cases):
+        client = AgenticHeadlessClient(
+            f"ping-default-{index}",
+            http_enabled=False,
+            ipc_enabled=False,
+            auto_connect=False,
+            ping_type_id=type_id,
+            pong_type_id=8,
+            ping_interval_ms=interval,
+            pong_timeout_ms=timeout,
+        )
+        transport = _RecordingTransport()
+        client._transport = transport  # type: ignore[assignment]
+        client._running = True
+        try:
+            client.register_type("ping", 7)
+            client.register_type("pong", 8)
+            assert client._client_lib.kith_client_on_connected(client._client, 100) == 0
+            assert client._ping_interval_ms == expected_interval
+            assert client._pong_timeout_ms == (timeout or 3 * expected_interval)
+            clock[0] = 100 + (expected_interval or 1000)
+            client.tick_engine()
+            if not expected_interval:
+                assert not transport.chunks and not transport.closing
+                continue
+            assert transport.chunks == [_encode_frame(client, 7, clock[0].to_bytes(8, "big"))]
+            clock[0] += client._pong_timeout_ms
+            client.tick_engine()
+            assert not transport.closing
+            clock[0] += 1
+            client.tick_engine()
+            assert transport.closing
+        finally:
+            client._running = False
+            client._destroy_engine()
+
 
 def test_stalled_outbound_probe_warns_and_drains(
     build_ahc: Callable[..., AgenticHeadlessClient],
@@ -1054,7 +1323,9 @@ def test_high_water_defers_residue_until_resume(
     build_ahc: Callable[..., AgenticHeadlessClient],
 ) -> None:
     """Popping stops at the transport high-water mark; resume restarts it."""
-    client = build_ahc(http_enabled=False, ipc_enabled=False)
+    client = build_ahc(
+        http_enabled=False, ipc_enabled=False, direct_type_ids=frozenset({_DIRECT_TYPE})
+    )
     client.register_type("state", _DIRECT_TYPE)
     # Queue three frames with no transport attached.
     for i in range(3):
@@ -1067,10 +1338,213 @@ def test_high_water_defers_residue_until_resume(
     client._running = True
     client._request_flush()
     assert len(transport.chunks) == 1
+    client._direct_ready = True
+    assert not client._outbound_empty
+    client._on_socket_data(_encode_frame(client, _DIRECT_TYPE, b"received"))
+    assert len(transport.chunks) == 2
     # Below low water again, the writable callback drains the residue.
     transport.buffered = 0
     client._on_write_resumed()
     assert len(transport.chunks) == 3
+
+
+@pytest.mark.parametrize("probe", [False, True], ids=["flush", "probe"])
+def test_outbound_growth_preserves_large_correlated_frames_and_backpressure(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+    probe: bool,
+) -> None:
+    """Configured wire limits include the trailer and preserve FIFO on resume."""
+    wire_limit = (1 << 20) + 257
+    requested = 16384 if probe else 64
+    client = build_ahc(
+        http_enabled=False,
+        ipc_enabled=False,
+        max_payload=wire_limit,
+        outbound_buffer_initial_bytes=requested,
+    )
+    try:
+        client.register_type("state", _DIRECT_TYPE)
+        bodies = [b"head", b"x" * (wire_limit - 8), b"tail"]
+        frames = []
+        for body in bodies:
+            frames.append(
+                _encode_frame(
+                    client,
+                    _DIRECT_TYPE,
+                    body,
+                    flags=ahc.KITH_PROTO_FLAG_CORRELATION,
+                    correlation_id=0x123456789ABCDEF0,
+                )
+            )
+            client.submit(
+                _DIRECT_TYPE,
+                body,
+                flags=ahc.KITH_PROTO_FLAG_CORRELATION,
+                correlation_id=0x123456789ABCDEF0,
+            )
+        initial = ctypes.sizeof(client._out_buf)
+        assert initial == requested
+        assert client._out_limit == wire_limit + ahc.KITH_PROTO_HDR_SIZE
+        assert len(frames[1]) == client._out_limit
+        transport = _RecordingTransport()
+        client._transport = transport  # type: ignore[assignment]
+        client._running = True
+        if probe:
+            client.probe_stalled_outbound()
+        else:
+            client._request_flush()
+        assert transport.chunks == frames[:2]
+        grown = ctypes.sizeof(client._out_buf)
+        assert initial < grown <= client._out_limit
+        assert not client._draining
+        transport.buffered = 0
+        client._on_write_resumed()
+        client._on_write_resumed()
+        assert transport.chunks == frames
+        assert ctypes.sizeof(client._out_buf) == grown
+        assert client._pop_outbound() is None
+    finally:
+        client._running = False
+        client._destroy_engine()
+
+
+@pytest.mark.parametrize("probe", [False, True], ids=["flush", "probe"])
+def test_outbound_growth_memory_failure_retains_queued_frames(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    probe: bool,
+) -> None:
+    """Failed growth retains the front frame and releases drain ownership."""
+    client = build_ahc(
+        http_enabled=False, ipc_enabled=False, direct_type_ids=frozenset({_DIRECT_TYPE})
+    )
+    try:
+        client.register_type("state", _DIRECT_TYPE)
+        bodies = [b"head", b"x" * 8192, b"tail"]
+        frames = [_encode_frame(client, _DIRECT_TYPE, body) for body in bodies]
+        for body in bodies:
+            client.submit(_DIRECT_TYPE, body)
+        original = client._out_buf
+        transport = _RecordingTransport()
+        client._transport = transport  # type: ignore[assignment]
+        client._running = True
+
+        class _FailGrowth:
+            def __mul__(self, capacity: int) -> object:
+                raise MemoryError(f"scratch growth to {capacity}")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(ahc, "_U8", _FailGrowth())
+            if probe:
+                with caplog.at_level(logging.WARNING, logger="kith._agent.ahc"):
+                    client.probe_stalled_outbound()
+                assert any("scratch growth" in record.message for record in caplog.records)
+            else:
+                with pytest.raises(MemoryError, match="scratch growth"):
+                    client._request_flush()
+        assert client._out_buf is original
+        assert not client._draining
+        assert transport.chunks == frames[:1]
+        assert not client._outbound_empty
+        transport.buffered = 0
+        client._direct_ready = True
+        client._on_socket_data(_encode_frame(client, _DIRECT_TYPE, b"received"))
+        client._on_write_resumed()
+        assert transport.chunks == frames
+        assert client._pop_outbound() is None
+        assert not client._draining
+    finally:
+        client._running = False
+        client._destroy_engine()
+
+
+@pytest.mark.parametrize("max_payload", [-1, 1 << 32])
+def test_outbound_payload_limit_rejects_before_creating_handles(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+    monkeypatch: pytest.MonkeyPatch,
+    max_payload: int,
+) -> None:
+    """Out-of-range wire limits cannot wrap through ctypes constructor fields."""
+
+    def fail_create(self: AgenticHeadlessClient, maximum: int) -> ctypes.c_void_p:
+        raise AssertionError(f"created proto with invalid maximum {maximum}")
+
+    monkeypatch.setattr(AgenticHeadlessClient, "_create_proto", fail_create)
+    with pytest.raises(ValueError, match="max_payload"):
+        build_ahc(http_enabled=False, ipc_enabled=False, max_payload=max_payload)
+
+
+@pytest.mark.parametrize("initial_bytes", [0, 1 << 32, 1.5])
+def test_outbound_initial_buffer_rejects_before_creating_handles(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+    monkeypatch: pytest.MonkeyPatch,
+    initial_bytes: int | float,
+) -> None:
+    """Scratch capacity requires a positive uint32 integer before native setup."""
+
+    def fail_create(self: AgenticHeadlessClient, maximum: int) -> ctypes.c_void_p:
+        raise AssertionError(f"created proto with invalid initial capacity {initial_bytes}")
+
+    monkeypatch.setattr(AgenticHeadlessClient, "_create_proto", fail_create)
+    with pytest.raises(ValueError, match="outbound_buffer_initial_bytes"):
+        build_ahc(
+            http_enabled=False,
+            ipc_enabled=False,
+            outbound_buffer_initial_bytes=initial_bytes,
+        )
+
+
+def test_cli_outbound_initial_buffer_forwarding_and_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The CLI forwards valid capacity and rejects zero before constructing a client."""
+    calls: list[dict[str, object]] = []
+    lifecycle: list[str] = []
+
+    class _Client:
+        def __init__(self, **kwargs: object) -> None:
+            calls.append(kwargs)
+            self.ipc_socket_path = "/unused"
+            self.http_port = 0
+            self._running = False
+
+        async def start(self) -> None:
+            lifecycle.append("start")
+
+        async def stop(self) -> None:
+            lifecycle.append("stop")
+
+    monkeypatch.setattr(ahc, "AgenticHeadlessClient", _Client)
+    monkeypatch.setattr(sys, "argv", ["ahc", "--outbound-buffer-initial-bytes", "16384"])
+    assert asyncio.run(ahc.main()) == 0
+    assert len(calls) == 1
+    assert calls[0]["outbound_buffer_initial_bytes"] == 16384
+    assert lifecycle == ["start", "stop"]
+    monkeypatch.setattr(sys, "argv", ["ahc", "--outbound-buffer-initial-bytes", "0"])
+    with pytest.raises(SystemExit) as exc:
+        asyncio.run(ahc.main())
+    assert exc.value.code == 2
+    assert len(calls) == 1
+    assert lifecycle == ["start", "stop"]
+
+
+def test_initial_outbound_allocation_precedes_native_handles(
+    build_ahc: Callable[..., AgenticHeadlessClient], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Failed initial scratch allocation creates no native handles."""
+
+    class _Unavailable:
+        def __mul__(self, capacity: int) -> object:
+            raise MemoryError(f"initial scratch allocation {capacity}")
+
+    def fail_create(self: AgenticHeadlessClient, maximum: int) -> ctypes.c_void_p:
+        raise AssertionError(f"created proto before scratch with maximum {maximum}")
+
+    monkeypatch.setattr(ahc, "_U8", _Unavailable())
+    monkeypatch.setattr(AgenticHeadlessClient, "_create_proto", fail_create)
+    with pytest.raises(MemoryError, match="initial scratch"):
+        build_ahc(http_enabled=False, ipc_enabled=False)
 
 
 def test_eof_received_tears_down_both_directions(
@@ -1130,22 +1604,9 @@ def test_partial_batch_then_teardown_keeps_consumed_prefix(
     assert [event.payload for event in client._event_history] == [b"kept"]
 
 
-def test_consume_inbound_never_suspends() -> None:
-    """The inbound consumer is synchronous end to end.
-
-    Inline draining never blocks inbound decode because the consumer
-    cannot yield; an async slip would silently reintroduce suspension.
-    """
-    source = textwrap.dedent(inspect.getsource(ahc.AgenticHeadlessClient._consume_inbound))
-    tree = ast.parse(source)
-    (fn,) = [
-        node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    ]
-    assert isinstance(fn, ast.FunctionDef), "_consume_inbound must stay sync"
-    for node in ast.walk(tree):
-        assert not isinstance(node, ast.Await), "no await in _consume_inbound"
-        assert not isinstance(node, ast.AsyncFor), "no async for in _consume_inbound"
-        assert not isinstance(node, ast.AsyncWith), "no async with in _consume_inbound"
+def test_consume_inbound_is_synchronous() -> None:
+    """The socket callback can invoke its consumer without awaiting it."""
+    assert not inspect.iscoroutinefunction(ahc.AgenticHeadlessClient._consume_inbound)
 
 
 def test_pump_unregisters_ticker_and_sweeper_on_connection_end(
@@ -1169,3 +1630,314 @@ def test_pump_unregisters_ticker_and_sweeper_on_connection_end(
 
     asyncio.run(run())
     assert sorted(unregistered) == ["sweeper", "ticker"]
+
+
+def test_view_window_future_seal_remains_provisional(
+    build_ahc: Callable[..., AgenticHeadlessClient], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Future seals admit frames through the deadline and exclude arrivals beyond it."""
+    now = [10]
+    monkeypatch.setattr("kith._agent.ahc.time.monotonic_ns", lambda: now[0])
+    client = build_ahc(
+        evidence_budget_bytes=4096,
+        window_id_extractor=lambda type_id, payload: [len(payload)],
+    )
+    client.begin_view_window()
+    client._evidence.append((11, 1, b"a"))
+    client.seal_view_window(20)
+    early = client.view_window()
+    assert early is not None and early.distinct_ids == frozenset({1})
+    client._evidence.extend(((20, 1, b"bb"), (21, 1, b"ccc")))
+    now[0] = 22
+    final = client.view_window()
+    assert final is not None and final.distinct_ids == frozenset({1, 2})
+    assert final.deque_distinct_ids == frozenset({1, 2, 3})
+    assert final.frame_ts_ns == (11, 20)
+    assert client.view_window() is final
+
+
+def test_window_snapshot_survives_retention_mutation(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """Captured frames and completeness survive retention eviction."""
+    client = build_ahc(
+        evidence_budget_bytes=4,
+        window_id_extractor=lambda type_id, payload: [len(payload)],
+    )
+    client.begin_view_window()
+    ts = time.monotonic_ns()
+    client._append_evidence(ts, 1, b"aaaa")
+    client.seal_view_window(ts)
+    snapshot = client.snapshot_view_window()
+    assert snapshot is not None
+    client._append_evidence(ts + 1, 1, b"bb")
+    evidence = snapshot.evaluate()
+    assert evidence.distinct_ids == frozenset({4})
+    assert evidence.frame_ts_ns == (ts,)
+    assert evidence.incomplete is False
+    live = client.view_window()
+    assert live is not None and live.incomplete is True
+
+
+@pytest.mark.parametrize("operation", ["reseal", "reopen", "retire"])
+def test_cooperative_window_decode_does_not_cache_stale_generation(
+    build_ahc: Callable[..., AgenticHeadlessClient], operation: str
+) -> None:
+    """Cooperative decoding never caches across window generation changes."""
+    extracted = [0]
+
+    def extractor(type_id: int, payload: bytes) -> list[int]:
+        del type_id
+        extracted[0] += 1
+        return [len(payload)]
+
+    client = build_ahc(
+        evidence_budget_bytes=4096,
+        window_id_extractor=extractor,
+    )
+    client.begin_view_window()
+    ts = time.monotonic_ns()
+    client._evidence.extend((ts, 1, b"a") for _ in range(130))
+    client.seal_view_window(ts)
+
+    async def exercise() -> None:
+        task = asyncio.create_task(client.view_window_async())
+        await asyncio.sleep(0)
+        while extracted[0] == 0 and not task.done():
+            await asyncio.sleep(0)
+        assert 0 < extracted[0] < 130
+        assert not task.done()
+        if operation == "reopen":
+            client.begin_view_window()
+        elif operation == "reseal":
+            client.seal_view_window(time.monotonic_ns() + 1_000_000_000)
+        else:
+            client.retire_view_window()
+        if operation != "retire":
+            client._evidence.append((time.monotonic_ns(), 1, b"bb"))
+        old = await task
+        assert old is not None and old.distinct_ids == frozenset({1})
+        assert client._window_evidence is None
+        current = await client.view_window_async()
+        if operation == "retire":
+            assert current is None
+        else:
+            assert current is not None and 2 in current.distinct_ids
+
+    asyncio.run(exercise())
+
+
+def test_retired_window_pauses_raw_retention_until_a_new_window(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """Snapshots survive retirement while events and reconnect remain independent."""
+    client = build_ahc(
+        direct_type_ids=frozenset({_DIRECT_TYPE}),
+        evidence_budget_bytes=4096,
+        window_id_extractor=lambda type_id, payload: [len(payload)],
+    )
+    client.register_type("state", _DIRECT_TYPE)
+    client._direct_ready = True
+    client.begin_view_window()
+    _drain(client, bytearray(_encode_frame(client, _DIRECT_TYPE, b"aaa")))
+    client.seal_view_window(time.monotonic_ns())
+    snapshot = client.snapshot_view_window()
+    assert snapshot is not None
+    expected = snapshot.evaluate()
+    count = client.replication_count()
+    client.retire_view_window()
+    generation = client._window_generation
+    client.retire_view_window()
+    assert client._window_generation == generation
+    _drain(client, bytearray(_encode_frame(client, _DIRECT_TYPE, b"bbbb")))
+    assert client.evidence_frames() == [] and client._evidence_bytes == 0
+    assert client.view_window() is None
+    assert client.replication_count() == count + 1
+    assert [event.payload for event in client.recent_events()] == [b"aaa", b"bbbb"]
+    assert snapshot.evaluate() == expected
+    client._arm_connection()
+    client._direct_ready = True
+    _drain(client, bytearray(_encode_frame(client, _DIRECT_TYPE, b"ccccc")))
+    assert client.evidence_frames() == []
+    client.begin_view_window()
+    _drain(client, bytearray(_encode_frame(client, _DIRECT_TYPE, b"dddddd")))
+    assert [event.payload for event in client.evidence_frames()] == [b"dddddd"]
+    assert snapshot.evaluate() == expected
+
+
+@pytest.mark.parametrize("discard", [False, True])
+def test_evidence_fifo_matches_deque_across_turnover_and_reuse(discard: bool) -> None:
+    """FIFO turnover preserves values and payload references."""
+    frames = ahc._EvidenceFrames()
+    expected: deque[tuple[int, int, bytes]] = deque()
+    for index in range(600):
+        payload = bytes([index % 256]) * 7
+        frames.append_values(index, index % 65536, payload)
+        expected.append((index, index % 65536, payload))
+    for _ in range(300):
+        original = expected.popleft()
+        if discard:
+            assert frames.oldest_timestamp() == original[0]
+            assert frames.discard_oldest() is original[2]
+        else:
+            actual = frames.popleft()
+            assert actual == original and actual[2] is original[2]
+    for index in range(600, 900):
+        payload = bytes([index % 256]) * 7
+        frames.append_values(index, index, payload)
+        expected.append((index, index, payload))
+    assert list(frames) == list(expected)
+    assert all(a[2] is b[2] for a, b in zip(frames, expected, strict=True))
+    assert frames.span_ns() == expected[-1][0] - expected[0][0]
+    while expected:
+        original = expected.popleft()
+        if discard:
+            assert frames.oldest_timestamp() == original[0]
+            assert frames.discard_oldest() is original[2]
+        else:
+            assert frames.popleft() == original
+    assert len(frames) == 0 and frames.span_ns() is None
+    with pytest.raises(IndexError):
+        frames.popleft()
+    frames.extend([(1, 2, b"shared")])
+    frames.clear()
+    assert list(frames) == [] and frames.span_ns() is None
+    frames.append((3, 4, b"again"))
+    assert list(frames) == [(3, 4, b"again")]
+
+
+def test_evidence_oversized_eviction_preserves_snapshot_after_reconnect(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """Snapshots share payloads while live reconnect and eviction stay isolated."""
+    client = build_ahc(evidence_budget_bytes=4)
+    client.begin_view_window()
+    timestamp = time.monotonic_ns()
+    first, second = bytes(bytearray(b"aa")), bytes(bytearray(b"bb"))
+    client._append_evidence(timestamp, 1, first)
+    client._append_evidence(timestamp + 1, 2, second)
+    snapshot = client.snapshot_view_window()
+    assert snapshot is not None and type(snapshot.frames) is tuple
+    assert all(type(frame) is tuple for frame in snapshot.frames)
+    assert snapshot.frames[0][2] is first and snapshot.frames[1][2] is second
+    client._arm_connection()
+    assert tuple(client._evidence) == snapshot.frames
+    client._append_evidence(timestamp + 2, 3, b"large")
+    assert len(client._evidence) == 0 and client._evidence_bytes == 0
+    assert client._evidence_evictions == 3 and client._window_evicted_in_window
+    assert snapshot.frames == ((timestamp, 1, first), (timestamp + 1, 2, second))
+    assert snapshot.frames[0][2] is first and snapshot.frames[1][2] is second
+    assert not snapshot.incomplete
+
+
+def test_evidence_hot_discard_reads_timestamp_until_first_in_window_eviction(
+    build_ahc: Callable[..., AgenticHeadlessClient],
+) -> None:
+    """Steady eviction preserves counts without repeatedly reading metadata."""
+    client = build_ahc(evidence_budget_bytes=1)
+    client.begin_view_window()
+    timestamp = client._window_start_ns
+    assert timestamp is not None
+    reads = [0]
+
+    class Metadata(deque[int]):
+        @overload
+        def __getitem__(self, index: SupportsIndex, /) -> int: ...
+
+        @overload
+        def __getitem__(self, index: slice, /) -> Never: ...
+
+        def __getitem__(self, index: SupportsIndex | slice, /) -> int:
+            if isinstance(index, slice):
+                raise TypeError("deque indices must be integers")
+            if index == 0:
+                reads[0] += 1
+            return super().__getitem__(index)
+
+    client._evidence._metadata = Metadata(client._evidence._metadata)
+    client._append_evidence(timestamp - 1, 1, b"a")
+    client._append_evidence(timestamp + 1, 1, b"b")
+    assert reads == [1] and not bool(client._window_evicted_in_window)
+    client._append_evidence(timestamp + 2, 1, b"c")
+    assert reads == [2] and client._window_evicted_in_window
+    for index in range(3, 100):
+        client._append_evidence(timestamp + index, 1, b"d")
+    assert reads == [2]
+    assert client._evidence_evictions == 99 and client._evidence_bytes == 1
+    client._window_open = False
+    client._window_evicted_in_window = False
+    client._append_evidence(timestamp + 100, 1, b"e")
+    assert reads == [2] and not client._window_evicted_in_window
+    assert client._evidence_evictions == 100 and client._evidence_bytes == 1
+
+
+@pytest.mark.parametrize("path", ["cold", "hot"])
+@pytest.mark.parametrize("length", [0, 64])
+@pytest.mark.parametrize("failure", ["first_metadata", "second_metadata", "payload"])
+def test_evidence_fifo_append_failure_preserves_values_and_reuse(
+    length: int, failure: str, path: str, build_ahc: Callable[..., AgenticHeadlessClient]
+) -> None:
+    """Partial appends roll back both FIFOs and re-raise the same failure."""
+    client = build_ahc(evidence_budget_bytes=1024) if path == "hot" else None
+    frames = client._evidence if client is not None else ahc._EvidenceFrames()
+    append = client._append_evidence if client is not None else frames.append_values
+    if client is not None:
+        client.begin_view_window()
+    for index in range(length):
+        append(index, 1, bytes([index % 256]))
+    before = list(frames)
+    client_state = (
+        (
+            client._evidence_bytes,
+            client._evidence_evictions,
+            client._window_evicted_in_window,
+            client._window_generation,
+            client._window_open,
+            client._window_start_ns,
+        )
+        if client is not None
+        else None
+    )
+    calls = [0]
+    error = (
+        KeyboardInterrupt("append")
+        if failure == "payload" and length == 64
+        else MemoryError("append")
+    )
+
+    class Metadata(deque[int]):
+        def append(self, value: int) -> None:
+            calls[0] += 1
+            if failure == "first_metadata" and calls[0] == 1:
+                raise error
+            super().append(value)
+            if failure == "second_metadata" and calls[0] == 2:
+                raise error
+
+    class Payloads(deque[bytes]):
+        def append(self, value: bytes) -> None:
+            super().append(value)
+            calls[0] += 1
+            if failure == "payload" and calls[0] == 3:
+                raise error
+
+    frames._metadata = Metadata(frames._metadata)
+    frames._payloads = Payloads(frames._payloads)
+    with pytest.raises(type(error)) as caught:
+        append(999, 2, b"new")
+    assert caught.value is error
+    if client is not None:
+        assert (
+            client._evidence_bytes,
+            client._evidence_evictions,
+            client._window_evicted_in_window,
+            client._window_generation,
+            client._window_open,
+            client._window_start_ns,
+        ) == client_state
+    assert list(frames) == before
+    assert all(a[2] is b[2] for a, b in zip(frames, before, strict=True))
+    assert len(frames._metadata) == 2 * len(frames._payloads) == 2 * length
+    append(1000, 3, b"after")
+    assert list(frames) == [*before, (1000, 3, b"after")]
+    assert len(frames._metadata) == 2 * len(frames._payloads)

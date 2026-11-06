@@ -63,7 +63,7 @@ enum kith_client_default : unsigned int
     KITH_CLIENT_DEFAULT_OUTBOUND_CAP = 64u,
     /** Default event ring capacity in event records. */
     KITH_CLIENT_DEFAULT_EVENT_CAP = 256u,
-    /** Default ping interval in milliseconds (0 = no ping). */
+    /** Default ping interval in milliseconds. */
     KITH_CLIENT_DEFAULT_PING_INTERVAL_MS = 1000u,
     /** Default reconnect base delay in milliseconds. */
     KITH_CLIENT_DEFAULT_RECONNECT_BASE_MS = 250u,
@@ -539,8 +539,8 @@ kith_client_set_frame_handler(kith_client_t *client, kith_client_frame_fn on_fra
 /**
  * Feed a decoded inbound frame to the engine. The engine processes the
  * frame in this order:
- * 1. If the frame is a pong (matches @c pong_type_id) and keepalive is
- *    active, extract RTT and clear @c awaiting_pong. Done.
+ * 1. If the frame matches a configured nonzero @c pong_type_id, handle
+ *    it as a pong and stop dispatch, even when ping transmission is disabled.
  * 2. If the bootstrap is RUNNING and the frame's @c type_id matches the
  *    current step's @c await_type_id (or @c await_type_id is 0), call
  *    the step's @c on_reply. Done.
@@ -566,11 +566,14 @@ kith_client_feed_frame(kith_client_t *client, const kith_proto_frame_t *frame, u
 /**
  * Pop the next outbound frame to send. The engine copies the frame into
  * @p out_buf and frees the queue slot.
+ * A too-small buffer leaves the frame at the front of the queue for a
+ * subsequent call with more output space.
  *
  * @param client      Client handle. Must be non-NULL.
  * @param out_buf     Output buffer. Must be non-NULL.
  * @param cap         Bytes available at @p out_buf.
- * @param out_len     Receives the frame length on success.
+ * @param out_len     Receives the frame length on success, or 0 on
+ *                    -KITH_EAGAIN or -KITH_EOVERFLOW.
  * @return            0 on success, negative kith_error on failure:
  *                    - -KITH_EINVAL if @p client, @p out_buf, or
  *                      @p out_len is NULL,

@@ -58,22 +58,17 @@ import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
+from fractions import Fraction
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from examples._common.query_state import QUERY_STATE_DEFAULT_PAGE_SIZE
 from examples.spatial import handlers as spatial_handlers
 from examples.spatial import messages as spatial_messages
-from examples.spatial.client import (
-    ActorStateView,
-    decode_actor_state,
-    decode_actor_state_batch,
-    is_membership_record,
-)
+from examples.spatial.client import iter_actor_states_for
 from examples.spatial.handlers import CELL_RADIUS, CELL_SIZE_Q16
 
 from kith import SimInput
-from tools.agent.ahc import ClientEvent
 from tools.agent.assertions import ServerControl
 from tools.agent.gap_ledger import (
     ClientSeries,
@@ -90,7 +85,7 @@ from tools.agent.observer_gates import (
     ObserverLimits,
     evaluate_observation,
 )
-from tools.agent.orchestrator import ManagedClient, Orchestrator
+from tools.agent.orchestrator import EvidenceReader, EvidenceSnapshot, ManagedClient, Orchestrator
 from tools.agent.proc_sampler import ProcSampler, ProcTrace, SamplerTarget
 from tools.agent.server_control import ServerControlError
 
@@ -1233,15 +1228,67 @@ def _collect_run_envelope() -> RunEnvelope:
 
 
 @dataclass(frozen=True, slots=True)
+class MovementRound:
+    """One completed client walk on the absolute offered-load schedule.
+
+    Submit counts denote returned client API calls, not kernel writes.
+    """
+
+    input_tick: int
+    due_ns: int
+    start_ns: int
+    end_ns: int
+    lateness_ns: int
+    submits: int
+    yields: int
+
+
+@dataclass(frozen=True, slots=True)
+class OfferedLoad:
+    """Actual movement timing and completeness, separate from delivery bars.
+
+    A full-slot overrun skips all elapsed slots and resumes at the next
+    future slot. Missing slots, readiness after the anchor, or a client
+    walk finishing after the planned deadline make the attempt incomplete.
+    Sub-period wakeup lateness is recorded without a jitter allowance.
+    ``period_ns`` is the whole-nanosecond minimum interval; adjacent slots
+    can differ by one nanosecond. Each due time floors its exact schedule
+    offset independently; the duration rounds to the nearest nanosecond.
+    """
+
+    ready_ns: int
+    anchor_ns: int
+    deadline_ns: int
+    period_ns: int
+    movable_clients: int
+    planned_rounds: int
+    missed_slots: int
+    rounds: tuple[MovementRound, ...]
+
+    @property
+    def complete(self) -> bool:
+        return (
+            self.movable_clients > 0
+            and self.ready_ns <= self.anchor_ns
+            and self.missed_slots == 0
+            and len(self.rounds) == self.planned_rounds
+            and bool(self.rounds)
+            and self.rounds[-1].end_ns <= self.deadline_ns
+            and all(r.submits == self.movable_clients for r in self.rounds)
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class GateReport:
     """A renderable report over one scaling-gate run.
 
     Pure value object: holds the profile, metrics, thresholds, and run
     metadata and produces strings; performs no I/O. The ``passed`` property
-    compares metrics against thresholds and requires an ``ok`` observer
-    verdict when one is attached, so classification only adds failure
-    modes. ``invocation`` records the command line that drove the run (the
-    profile carries the resolved configuration), so the report alone
+    compares metrics against thresholds, rejects incomplete offered load,
+    and requires an ``ok`` observer verdict when one is attached, so
+    classification only adds failure modes. ``invocation`` records the command
+    line that drove the run (the profile carries the resolved configuration),
+    so the report alone
     reproduces its own measurement.
     """
 
@@ -1255,6 +1302,15 @@ class GateReport:
     echo_settle_s: float = _POST_WINDOW_ECHO_SETTLE_S
     envelope: RunEnvelope | None = None
     shape: RunShape | None = None
+    offered_load: tuple[OfferedLoad, ...] = ()
+
+    @property
+    def offered_load_complete(self) -> bool | None:
+        """Require every cohort to be ready before the first movement anchor."""
+        if not self.offered_load:
+            return None
+        first_anchor = min(load.anchor_ns for load in self.offered_load)
+        return all(load.complete and load.ready_ns <= first_anchor for load in self.offered_load)
 
     @property
     def passed(self) -> bool:
@@ -1262,6 +1318,7 @@ class GateReport:
         t = self.thresholds
         return (
             _meets_bars(m, t)
+            and self.offered_load_complete is not False
             and m.publish_rate_skew <= t.publish_rate_skew_max
             and m.breadth_violation is None
             and (self.observation is None or self.observation.klass == VERDICT_OK)
@@ -1275,6 +1332,8 @@ class GateReport:
             "metrics": asdict(self.metrics),
             "thresholds": asdict(self.thresholds),
             "passed": self.passed,
+            "offered_load": [asdict(load) for load in self.offered_load],
+            "offered_load_complete": self.offered_load_complete,
             "started_at": self.started_at,
             "duration_s": round(self.duration_s, 3),
             "invocation": self.invocation,
@@ -1309,6 +1368,17 @@ class GateReport:
             f"**Delivery:** {self.profile.delivery_strategy or 'full'}  ",
             f"**Actors:** {m.actor_count} (sampled: {m.sampled_clients})",
         ]
+        if self.offered_load_complete is False:
+            lines.append("**Offered load incomplete:** timing evidence does not qualify this run.")
+        for index, load in enumerate(self.offered_load):
+            state = "complete" if load.complete else "INCOMPLETE"
+            first_offset = load.rounds[0].start_ns - load.anchor_ns if load.rounds else None
+            lines.append(
+                f"**Offered load {index}:** {state}; {len(load.rounds)}/{load.planned_rounds} "
+                f"rounds; {load.missed_slots} missed slots; "
+                f"ready offset {load.ready_ns - load.anchor_ns} ns; "
+                f"first-round offset {first_offset} ns"
+            )
         if self.invocation:
             lines.append(f"**Invocation:** `{self.invocation}`")
         if self.shape is not None:
@@ -1534,7 +1604,8 @@ class GateReport:
                     "—",
                 )
             )
-        planned = math.ceil(self.profile.duration_s * self.profile.input_hz)
+        duration_ns = round(Fraction(str(self.profile.duration_s)) * 1_000_000_000)
+        planned = math.ceil(duration_ns * Fraction(str(self.profile.input_hz)) / 1_000_000_000)
         per_client = m.inputs_submitted / max(self.profile.actor_count, 1)
         rounds_value = f"{per_client:.1f} / {planned} planned"
         if m.rounds_max > 0:
@@ -2585,6 +2656,7 @@ class LoadHarness:
         "_invocation",
         "_limits",
         "_movement_anchor_ns",
+        "_offered_load",
         "_proc_trace_output",
         "_profile",
         "_server_pids",
@@ -2606,6 +2678,10 @@ class LoadHarness:
         echo_settle_s: float | None = None,
         shape: RunShape | None = None,
     ) -> None:
+        if not math.isfinite(profile.input_hz) or not 0 < profile.input_hz <= 1e9:
+            raise ValueError("input_hz must be finite, positive, and at most 1e9 Hz")
+        if not math.isfinite(profile.duration_s) or profile.duration_s < 1e-9:
+            raise ValueError("duration_s must be finite and at least one nanosecond")
         self._profile = profile
         self._host_factory = host_factory
         self._proc_trace_output = proc_trace_output
@@ -2620,12 +2696,10 @@ class LoadHarness:
         # depth history and feed the diagnostic cohort section (never the
         # gate metrics). Empty disables the probe (the default).
         self._spread_probe_indices = spread_probe_indices
-        # Absolute CLOCK_MONOTONIC deadline (ns) the movement phase waits
-        # for before scraping its start counters. CLOCK_MONOTONIC is
-        # system-wide, so two processes handed anchors stagger ms apart
-        # hold that offset for the whole window regardless of bootstrap
-        # jitter. None drives immediately (the single-drive behavior).
+        # CLOCK_MONOTONIC anchors survive bootstrap and scrape delays:
+        # late preparation invalidates the load instead of moving its origin.
         self._movement_anchor_ns = movement_anchor_ns
+        self._offered_load = OfferedLoad(0, 0, 0, 0, 0, 0, 0, ())
         # Ceilings the observer-health verdict judges with (the CLI knobs
         # are its recalibration surface; the frozen defaults stand in when
         # unset).
@@ -2659,6 +2733,7 @@ class LoadHarness:
             echo_settle_s=self._echo_settle_s,
             envelope=_collect_run_envelope(),
             shape=self._shape,
+            offered_load=(self._offered_load,),
         )
 
     def _observation_for(self, outcome: _DriveOutcome) -> ObservationVerdict | None:
@@ -2720,7 +2795,7 @@ class LoadHarness:
             await asyncio.sleep(self._profile.settle_s)
             phase_windows, counter_samples = await self._movement_phase(orch, records)
             backlog_pre = await self._frame_age_sample_ms(orch, records)
-            await self._post_window_echo_drain(phase_windows)
+            await self._post_window_echo_drain(records)
             backlog_post = await self._frame_age_sample_ms(orch, records)
             metrics, series = await self._sample_metrics(
                 orch, records, [w.counters for w in phase_windows]
@@ -2874,37 +2949,89 @@ class LoadHarness:
         An empty windows list (no movable clients) means no movement
         window was driven and no counters are reported.
         """
+        self._offered_load = OfferedLoad(0, 0, 0, 0, 0, 0, 0, ())
         movable = [r for r in records if r.own_actor_id != 0 and r.ready_ns > r.started_ns]
         if not movable:
             return [], []
-        anchor_delay_s = _anchor_delay_s(self._movement_anchor_ns)
+        start_scrapes = await _scrape_phase_counters(orch)
+        clients = [(rec, orch.managed_client(rec.name)) for rec in movable]
+        # Keep the decimal profile cadence exact until each absolute due
+        # offset is floored to nanoseconds. A rounded 30 Hz period invents
+        # a 31st slot just before a one-second deadline.
+        period = 1_000_000_000 / Fraction(str(self._profile.input_hz))
+        period_num, period_den = period.numerator, period.denominator
+        period_ns = period_num // period_den
+        duration_ns = round(Fraction(str(self._profile.duration_s)) * 1_000_000_000)
+        ready_ns = time.monotonic_ns()
+        anchor_ns = ready_ns if self._movement_anchor_ns is None else self._movement_anchor_ns
+        deadline_ns = anchor_ns + duration_ns
+        planned_rounds = (duration_ns * period_den + period_num - 1) // period_num
+        anchor_delay_s = _anchor_delay_s(anchor_ns)
         if anchor_delay_s > 0:
             await asyncio.sleep(anchor_delay_s)
-        start_scrapes = await _scrape_phase_counters(orch)
+            # Exclude the anchor wait from movement counter deltas. Scrape
+            # latency remains part of the fixed schedule's actual lateness.
+            start_scrapes = await _scrape_phase_counters(orch)
         window_start = time.monotonic_ns()
         for rec in records:
             orch.managed_client(rec.name).begin_view_window()
         samples: list[CounterSample] = []
         sampler = asyncio.create_task(_run_counter_sampler(orch, samples, window_start))
-        interval = 1.0 / self._profile.input_hz
-        deadline = time.perf_counter() + self._profile.duration_s
-        clients = [(rec, orch.managed_client(rec.name)) for rec in movable]
-        tick = 0
-        while time.perf_counter() < deadline:
-            tick += 1
-            for round_index, (rec, client) in enumerate(clients):
-                _submit_input(client, rec, tick)
-                if round_index % _SUBMIT_YIELD_EVERY == _SUBMIT_YIELD_EVERY - 1:
-                    # Yield so inbound frame processing keeps breathing
-                    # across a round that outgrows its slot.
-                    await asyncio.sleep(0)
-            remaining = deadline - time.perf_counter()
-            if remaining <= 0:
-                break
-            await asyncio.sleep(min(interval, remaining))
-        window_end = time.monotonic_ns()
-        sampler.cancel()
-        await asyncio.gather(sampler, return_exceptions=True)
+        try:
+            rounds: list[MovementRound] = []
+            slot = 0
+            missed_slots = 0
+            while slot < planned_rounds:
+                due_ns = anchor_ns + slot * period_num // period_den
+                now_ns = time.monotonic_ns()
+                if now_ns < due_ns:
+                    await asyncio.sleep((due_ns - now_ns) / 1e9)
+                    continue
+                if now_ns >= deadline_ns:
+                    missed_slots += planned_rounds - slot
+                    break
+                next_due_ns = anchor_ns + (slot + 1) * period_num // period_den
+                if now_ns >= next_due_ns:
+                    next_slot = min(
+                        ((now_ns - anchor_ns + 1) * period_den + period_num - 1) // period_num,
+                        planned_rounds,
+                    )
+                    missed_slots += next_slot - slot
+                    slot = next_slot
+                    continue
+                tick = slot + 1
+                submits = 0
+                yields = 0
+                for round_index, (rec, client) in enumerate(clients):
+                    _submit_input(client, rec, tick)
+                    submits += 1
+                    if round_index % _SUBMIT_YIELD_EVERY == _SUBMIT_YIELD_EVERY - 1:
+                        # Every started round reaches all clients, even on overrun.
+                        await asyncio.sleep(0)
+                        yields += 1
+                rounds.append(
+                    MovementRound(
+                        tick, due_ns, now_ns, time.monotonic_ns(), now_ns - due_ns, submits, yields
+                    )
+                )
+                slot += 1
+            remaining_ns = deadline_ns - time.monotonic_ns()
+            if remaining_ns > 0:
+                await asyncio.sleep(remaining_ns / 1e9)
+            window_end = time.monotonic_ns()
+            self._offered_load = OfferedLoad(
+                ready_ns,
+                anchor_ns,
+                deadline_ns,
+                period_ns,
+                len(clients),
+                planned_rounds,
+                missed_slots,
+                tuple(rounds),
+            )
+        finally:
+            sampler.cancel()
+            await asyncio.gather(sampler, return_exceptions=True)
         deadline = window_end + int(_BREADTH_WINDOW_DRAIN_S * 1e9)
         for rec in records:
             orch.managed_client(rec.name).seal_view_window(deadline)
@@ -2921,22 +3048,25 @@ class LoadHarness:
             windows.append(_WindowCounters(present, delta if present else _ABSENT_PHASE_COUNTERS))
         return windows, samples
 
-    async def _post_window_echo_drain(self, phase_windows: Sequence[_WindowCounters]) -> None:
-        """Hold the depth scrape for the fixed echo drain after the window.
+    async def _post_window_echo_drain(self, records: Sequence[_ClientRecord]) -> None:
+        """Wait for the absolute breadth and depth collection deadlines.
 
         The echo pipeline lags the last submitted tick by up to the tiered
         max-gap backstop plus one delivery cadence; a scrape at window end
         counts that lag as move-missing. Sleeping for
         :data:`_POST_WINDOW_ECHO_SETTLE_S` lets in-flight echoes land, so
         move-missing measures echo lag beyond the bound plus permanent
-        loss instead of scrape timing. The bound is fixed in the module —
-        never tuned per run — and skipped when no movement window drove.
-        The end-of-window phase-counter scrape stays inside the movement
-        phase, so the drain adds no counter noise.
+        loss instead of scrape timing. Work already elapsed after movement
+        counts toward the wait. Breadth keeps its own fixed drain when a
+        diagnostic selects a shorter echo drain. Missing phase counters
+        do not remove either deadline.
         """
-        if not phase_windows:
-            return
-        await asyncio.sleep(self._echo_settle_s)
+        ends = [rec.movement_end_ns for rec in records if rec.movement_end_ns != 0]
+        if ends:
+            deadline = max(ends) + int(max(self._echo_settle_s, _BREADTH_WINDOW_DRAIN_S) * 1e9)
+            remaining = deadline - time.monotonic_ns()
+            if remaining > 0:
+                await asyncio.sleep(remaining / 1e9)
 
     @staticmethod
     async def _frame_age_sample_ms(
@@ -2971,7 +3101,7 @@ class LoadHarness:
         fetch (the event histories are drained at shutdown).
         """
         thresholds = thresholds_for(self._profile)
-        breadth = await _collect_breadth(
+        breadth, evidence = await _collect_window_evidence(
             orch,
             records,
             thresholds.min_distinct_others,
@@ -2984,7 +3114,7 @@ class LoadHarness:
 
         instrumented = [r for r in records if r.instrumented and r.own_actor_id != 0]
         submitted, observed, series, cert_rows = await _collect_depth_metrics(
-            orch, instrumented, self._echo_settle_s
+            evidence, instrumented, self._echo_settle_s
         )
         move_missing = _move_missing_ratio(submitted, observed)
         move_missing_certified, cert_fallbacks = _certified_metrics(cert_rows)
@@ -2994,16 +3124,22 @@ class LoadHarness:
         spread_cohort: CohortDepth | None = None
         if self._spread_probe_indices:
             head_cohort = await _collect_cohort_depth(
-                orch, "head", list(instrumented), _per_instance_ranks(records), self._echo_settle_s
+                evidence,
+                "head",
+                list(instrumented),
+                _per_instance_ranks(records),
+                self._echo_settle_s,
+                depth_rows=cert_rows,
             )
             spread_recs = [r for r in records if r.spread and r.own_actor_id != 0]
             if spread_recs:
                 spread_cohort = await _collect_cohort_depth(
-                    orch,
+                    evidence,
                     "spread",
                     spread_recs,
                     _per_instance_ranks(records),
                     self._echo_settle_s,
+                    depth_rows=cert_rows,
                 )
         per_client_inputs = [r.inputs_submitted for r in records]
         rounds_min = min(per_client_inputs) if per_client_inputs else 0
@@ -3102,7 +3238,7 @@ class LoadHarness:
             await asyncio.sleep(self._profile.settle_s)
             phase_windows, counter_samples = await self._movement_phase(orch, records)
             backlog_pre = await self._frame_age_sample_ms(orch, records)
-            await self._post_window_echo_drain(phase_windows)
+            await self._post_window_echo_drain(records)
             backlog_post = await self._frame_age_sample_ms(orch, records)
             metrics, series = await self._sample_distributed_metrics(
                 orch, records, [w.counters for w in phase_windows]
@@ -3200,7 +3336,7 @@ class LoadHarness:
         the instrumented sample's own-actor series for the ledger.
         """
         thresholds = thresholds_for(self._profile)
-        breadth = await _collect_breadth(
+        breadth, evidence = await _collect_window_evidence(
             orch,
             records,
             thresholds.min_distinct_others,
@@ -3213,7 +3349,7 @@ class LoadHarness:
 
         instrumented = [r for r in records if r.instrumented and r.own_actor_id != 0]
         submitted, observed, series, cert_rows = await _collect_depth_metrics(
-            orch, instrumented, self._echo_settle_s
+            evidence, instrumented, self._echo_settle_s
         )
         move_missing = _move_missing_ratio(submitted, observed)
         move_missing_certified, cert_fallbacks = _certified_metrics(cert_rows)
@@ -3223,16 +3359,22 @@ class LoadHarness:
         spread_cohort: CohortDepth | None = None
         if self._spread_probe_indices:
             head_cohort = await _collect_cohort_depth(
-                orch, "head", list(instrumented), _per_instance_ranks(records), self._echo_settle_s
+                evidence,
+                "head",
+                list(instrumented),
+                _per_instance_ranks(records),
+                self._echo_settle_s,
+                depth_rows=cert_rows,
             )
             spread_recs = [r for r in records if r.spread and r.own_actor_id != 0]
             if spread_recs:
                 spread_cohort = await _collect_cohort_depth(
-                    orch,
+                    evidence,
                     "spread",
                     spread_recs,
                     _per_instance_ranks(records),
                     self._echo_settle_s,
+                    depth_rows=cert_rows,
                 )
         per_client_inputs = [r.inputs_submitted for r in records]
         rounds_min = min(per_client_inputs) if per_client_inputs else 0
@@ -3246,7 +3388,7 @@ class LoadHarness:
         ]
         p95 = _percentile(latencies_ms, 95) if latencies_ms else 0
 
-        skew = await _publish_rate_skew(orch, records)
+        skew = await _publish_rate_skew(evidence, records)
 
         return (
             GateMetrics(
@@ -3371,31 +3513,6 @@ def _submit_input(client: ManagedClient, rec: _ClientRecord, tick: int) -> None:
     client.submit(spatial_messages.ACTOR_INPUT_TYPE, payload)
 
 
-def _iter_actor_state_views(event: ClientEvent) -> list[ActorStateView]:
-    """Decode a replication event into a list of actor state views.
-
-    Handles both the per-subject ``actor_state`` form (one 64-byte record)
-    and the multi-subject ``actor_state_batch`` form (a 4-byte header + N
-    records). Returns an empty list when the payload is too short or the
-    event is not a replication type.
-    """
-    if event.type_id == spatial_messages.ACTOR_STATE_BATCH_TYPE:
-        try:
-            views = decode_actor_state_batch(event.payload)
-        except ValueError:
-            return []
-        # Membership events are not subject states: the fidelity metrics key
-        # on positions and echoed input ticks, which sentinels do not carry.
-        return [v for v in views if not is_membership_record(v)]
-    if event.type_id == spatial_messages.ACTOR_STATE_TYPE:
-        try:
-            view = decode_actor_state(event.payload)
-        except ValueError:
-            return []
-        return [] if is_membership_record(view) else [view]
-    return []
-
-
 def _distinct_non_self(ids: frozenset[int], own_actor_id: int) -> int:
     """Count a distinct-id set's members excluding the client's own actor id.
 
@@ -3416,7 +3533,7 @@ def _window_stream_continuous(frame_ts_ns: Sequence[int]) -> bool:
 
 
 async def _client_view_facts(
-    orch: Orchestrator, rec: _ClientRecord, min_distinct: int
+    orch: EvidenceReader, rec: _ClientRecord, min_distinct: int
 ) -> tuple[bool, bool, bool]:
     """Return ``(observed, stalled, incomplete)`` from one client's window evidence.
 
@@ -3459,14 +3576,14 @@ async def _client_view_facts(
 
 
 async def _client_view_set_healthy(
-    orch: Orchestrator, rec: _ClientRecord, min_distinct: int
+    orch: EvidenceReader, rec: _ClientRecord, min_distinct: int
 ) -> bool:
     """Return whether ``rec``'s movement-window stream proves the view bar."""
     observed, _stalled, _incomplete = await _client_view_facts(orch, rec, min_distinct)
     return observed
 
 
-async def _view_evidence_fresh(orch: Orchestrator, rec: _ClientRecord, min_distinct: int) -> bool:
+async def _view_evidence_fresh(orch: EvidenceReader, rec: _ClientRecord, min_distinct: int) -> bool:
     """Return whether ``rec``'s movement-window evidence alone proves the view bar.
 
     The divergence guard for isolated clients: an isolated client whose
@@ -3502,7 +3619,7 @@ class ClientDepthRow:
 
 
 async def _collect_depth_metrics(
-    orch: Orchestrator,
+    orch: EvidenceReader,
     instrumented: list[_ClientRecord],
     drain_s: float,
 ) -> tuple[int, int, tuple[ClientSeries, ...], tuple[ClientDepthRow, ...]]:
@@ -3544,10 +3661,10 @@ async def _collect_depth_metrics(
         cert_end = end + int(drain_s * 1_000_000_000)
         frames: list[SeriesFrame] = []
         cert_frames: list[SeriesFrame] = []
-        for event in events:
-            for view in _iter_actor_state_views(event):
-                if view.actor_id != rec.own_actor_id:
-                    continue
+        for event_index, event in enumerate(events):
+            if event_index % 16 == 0:
+                await asyncio.sleep(0)
+            for view in iter_actor_states_for(event.type_id, event.payload, rec.own_actor_id):
                 # Tick distinctness spans the full history; the series is
                 # scoped to the movement window alone.
                 seen_ticks.add(view.input_tick)
@@ -3727,11 +3844,13 @@ class CohortDepth:
 
 
 async def _collect_cohort_depth(
-    orch: Orchestrator,
+    orch: EvidenceReader,
     cohort: str,
     records: list[_ClientRecord],
     ranks: dict[str, int],
     drain_s: float,
+    *,
+    depth_rows: Sequence[ClientDepthRow] = (),
 ) -> CohortDepth:
     """Collect per-client depth detail for one client cohort.
 
@@ -3743,26 +3862,29 @@ async def _collect_cohort_depth(
     subset would renumber its members instead of locating them in the real
     submit sequence.
     """
+    by_name = {row.name: row for row in depth_rows}
+    missing = [rec for rec in records if rec.name not in by_name]
+    if missing:
+        _, _, _, extra_rows = await _collect_depth_metrics(orch, missing, drain_s)
+        by_name.update((row.name, row) for row in extra_rows)
     rows: list[CohortRow] = []
     cert_rows: list[ClientDepthRow] = []
     submitted = 0
     observed = 0
     for rec in records:
-        rec_submitted, rec_observed, _, rec_rows = await _collect_depth_metrics(
-            orch, [rec], drain_s
-        )
-        submitted += rec_submitted
-        observed += rec_observed
-        cert_rows.extend(rec_rows)
+        depth = by_name[rec.name]
+        submitted += depth.submitted
+        observed += depth.observed
+        cert_rows.append(depth)
         rows.append(
             CohortRow(
                 name=rec.name,
                 instance_index=rec.instance_index,
                 per_instance_rank=ranks.get(rec.name, 0),
-                submitted=rec_submitted,
-                observed=rec_observed,
-                certified_missing=rec_rows[0].certified_missing,
-                certified_fallback=rec_rows[0].certified_fallback,
+                submitted=depth.submitted,
+                observed=depth.observed,
+                certified_missing=depth.certified_missing,
+                certified_fallback=depth.certified_fallback,
             )
         )
     certified, fallbacks = _certified_metrics(tuple(cert_rows))
@@ -4326,7 +4448,7 @@ def _assemble_breadth(
 
 
 async def _probe_breadth_rows(
-    orch: Orchestrator,
+    orch: EvidenceReader,
     records: Sequence[_ClientRecord],
     rows: list[_BreadthRow],
     min_distinct: int,
@@ -4384,6 +4506,42 @@ async def _collect_breadth(
     so the fresh flag renders there without breaching the guardrail; a
     multi-cell embedded profile would need the cell-aware form.
     """
+    rows, classified = await _prepare_breadth_rows(orch, records, min_distinct)
+    return await _finish_breadth(
+        orch, records, rows, min_distinct, classified, fresh_isolated_violates
+    )
+
+
+async def _collect_window_evidence(
+    orch: Orchestrator,
+    records: list[_ClientRecord],
+    min_distinct: int,
+    *,
+    fresh_isolated_violates: bool = True,
+) -> tuple[BreadthCensus, EvidenceSnapshot]:
+    """Bind the cohort, capture its observations, and reduce frozen breadth.
+
+    The caller waits for the absolute collection deadlines first. Control
+    queries retain their collection-time ordering; they are separate remote
+    observations. The subsequent client capture does not yield or decode.
+    The returned reader also supplies depth and delivered-frame reporting.
+    """
+    rows, classified = await _prepare_breadth_rows(orch, records, min_distinct)
+    evidence = orch.snapshot_clients(
+        [rec.name for rec in records],
+        event_clients=frozenset(rec.name for rec in records if rec.instrumented or rec.spread),
+        retire_windows=True,
+    )
+    breadth = await _finish_breadth(
+        evidence, records, rows, min_distinct, classified, fresh_isolated_violates
+    )
+    return breadth, evidence
+
+
+async def _prepare_breadth_rows(
+    orch: Orchestrator, records: list[_ClientRecord], min_distinct: int
+) -> tuple[list[_BreadthRow], bool]:
+    """Read collection-time bindings and rosters before observing clients."""
     control = orch.server_control
     rows = [
         _BreadthRow(
@@ -4397,8 +4555,7 @@ async def _collect_breadth(
     ]
     rows_by_name = {row.name: row for row in rows}
     if control is None:
-        await _probe_breadth_rows(orch, records, rows, min_distinct)
-        return _assemble_with_instances(records, rows, classified=False)
+        return rows, False
     from tools.agent.distributed_host import DistributedControl
 
     groups: list[tuple[ServerControl, list[_ClientRecord]]] = []
@@ -4429,7 +4586,21 @@ async def _collect_breadth(
         for rec in recs:
             if rec.principal_id in bindings:
                 rows_by_name[rec.name].isolated = rec.own_actor_id in iso_ids
+    return rows, True
+
+
+async def _finish_breadth(
+    orch: EvidenceReader,
+    records: list[_ClientRecord],
+    rows: list[_BreadthRow],
+    min_distinct: int,
+    classified: bool,
+    fresh_isolated_violates: bool,
+) -> BreadthCensus:
+    """Reduce the supplied client observations with the prepared cohort truth."""
     await _probe_breadth_rows(orch, records, rows, min_distinct)
+    if not classified:
+        return _assemble_with_instances(records, rows, classified=False)
     for rec, row in zip(records, rows, strict=True):
         if row.isolated:
             row.fresh = await _view_evidence_fresh(orch, rec, min_distinct)
@@ -4488,7 +4659,9 @@ def _assemble_with_instances(
     return replace(census, instances=instances)
 
 
-async def _publish_rate_counts(orch: Orchestrator, records: list[_ClientRecord]) -> dict[int, int]:
+async def _publish_rate_counts(
+    orch: EvidenceReader, records: list[_ClientRecord]
+) -> dict[int, int]:
     """Sum the replication frames each instance delivered to its booted clients.
 
     For each instance, sums the dispatched replication-frame counts of
@@ -4508,7 +4681,7 @@ async def _publish_rate_counts(orch: Orchestrator, records: list[_ClientRecord])
     return per_instance
 
 
-async def _publish_rate_skew(orch: Orchestrator, records: list[_ClientRecord]) -> float:
+async def _publish_rate_skew(orch: EvidenceReader, records: list[_ClientRecord]) -> float:
     """Return the max/min ratio of per-instance delivered-frame counts.
 
     Under even spread the ratio trends to 1.0; an instance that is the
