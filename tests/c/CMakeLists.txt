@@ -147,7 +147,8 @@ target_compile_definitions(test_state_overflow PRIVATE _GNU_SOURCE)
 add_test(NAME test_state_overflow COMMAND test_state_overflow)
 
 add_executable(test_state_ops test_state_ops.c)
-target_link_libraries(test_state_ops PRIVATE kith_state kith_reactor Threads::Threads)
+target_link_libraries(test_state_ops PRIVATE kith_state kith_reactor Threads::Threads PkgConfig::hiredis)
+target_include_directories(test_state_ops PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_compile_definitions(test_state_ops PRIVATE _GNU_SOURCE)
 add_test(NAME test_state_ops COMMAND test_state_ops)
 

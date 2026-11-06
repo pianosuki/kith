@@ -18,7 +18,7 @@ struct kith_state_adapter
     bool registration_failed; // a reactor registration failed; the context is
                               // freed and every pending command fails as soon
                               // as a top-level reactor context allows it
-    int registration_rc;      // the failing registration's negative error code
+    int registration_rc;      // the first failing registration's negative error code
     bool wiring;              // true while create wires the adapter callbacks
 };
 

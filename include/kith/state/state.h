@@ -13,8 +13,8 @@
  * A state handle wraps a non-blocking Redis connection (via hiredis async)
  * and integrates with a reactor for event-driven I/O. Operations —
  * SET, GET, DEL, EXISTS — are submitted asynchronously; the result
- * arrives via a caller-supplied callback invoked from the reactor's event
- * loop.
+ * arrives via a caller-supplied callback, normally from the reactor's event
+ * loop. Destruction completes pending commands synchronously on its caller.
  *
  * Keys and values are opaque byte buffers with explicit lengths, not
  * null-terminated strings. This supports binary data, structured
@@ -26,7 +26,7 @@
  *
  * The state store does not own a reactor — it borrows one from the
  * composition root for the lifetime of the state handle. The reactor
- * thread dispatches reply callbacks.
+ * thread dispatches replies during normal operation.
  */
 
 /* Forward declaration — the full type lives in kith/reactor/reactor.h. */
@@ -165,15 +165,16 @@ struct kith_state_reply
 typedef struct kith_state_reply kith_state_reply_t;
 
 /**
- * Completion callback invoked by the reactor when a Redis command
- * completes.
+ * Command completion callback. Normal completions run on the reactor thread;
+ * pending commands completed by kith_state_destroy run on its calling thread.
  *
  * @param reply The command result. All pointer fields are valid only for
  *              the duration of this call; copy any data that must
  *              outlive the callback.
- * @thread_safety unsafe — called on the reactor's event-loop thread.
- *                 The callback must not block or call back into the
- *                 reactor.
+ * @thread_safety unsafe — callbacks for a state handle are serialized.
+ *                 The callback may request shutdown with kith_reactor_stop.
+ *                 It must not block or call other reactor APIs. A stop
+ *                 request does not permit destroying handles in the callback.
  */
 typedef void (*kith_state_reply_fn)(kith_state_reply_t *reply);
 
@@ -208,10 +209,11 @@ typedef void (*kith_state_reply_fn)(kith_state_reply_t *reply);
  *                   - -KITH_ESIZE if @p params or @p alloc has an
  *                     undersized size,
  *                   - -KITH_ENOMEM on allocation failure,
- *                   - -KITH_EBUSY if the reactor cannot register the
- *                     connection's socket (registration table full).
- * @thread_safety unsafe — must not race with another kith_state_create
- *                on the same @p out_state slot.
+ *                   - -KITH_EBUSY if reactor registration capacity or poll
+ *                     identities are exhausted,
+ *                   - -KITH_EIO if the backend cannot register the socket.
+ * @thread_safety unsafe — the reactor must not be running; must not race
+ *                with another kith_state_create on the same @p out_state slot.
  * @ownership callee — the returned handle is freed by the caller with
  *           kith_state_destroy.
  */
@@ -225,13 +227,15 @@ typedef void (*kith_state_reply_fn)(kith_state_reply_t *reply);
  *
  * Disconnects from Redis and frees the hiredis async context, the
  * reactor event adapter, and any pending command state. Pending
- * commands complete during the call with -KITH_ECONNRESET replies.
+ * commands already handed to hiredis complete synchronously on the calling
+ * thread with -KITH_ECONNRESET replies. Queued reactor submission tasks must
+ * have drained before this call; stopping the run loop alone does not ensure
+ * that condition.
  *
  * @param state State store handle. NULL is a no-op.
- * @thread_safety unsafe — no operation may be in flight, including one
- *                whose submission task is queued but not yet drained on
- *                the reactor thread, and no callback may be running when
- *                this is called.
+ * @thread_safety unsafe — the reactor must not be running, all submission
+ *                tasks must have drained, and no concurrent submissions or
+ *                callbacks may remain when this is called.
  * @ownership callee — @p state is consumed and freed by the call.
  */
 KITH_API void kith_state_destroy(kith_state_t *state);
@@ -245,7 +249,7 @@ KITH_API void kith_state_destroy(kith_state_t *state);
  *
  * Issues a Redis SET command. The command is issued on the reactor
  * thread: the call validates its arguments, copies @p key and @p value,
- * and queues the work. The result arrives via @p callback, invoked from
+ * and queues the work. The result normally arrives via @p callback from
  * the reactor's event loop. Failures discovered after the call returns —
  * a connection that is broken or lost, a command the server cannot
  * process — surface as a non-zero status in the completion callback
@@ -270,9 +274,9 @@ KITH_API void kith_state_destroy(kith_state_t *state);
  *                   - -KITH_EBUSY if the reactor task queue is full.
  * @thread_safety safe-if the state handle is not being destroyed
  *                concurrently. May be called from any thread; callbacks
- *                always fire on the reactor thread.
- * @ownership caller — @p state, @p key, and @p value are borrowed for the call
- *           only; @p user_data is borrowed until the completion callback fires.
+ *                follow the kith_state_reply_fn thread contract.
+ * @ownership caller — @p key and @p value are borrowed for the call only.
+ *           @p state and @p user_data must outlive the completion callback.
  */
 [[nodiscard]] KITH_API int kith_state_set(kith_state_t *state,
                                           const void *key,
@@ -285,7 +289,7 @@ KITH_API void kith_state_destroy(kith_state_t *state);
 /**
  * Get the value of a key asynchronously.
  *
- * Issues a Redis GET command. The result arrives via @p callback,
+ * Issues a Redis GET command. The result normally arrives via @p callback,
  * invoked from the reactor's event loop. If the key does not exist,
  * the callback receives @p status = 0 with @p value = NULL.
  *
@@ -305,9 +309,9 @@ KITH_API void kith_state_destroy(kith_state_t *state);
  *                   - -KITH_EBUSY if the reactor task queue is full.
  * @thread_safety safe-if the state handle is not being destroyed
  *                concurrently. May be called from any thread; callbacks
- *                always fire on the reactor thread.
- * @ownership caller — @p state and @p key are borrowed for the call only;
- *           @p user_data is borrowed until the completion callback fires.
+ *                follow the kith_state_reply_fn thread contract.
+ * @ownership caller — @p key is borrowed for the call only; @p state and
+ *           @p user_data must outlive the completion callback.
  */
 [[nodiscard]] KITH_API int kith_state_get(kith_state_t *state,
                                           const void *key,
@@ -318,7 +322,7 @@ KITH_API void kith_state_destroy(kith_state_t *state);
 /**
  * Delete a key asynchronously.
  *
- * Issues a Redis DEL command. The result arrives via @p callback,
+ * Issues a Redis DEL command. The result normally arrives via @p callback,
  * invoked from the reactor's event loop. Deleting a nonexistent key
  * is not an error — the callback receives @p status = 0.
  *
@@ -338,9 +342,9 @@ KITH_API void kith_state_destroy(kith_state_t *state);
  *                   - -KITH_EBUSY if the reactor task queue is full.
  * @thread_safety safe-if the state handle is not being destroyed
  *                concurrently. May be called from any thread; callbacks
- *                always fire on the reactor thread.
- * @ownership caller — @p state and @p key are borrowed for the call only;
- *           @p user_data is borrowed until the completion callback fires.
+ *                follow the kith_state_reply_fn thread contract.
+ * @ownership caller — @p key is borrowed for the call only; @p state and
+ *           @p user_data must outlive the completion callback.
  */
 [[nodiscard]] KITH_API int kith_state_del(kith_state_t *state,
                                           const void *key,
@@ -351,7 +355,7 @@ KITH_API void kith_state_destroy(kith_state_t *state);
 /**
  * Check whether a key exists asynchronously.
  *
- * Issues a Redis EXISTS command. The result arrives via @p callback,
+ * Issues a Redis EXISTS command. The result normally arrives via @p callback,
  * invoked from the reactor's event loop. The @p exists field of the
  * reply indicates whether the key was present.
  *
@@ -371,9 +375,9 @@ KITH_API void kith_state_destroy(kith_state_t *state);
  *                   - -KITH_EBUSY if the reactor task queue is full.
  * @thread_safety safe-if the state handle is not being destroyed
  *                concurrently. May be called from any thread; callbacks
- *                always fire on the reactor thread.
- * @ownership caller — @p state and @p key are borrowed for the call only;
- *           @p user_data is borrowed until the completion callback fires.
+ *                follow the kith_state_reply_fn thread contract.
+ * @ownership caller — @p key is borrowed for the call only; @p state and
+ *           @p user_data must outlive the completion callback.
  */
 [[nodiscard]] KITH_API int kith_state_exists(kith_state_t *state,
                                              const void *key,

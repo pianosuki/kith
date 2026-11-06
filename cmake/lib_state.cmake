@@ -4,7 +4,7 @@
 # connection via hiredis async and integrates with the reactor for
 # event-driven I/O. Operations (set, get, del, exists) are submitted
 # asynchronously; results arrive via caller-supplied callbacks invoked
-# from the reactor event loop.
+# from the reactor event loop during normal operation.
 #
 # Keys and values are opaque byte buffers with explicit lengths, not
 # null-terminated strings. An optional key prefix provides namespace

@@ -149,9 +149,8 @@ void kith_state_command_cb(redisAsyncContext *ac, void *reply, void *privdata)
 // ---------------------------------------------------------------------------
 // connection failure — free the hiredis context, failing every pending command
 // ---------------------------------------------------------------------------
-// Top-level reactor contexts only (task drain, fd-callback entry and exit):
-// hiredis frees the context inline only outside its own callbacks, and a
-// nested redisAsyncFree leaves the caller dereferencing freed memory.
+// Called outside hiredis entry calls, including owner destruction, so context
+// cleanup and command completions finish before the state handle is released.
 // redisAsyncFree fires every pending command with a NULL reply, which
 // kith_state_command_cb maps to a -KITH_ECONNRESET reply.
 static void state_fail_connection(struct kith_state_adapter *adapter)
@@ -175,6 +174,10 @@ static void state_fail_connection(struct kith_state_adapter *adapter)
 // top-level exit; create checks it after wiring and fails instead.
 static void state_registration_failed(struct kith_state_adapter *adapter, int rc)
 {
+    if (adapter->registration_failed)
+    {
+        return;
+    }
     adapter->registration_failed = true;
     adapter->registration_rc = rc;
 }
@@ -207,7 +210,7 @@ void kith_state_event_handler(int fd, unsigned int events, void *ctx)
     }
     if (adapter->ac == nullptr)
     {
-        // The read half processed a disconnect and freed the context.
+        // The read half released the context.
         return;
     }
     if (fatal != 0u || (events & (unsigned int)KITH_REACTOR_OUT) != 0u)
@@ -227,13 +230,18 @@ void kith_state_event_handler(int fd, unsigned int events, void *ctx)
 static void recompute_events(struct kith_state_adapter *adapter)
 {
     int fd = adapter->ac->c.fd;
+    int rc;
     if (adapter->event_mask == 0u)
     {
-        (void)kith_reactor_del(adapter->reactor, fd);
+        rc = kith_reactor_del(adapter->reactor, fd);
     }
     else
     {
-        (void)kith_reactor_mod(adapter->reactor, fd, adapter->event_mask);
+        rc = kith_reactor_mod(adapter->reactor, fd, adapter->event_mask);
+    }
+    if (rc != 0)
+    {
+        state_registration_failed(adapter, rc);
     }
 }
 
@@ -262,6 +270,10 @@ void kith_state_adapter_add_read(void *privdata)
 void kith_state_adapter_del_read(void *privdata)
 {
     struct kith_state_adapter *adapter = privdata;
+    if ((adapter->event_mask & (unsigned int)KITH_REACTOR_IN) == 0u)
+    {
+        return;
+    }
     adapter->event_mask &= ~(unsigned int)KITH_REACTOR_IN;
     recompute_events(adapter);
 }
@@ -291,14 +303,26 @@ void kith_state_adapter_add_write(void *privdata)
 void kith_state_adapter_del_write(void *privdata)
 {
     struct kith_state_adapter *adapter = privdata;
+    if ((adapter->event_mask & (unsigned int)KITH_REACTOR_OUT) == 0u)
+    {
+        return;
+    }
     adapter->event_mask &= ~(unsigned int)KITH_REACTOR_OUT;
     recompute_events(adapter);
 }
 
 void kith_state_adapter_cleanup(void *privdata)
 {
-    // The adapter is embedded in kith_state; hiredis does not own it.
-    (void)privdata;
+    struct kith_state_adapter *adapter = privdata;
+    if (adapter->event_mask != 0u && adapter->ac != nullptr)
+    {
+        (void)kith_reactor_del(adapter->reactor, adapter->ac->c.fd);
+    }
+    // Failed connects invoke cleanup without a disconnect notification.
+    // The context is hiredis-owned; the embedded adapter remains state-owned.
+    adapter->event_mask = 0u;
+    adapter->connected = false;
+    adapter->ac = nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -312,17 +336,8 @@ void kith_state_connect_cb(const redisAsyncContext *ac, int status)
 
 void kith_state_disconnect_cb(const redisAsyncContext *ac, int status)
 {
-    struct kith_state_adapter *adapter = ac->ev.data;
     (void)status;
-    adapter->connected = false;
-    if (adapter->event_mask != 0u)
-    {
-        (void)kith_reactor_del(adapter->reactor, ac->c.fd);
-        adapter->event_mask = 0u;
-    }
-    // The context is freed after this callback returns; drop the dangling
-    // pointer so subsequent submission tasks and handlers fail cleanly.
-    adapter->ac = nullptr;
+    kith_state_adapter_cleanup(ac->ev.data);
 }
 
 // ---------------------------------------------------------------------------
@@ -620,20 +635,7 @@ KITH_API void kith_state_destroy(kith_state_t *state)
         return;
     }
 
-    // deregister from reactor if still registered
-    if (state->adapter.event_mask != 0u)
-    {
-        (void)kith_reactor_del(state->adapter.reactor, state->adapter.ac->c.fd);
-        state->adapter.event_mask = 0u;
-    }
-
-    // the hiredis context is hiredis-allocated and stays outside the
-    // allocator contract
-    if (state->adapter.ac != nullptr)
-    {
-        redisAsyncFree(state->adapter.ac);
-    }
-
+    state_fail_connection(&state->adapter);
     kith_free(state->allocator, state);
 }
 
