@@ -563,9 +563,40 @@ static int test_config_range_value_fails_create(void)
     return failures;
 }
 
+static int test_tick_rate_legacy_range(void)
+{
+    int failures = 0;
+    kith_server_params_t params = {0};
+    params.size = sizeof(params);
+    params.abi_version = KITH_ABI_VERSION;
+    params.tick_hz = 1001u;
+    kith_server_t *server = nullptr;
+    CHECK(kith_server_create(&params, nullptr, &server) == 0);
+    CHECK(server != nullptr);
+    if (server != nullptr)
+    {
+        CHECK(server->tick_interval_ms == 0u);
+        kith_server_destroy(server);
+    }
+    kith_config_t *cfg = nullptr;
+    CHECK(config_from_body("tick_hz = 65535\n", &cfg) == 0);
+    params.tick_hz = 0u;
+    params.config = cfg;
+    CHECK(kith_server_create(&params, nullptr, &server) == 0);
+    CHECK(server != nullptr);
+    if (server != nullptr)
+    {
+        CHECK(server->tick_interval_ms == 0u);
+        kith_server_destroy(server);
+    }
+    kith_config_destroy(cfg);
+    return failures;
+}
+
 int main(void)
 {
     int rc = 0;
+    rc |= test_tick_rate_legacy_range();
     rc |= test_create_arg_validation();
     rc |= test_create_params_validation();
     rc |= test_create_topology();

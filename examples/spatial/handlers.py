@@ -1024,11 +1024,10 @@ def register(
     exists. Login and chat stay Python handlers. The knob requires the
     built ``spatial_native_core`` shared library.
 
-    The ``native_apply`` wiring reaches the server's private borrowed-handle
-    accessors (``_borrowed_sim``, ``_borrowed_fabric``, ``_borrowed_gateway``):
-    a deliberate composition-root exception — this example composes the
-    server's own planes during setup, and no public borrowed-handle surface
-    exists this release.
+    The ``native_apply`` wiring passes ``Server.native_handle`` to the native
+    library, which derives plane handles through public C server accessors.
+    The server owns those planes; native state stays alive until server close
+    drains callbacks, then its destructor releases only application storage.
 
     Args:
         server: The facade the handlers publish through and register on.
@@ -1052,18 +1051,19 @@ def register(
     """
     native: SpatialNative | None = None
     if native_apply:
-        from examples.spatial.native import SpatialNative
+        from examples.spatial.native import SpatialNative, borrow_server_planes
 
+        sim, fabric, gateway = borrow_server_planes(server.native_handle)
         native = SpatialNative(
-            sim=server._borrowed_sim(),
+            sim=sim,
             model=model.handle,
-            fabric=server._borrowed_fabric(),
+            fabric=fabric,
             zone_id=zone_id,
             cell_size=cell_size,
             cell_radius=cell_radius,
             max_actors=8192,
         )
-        native.register_movement_handler(server._borrowed_gateway(), messages.ACTOR_INPUT_TYPE)
+        native.register_movement_handler(gateway, messages.ACTOR_INPUT_TYPE)
     handlers = SpatialHandlers(
         server=server,
         model=model,

@@ -125,8 +125,9 @@ typedef enum kith_server_status kith_server_status_t;
  *
  * @c KITH_SERVER_HANDLER_PYTHON marks the callback as a Python-bound ctypes
  * trampoline so the tick dispatch routes it through the server's worker
- * pool instead of invoking it on the reactor thread. A callback
- * registered without the flag is a plain C function pointer and runs inline
+ * pool instead of invoking it on the reactor thread.
+ * @c KITH_SERVER_HANDLER_POOL selects serialized native pool dispatch. A callback
+ * registered without either dispatch flag is a plain C function pointer and runs inline
  * on the reactor thread.
  */
 enum kith_server_handler_flag : unsigned int
@@ -142,6 +143,11 @@ enum kith_server_handler_flag : unsigned int
      *  exhausted, the callback is dropped and counted via
      *  @c kith_server_tick_drops. */
     KITH_SERVER_HANDLER_PYTHON = 1u,
+    /** Native callback dispatched to the worker pool with at most one
+     *  invocation queued or executing. Busy ticks are dropped and counted;
+     *  accepted invocations run in increasing tick order without overlap.
+     *  Cannot be combined with the Python flag. */
+    KITH_SERVER_HANDLER_POOL = 2u,
 };
 
 /** Alias of enum kith_server_handler_flag. */
@@ -152,7 +158,7 @@ typedef enum kith_server_handler_flag kith_server_handler_flag_t;
  * server's monotonic tick counter @p tick (the tick-boundary time base)
  * and the @p user_data pointer supplied at
  * registration. The callback runs on a worker thread when registered with
- * @c KITH_SERVER_HANDLER_PYTHON and a pool is attached, or inline on the
+ * @c KITH_SERVER_HANDLER_PYTHON or @c KITH_SERVER_HANDLER_POOL, or inline on the
  * reactor thread for a C callback (no flag).
  *
  * @param tick      The monotonic tick index for this tick (1-based; advances
@@ -228,7 +234,10 @@ struct kith_server_params
     const char *listen_host;
     /** Gateway listen port; 0 selects an OS-assigned ephemeral port. */
     uint16_t listen_port;
-    /** Simulation tick rate in Hz; 0 selects the default. */
+    /** Tick rate in Hz; 0 selects the default. Rates 1..1000 use a monotonic
+     *  rational grid with millisecond resolution and skip late slots without
+     *  catch-up bursts. Larger values retain legacy zero-interval best-effort
+     *  scheduling, without a precise rate guarantee. See docs/guides/server_timing.md. */
     uint16_t tick_hz;
     /** Python handler worker pool size; 0 selects the default. */
     uint32_t python_worker_count;
@@ -390,7 +399,9 @@ typedef struct kith_server_params kith_server_params_t;
  * Release a server handle and every plane handle the wiring owns, in reverse
  * creation order. Passing NULL is a no-op. Must not be called while
  * @c kith_server_run is in flight on @p server; call @c kith_server_shutdown
- * first and wait for @c kith_server_run to return. The borrowed configuration
+ * first and wait for @c kith_server_run to return. Destruction must run on an
+ * owning thread outside this server's callbacks; a worker cannot join itself.
+ * The borrowed configuration
  * source passed at create time is not freed (the caller owns it and destroys
  * it separately, after this call).
  *
@@ -500,7 +511,8 @@ KITH_API uint16_t kith_server_control_port(const kith_server_t *server);
  * Register a single per-tick game-logic callback. The reactor invokes @p fn
  * once per normal tick, advancing a monotonic tick counter and dispatching
  * the callback to the worker pool
- * as a single task when @p flags carries @c KITH_SERVER_HANDLER_PYTHON,
+ * as a single task when @p flags carries @c KITH_SERVER_HANDLER_PYTHON
+ * or @c KITH_SERVER_HANDLER_POOL,
  * or inline on the reactor thread for a C callback (no flag). The shutdown
  * drain tick does not dispatch the callback. Replaces any prior
  * registration.
@@ -511,18 +523,32 @@ KITH_API uint16_t kith_server_control_port(const kith_server_t *server);
  * counted via @c kith_server_tick_drops; the reactor never runs a
  * Python-bound tick callback inline.
  *
+ * Native pool callbacks never overlap each other, including across replacement
+ * registrations. A busy native slot, allocation failure, absent pool or full
+ * pool drops the tick and increments @c kith_server_tick_drops. There is no
+ * retry or inline fallback. Accepted tick indices may have gaps. Message and
+ * control callbacks may overlap the tick; shared state needs application
+ * synchronization. Python ticks retain their concurrent dispatch contract.
+ *
+ * The task copies the function, tick index and context pointer, not the context
+ * data. Unregister does not drain accepted work. Keep callback code and context
+ * alive until server destruction drains the worker pool. Callbacks must return
+ * in bounded time; shutdown cannot cancel an executing native function.
+ * A callback may request shutdown but must not destroy its own server; the
+ * owning thread destroys it after the run loop returns and drains the pool.
+ *
  * @param server    Server handle. NULL is an error.
  * @param fn        Tick callback. NULL is an error.
  * @param user_data Caller context passed verbatim to @p fn on each tick.
  * @param flags     Bitmask of @c kith_server_handler_flag values.
  * @return          0 on success, negative kith_error on failure:
- *                  - -KITH_EINVAL if @p server or @p fn is NULL.
+ *                  - -KITH_EINVAL if @p server or @p fn is NULL, or flags are
+ *                    unknown or combine execution modes.
  * @thread_safety unsafe — must not be called concurrently with
  *                @c kith_server_run (the reactor reads the registration
  *                once per tick). Register before @c kith_server_run.
  * @ownership caller — @p user_data is borrowed for the registration's
- *           lifetime; the caller must keep it valid until the callback is
- *           unregistered or the server is destroyed.
+ *           lifetime and all accepted work; server destruction drains it.
  */
 [[nodiscard]] KITH_API int kith_server_register_tick_handler(kith_server_t *server,
                                                              kith_server_tick_fn fn,
@@ -572,13 +598,10 @@ KITH_API uint16_t kith_server_control_port(const kith_server_t *server);
 kith_server_register_poll_observer(kith_server_t *server, kith_server_poll_fn fn, void *user_data);
 
 /**
- * Read the monotonic count of per-tick callbacks dropped due to worker-pool
- * exhaustion. A drop occurs when the tick dispatch is called for a callback
- * registered with @c KITH_SERVER_HANDLER_PYTHON, a worker pool is attached,
- * and @c kith_worker_submit returns EBUSY; the callback is dropped instead
- * of running it on the reactor thread. The counter is monotonic
- * and never reset. The composition root records its delta as
- * @c kith_server_tick_dropped_total.
+ * Read the monotonic count of refused per-tick callbacks. Missing pool,
+ * allocation failure, full task queue and an occupied native tick slot count
+ * as drops. Refused callbacks never run inline. The counter never resets;
+ * its sampled delta is @c kith_server_tick_dropped_total.
  *
  * @param server   Server handle. NULL is an error.
  * @param out_drops Receives the monotonic drop count on success.

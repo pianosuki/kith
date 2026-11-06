@@ -19,11 +19,11 @@ paths (registering a query without a persistence pool raises
 
 from __future__ import annotations
 
-import os
 import signal
 import threading
 import time
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from types import FrameType
 
@@ -60,6 +60,47 @@ def _status(server: Server) -> ServerStatus:
     the property reflects.
     """
     return server.status
+
+
+@contextmanager
+def _signal_when_running(server: Server, signum: int) -> Iterator[threading.Event]:
+    """Send once to the calling thread, with cancellation before teardown."""
+    target = threading.get_ident()
+    cancelled = threading.Event()
+    sent = threading.Event()
+    send_lock = threading.Lock()
+
+    def _fire() -> None:
+        deadline = time.monotonic() + 5.0
+        while not cancelled.wait(0.01):
+            if time.monotonic() >= deadline:
+                server.shutdown()
+                return
+            if _status(server) is not ServerStatus.RUNNING:
+                continue
+            if cancelled.wait(0.05):
+                return
+            with send_lock:
+                if cancelled.is_set():
+                    return
+                if time.monotonic() >= deadline:
+                    server.shutdown()
+                    return
+                # Target the blocked serve() waiter or main-thread run()
+                # pump, never an unrelated thread with an unblocked mask.
+                signal.pthread_kill(target, signum)
+                sent.set()
+            return
+
+    sender = threading.Thread(target=_fire, daemon=True)
+    sender.start()
+    try:
+        yield sent
+    finally:
+        with send_lock:
+            cancelled.set()
+        sender.join()
+    assert sent.is_set(), "server did not become ready for signal delivery"
 
 
 def _tiered_config_bytes() -> bytes:
@@ -379,27 +420,25 @@ class TestLifecycle:
 class TestServe:
     def test_sigterm_ends_serve_and_close_joins(self) -> None:
         # Pre-block both signals BEFORE the facade constructs the worker
-        # pool: threads inherit the creating thread's mask, and a SIGTERM
-        # delivered to any unblocked thread ends the test process by
-        # default disposition instead of pending for serve()'s wait. The
-        # pool threads block both from entry themselves; the timer thread
-        # here inherits the mask set below.
+        # pool: the sender targets this thread, whose pending SIGTERM is
+        # consumed by serve()'s synchronous wait.
         previous = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
         try:
-            server = Server()
-            killer = threading.Timer(0.3, os.kill, args=(os.getpid(), signal.SIGTERM))
-            killer.start()
-            try:
-                server.serve()
-            finally:
-                killer.cancel()
-            # serve() returns on delivery; the drain finishes on its worker
-            # and close() waits for it before destroying the handle.
-            server.close()
+            assert signal.SIGTERM not in signal.sigpending(), "SIGTERM already pending"
+            with Server() as server:
+                sent: threading.Event | None = None
+                try:
+                    with _signal_when_running(server, signal.SIGTERM) as sent:
+                        server.serve()
+                        assert signal.SIGTERM not in signal.sigpending()
+                finally:
+                    # The sender has joined. If serve() raised before its
+                    # wait consumed the test signal, drain it while blocked.
+                    if sent is not None and sent.is_set():
+                        signal.sigtimedwait({signal.SIGTERM}, 0)
+            # Context exit waits for the run worker before releasing it.
             assert _status(server) is ServerStatus.STOPPED
         finally:
-            # serve() consumed the delivered signal, so restoring the mask
-            # exposes no pending default-disposition kill to the suite.
             signal.pthread_sigmask(signal.SIG_SETMASK, previous)
 
     def test_serve_rejects_when_run_in_flight(self) -> None:
@@ -432,27 +471,13 @@ class TestRunSignalPump:
     no-Python rule).
     """
 
-    def _kill_when_running(self, server: Server, signum: int) -> threading.Timer:
-        # Deliver the signal only once the loop is up, so the pump is what
-        # observes it rather than the pre-run setup window.
-        def _fire() -> None:
-            deadline = time.monotonic() + 5.0
-            while _status(server) is not ServerStatus.RUNNING and time.monotonic() < deadline:
-                time.sleep(0.01)
-            time.sleep(0.05)
-            os.kill(os.getpid(), signum)
-
-        timer = threading.Timer(0.0, _fire)
-        timer.start()
-        return timer
-
     def _install_disposition(
         self,
         signum: int,
         handler: Callable[[int, FrameType | None], None] | int | signal.Handlers,
-    ) -> Callable[[int, FrameType | None], None] | int | signal.Handlers | None:
-        """Set a signal disposition and return the previous one."""
-        previous = signal.getsignal(signum)
+    ) -> dict[int, Callable[[int, FrameType | None], None] | int | signal.Handlers | None]:
+        """Set one disposition, retaining both signals the pump can replace."""
+        previous = {int(sig): signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
         signal.signal(signum, handler)
         return previous
 
@@ -468,37 +493,33 @@ class TestRunSignalPump:
     def test_sigint_with_default_handler_drains_without_exception(
         self,
     ) -> None:
-        # The default int handler raises KeyboardInterrupt inside the pump's
-        # CheckSignals call; the exception cannot cross the C run loop, so the
-        # pump drops it and requests the drain instead. run() returns cleanly.
+        # The pump temporarily replaces the default interrupt handler with
+        # its shutdown shim, then restores it when the run loop drains.
         previous = self._install_disposition(signal.SIGINT, signal.default_int_handler)
-        server = Server()
-        killer = self._kill_when_running(server, signal.SIGINT)
         try:
-            server.run()
+            with Server() as server:
+                with _signal_when_running(server, signal.SIGINT):
+                    server.run()
+                assert _status(server) is ServerStatus.STOPPED
+                assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
         finally:
-            killer.cancel()
-            killer.join(timeout=5.0)
-            self._restore_disposition(signal.SIGINT, previous)
-        assert _status(server) is ServerStatus.STOPPED
-        server.close()
+            for sig, handler in previous.items():
+                self._restore_disposition(sig, handler)
 
     def test_sigterm_at_default_disposition_drains_via_shim(self) -> None:
         # SIG_DFL for SIGTERM kills the process outright; the pump fits a
         # graceful-shutdown shim for the duration of the run and restores the
         # disposition afterwards.
         previous = self._install_disposition(signal.SIGTERM, signal.SIG_DFL)
-        server = Server()
-        killer = self._kill_when_running(server, signal.SIGTERM)
         try:
-            server.run()
+            with Server() as server:
+                with _signal_when_running(server, signal.SIGTERM):
+                    server.run()
+                assert _status(server) is ServerStatus.STOPPED
+                assert signal.getsignal(signal.SIGTERM) is signal.SIG_DFL
         finally:
-            killer.cancel()
-            killer.join(timeout=5.0)
-            self._restore_disposition(signal.SIGTERM, previous)
-        assert _status(server) is ServerStatus.STOPPED
-        assert signal.getsignal(signal.SIGTERM) is signal.SIG_DFL
-        server.close()
+            for sig, handler in previous.items():
+                self._restore_disposition(sig, handler)
 
     def test_user_signal_handler_runs_and_can_request_shutdown(self) -> None:
         # A disposition the embedder set is left in place; the pump invokes
@@ -513,20 +534,17 @@ class TestRunSignalPump:
             server_ref[0].shutdown()
 
         previous = self._install_disposition(signal.SIGTERM, _handler)
-        server = Server()
-        server_ref.append(server)
-        killer = self._kill_when_running(server, signal.SIGTERM)
         try:
-            server.run()
+            with Server() as server:
+                server_ref.append(server)
+                with _signal_when_running(server, signal.SIGTERM):
+                    server.run()
+                assert received == [signal.SIGTERM]
+                assert _status(server) is ServerStatus.STOPPED
+                assert signal.getsignal(signal.SIGTERM) is _handler
         finally:
-            killer.cancel()
-            killer.join(timeout=5.0)
-            self._restore_disposition(signal.SIGTERM, previous)
-        assert received == [signal.SIGTERM]
-        assert _status(server) is ServerStatus.STOPPED
-        # The finally block already restored the pre-run disposition.
-        assert signal.getsignal(signal.SIGTERM) is previous
-        server.close()
+            for sig, handler in previous.items():
+                self._restore_disposition(sig, handler)
 
     def test_run_on_worker_thread_leaves_dispositions_untouched(self) -> None:
         # The pump is a main-thread-only affordance; a run on any other
@@ -541,11 +559,16 @@ class TestRunSignalPump:
                 time.sleep(0.01)
             server.shutdown()
             run_thread.join(timeout=5.0)
+            assert not run_thread.is_alive(), "run thread did not stop"
             assert _status(server) is ServerStatus.STOPPED
+            after = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+            assert after == before
         finally:
-            server.close()
-        after = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
-        assert after == before
+            try:
+                server.close()
+            finally:
+                for sig, previous in before.items():
+                    self._restore_disposition(sig, previous)
 
 
 @needs_build
@@ -891,3 +914,22 @@ class TestLifecycleSurface:
         with pytest.raises(KithStateError) as exc_info:
             _ = server.session_count
         assert exc_info.value.code == gen_types.kith_error.KITH_ESTATE
+
+
+@needs_build
+def test_native_handle_borrows_live_server_and_refuses_closed() -> None:
+    import ctypes
+
+    from kith._bridge import load
+    from kith._generated import server as gen_server
+
+    server = Server()
+    try:
+        address = server.native_handle
+        assert address != 0
+        handle = ctypes.cast(ctypes.c_void_p(address), ctypes.POINTER(gen_server.kith_server_t))
+        assert load().server().kith_server_status(handle) == ServerStatus.CREATED
+    finally:
+        server.close()
+    with pytest.raises(KithStateError):
+        _ = server.native_handle

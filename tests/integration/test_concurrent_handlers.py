@@ -175,6 +175,7 @@ async def _drive_clients(
     *,
     client_count: int = _CLIENT_COUNT,
     incs_per_client: int = _INCS_PER_CLIENT,
+    completed: threading.Event | None = None,
 ) -> int:
     """Start N AHC clients, submit M increments each, then stop them.
 
@@ -186,9 +187,11 @@ async def _drive_clients(
             concurrency.
         incs_per_client: Frames per client; defaults to the locked variant's
             per-client load.
+        completed: A rendezvous completion signal instead of counter progress.
 
     Returns:
-        The final counter value. The clients run without bootstrap steps:
+        The final counter value. An explicit completion event can end the
+        drive without counter progress. The clients run without bootstrap steps:
         on connect the C engine transitions to READY immediately (0 configured
         steps), so interactive commands are accepted as soon as the TCP connection
         is established. After all submissions, the counter is polled until it
@@ -225,6 +228,8 @@ async def _drive_clients(
         last_val = -1
         last_change = time.monotonic()
         while time.monotonic() < deadline:
+            if completed is not None and completed.is_set():
+                break
             val = counter.value
             if val != last_val:
                 last_val = val
@@ -323,6 +328,7 @@ class TestConcurrentHandlerDispatch:
     def test_handlers_execute_concurrently(self) -> None:
         arrivals: list[int] = []
         rendezvous = threading.Barrier(2, timeout=_RENDEZVOUS_TIMEOUT_S)
+        completed = threading.Event()
 
         def handler(_msg_type: int, _payload: bytes, _session: Session) -> None:
             # The first two in-flight invocations release together: a
@@ -331,6 +337,7 @@ class TestConcurrentHandlerDispatch:
             # breaks the barrier, and reads as zero arrivals.
             try:
                 arrivals.append(rendezvous.wait())
+                completed.set()
             except threading.BrokenBarrierError:
                 return
 
@@ -345,6 +352,7 @@ class TestConcurrentHandlerDispatch:
                     expected=1,
                     client_count=_RENDEZVOUS_CLIENTS,
                     incs_per_client=_RENDEZVOUS_INCS_PER_CLIENT,
+                    completed=completed,
                 )
             )
         finally:

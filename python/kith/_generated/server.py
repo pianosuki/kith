@@ -59,6 +59,7 @@ kith_server_status_t = kith_server_status
 class kith_server_handler_flag(IntEnum):
     KITH_SERVER_HANDLER_NONE = 0
     KITH_SERVER_HANDLER_PYTHON = 1
+    KITH_SERVER_HANDLER_POOL = 2
 
 
 kith_server_handler_flag_t = kith_server_handler_flag

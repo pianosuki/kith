@@ -112,7 +112,9 @@ class Worker:
 
         Signals every worker thread to drain remaining queued tasks and exit,
         joins each thread, and frees the pool. No ``kith_worker_submit`` may
-        be in flight on another thread when this is called. Release hooks
+        be in flight on another thread when this is called. Call from outside
+        this pool's own tasks; self-destruction aborts in the C layer because
+        a worker cannot join itself. Release hooks
         registered through :meth:`_register_close_hook` run after the join,
         so a registration held only through raw C pointers is freed once no
         queued task can still reach it.

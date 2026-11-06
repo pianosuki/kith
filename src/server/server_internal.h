@@ -316,6 +316,8 @@ struct kith_server
     kith_server_handler_flag_t tick_flags;
     uint64_t tick_count;
     _Atomic uint64_t tick_dropped;
+    /** One native tick may be queued or executing at a time. */
+    _Atomic bool tick_native_busy;
     uint64_t tick_dropped_last;
     pthread_mutex_t tick_lock;
     /** Error the tick callback stashes when the next-tick reactor

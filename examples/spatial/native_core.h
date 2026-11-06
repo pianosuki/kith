@@ -5,6 +5,7 @@
 
 #include "kith/fabric/fabric.h"
 #include "kith/gateway/gateway.h"
+#include "kith/server/server.h"
 #include "kith/sim/sim.h"
 
 /* Native movement-apply core for the spatial game library: the actor table,
@@ -73,6 +74,12 @@ extern "C"
         /** Reserved for future additive fields. Must be zero-filled. */
         void *reserved[4];
     };
+
+    /** Borrow the server planes during application composition. */
+    void spatial_native_server_planes(kith_server_t *server,
+                                      kith_sim_t **out_sim,
+                                      kith_fabric_t **out_fabric,
+                                      kith_gateway_t **out_gateway);
 
     /**
      * Build a native core. Pre-allocates the actor table, the stripe locks, the

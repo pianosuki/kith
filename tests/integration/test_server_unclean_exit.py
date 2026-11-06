@@ -19,10 +19,12 @@ exercise the gate.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from _helpers import _BUILD_DEBUG, needs_build
 
 
@@ -75,13 +77,43 @@ def main() -> int:
     hitter = threading.Thread(target=hit_route, daemon=True)
     hitter.start()
     time.sleep(2.0)
-    print(f"child: ticks={TICKS[0]}; crashing uncaught", flush=True)
+    print(
+        f"child: ticks={TICKS[0]}; gil_enabled={sys._is_gil_enabled()}; crashing uncaught",
+        flush=True,
+    )
     raise RuntimeError("driver crash: unclean exit with a live server")
 
 
 if __name__ == "__main__":
     sys.exit(main())
 '''
+
+
+def _assert_live_callback_exit(proc: subprocess.CompletedProcess[str]) -> None:
+    """Require callback execution before the intended uncaught exception."""
+    assert proc.returncode == 1, (
+        f"child exited {proc.returncode} (negative = signal death); "
+        f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    )
+    assert "Fatal Python error" not in proc.stderr
+    marker = re.search(
+        r"child: ticks=(\d+); gil_enabled=(True|False); crashing uncaught", proc.stdout
+    )
+    assert marker is not None, f"child never reported live callbacks: {proc.stdout}\n{proc.stderr}"
+    assert int(marker.group(1)) > 0, "child exited without a native-dispatched Python tick"
+    assert (marker.group(2) == "True") == sys._is_gil_enabled(), "child GIL mode differs from suite"
+    assert "RuntimeError: driver crash: unclean exit with a live server" in proc.stderr
+
+
+def test_setup_failure_does_not_pass_unclean_exit_check() -> None:
+    child = subprocess.CompletedProcess(
+        args=[sys.executable],
+        returncode=1,
+        stdout="",
+        stderr="ModuleNotFoundError: missing dependency",
+    )
+    with pytest.raises(AssertionError, match="never reported live callbacks"):
+        _assert_live_callback_exit(child)
 
 
 @needs_build
@@ -102,11 +134,4 @@ class TestServerUncleanExit:
             text=True,
             timeout=60.0,
         )
-        # Status 1 is the child's uncaught RuntimeError. A negative status is
-        # a signal death (-6 SIGABRT, -11 SIGSEGV — the crash class this gate
-        # refuses); 0 means the crash never reached the interpreter exit path.
-        assert proc.returncode == 1, (
-            f"child exited {proc.returncode} (negative = signal death); "
-            f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
-        )
-        assert "Fatal Python error" not in proc.stderr
+        _assert_live_callback_exit(proc)

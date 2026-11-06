@@ -27,9 +27,10 @@
  * itself is interpreter-agnostic: it never enters Python and never
  * blocks on interpreter state.
  *
- * The contract: the reactor never blocks on Python and
- * never runs game or handler logic inline; the pool exists so handler work
- * has somewhere to go that is not the reactor thread.
+ * The reactor never blocks on Python. Python-bound and explicitly pool-bound
+ * handlers and tick callbacks run on the pool, with no inline fallback.
+ * Unflagged native C handlers and tick callbacks run inline on the reactor;
+ * their work must remain bounded and non-blocking.
  * The pool is sized 1 under standard Python (the GIL serializes Python
  * execution anyway, so additional workers only add contention) and sized
  * N under free-threaded Python (real parallelism, no GIL). The size is
@@ -183,7 +184,9 @@ typedef void (*kith_worker_task_cb)(void *ctx);
  * Signals every worker thread to drain the remaining queued tasks and
  * exit, joins each thread, frees the task node pool and the handle. The
  * caller must ensure no @c kith_worker_submit is in flight on another
- * thread when this is called.
+ * thread when this is called. Destruction must run outside this pool's own
+ * tasks. A task cannot join itself; such a call aborts before freeing the pool.
+ * Tasks may request their owner to shut down and destroy the pool instead.
  *
  * @param pool Pool handle. NULL is a no-op.
  * @thread_safety unsafe — must not race with kith_worker_submit or
@@ -212,8 +215,8 @@ KITH_API void kith_worker_destroy(kith_worker_t *pool);
  *             - -KITH_EINVAL if @p pool is NULL or @p cb is NULL,
  *             - -KITH_EBUSY if the task queue is full (no free nodes).
  * @thread_safety safe — callable from any thread.
- * @ownership caller — @p cb and @p ctx are borrowed for the call only (passed
- *           to @p cb when the task fires on a worker thread).
+ * @ownership caller — on success, @p cb and @p ctx remain valid until the
+ *           accepted callback returns. Pool destruction drains accepted tasks.
  */
 [[nodiscard]] KITH_API int
 kith_worker_submit(kith_worker_t *pool, kith_worker_task_cb cb, void *ctx);
@@ -318,9 +321,8 @@ typedef struct kith_worker_bridge kith_worker_bridge_t;
  * The pool's @c task_capacity is the tuning knob for saturation.
  *
  * @param pool  Worker pool to submit to. Must not be NULL.
- * @param ready User readiness callback. Must not be NULL. Stored by the
- *              bridge for its lifetime; the caller keeps the callable alive
- *              until @c kith_worker_bridge_destroy.
+ * @param ready User readiness callback. Must not be NULL. The caller keeps
+ *              the callable alive until all accepted callbacks return.
  * @param ctx   Opaque context passed to @p ready. Borrowed by the bridge.
  * @param out_bridge Receives the new handle on success.
  * @return     0 on success, negative kith_error on failure:
@@ -350,9 +352,8 @@ typedef struct kith_worker_bridge kith_worker_bridge_t;
  * (@c -KITH_EBUSY); the pool's @c task_capacity is the tuning knob.
  *
  * @param pool  Worker pool to submit to. Must not be NULL.
- * @param task  User task callback. Must not be NULL. Stored by the bridge
- *              for its lifetime; the caller keeps the callable alive until
- *              @c kith_worker_bridge_destroy.
+ * @param task  User task callback. Must not be NULL. The caller keeps the
+ *              callable alive until all accepted callbacks return.
  * @param ctx   Opaque context passed to @p task. Borrowed by the bridge.
  * @param out_bridge Receives the new handle on success.
  * @return     0 on success, negative kith_error on failure:
@@ -373,6 +374,9 @@ typedef struct kith_worker_bridge kith_worker_bridge_t;
  * the hop from the reactor (via @c kith_reactor_del for a ready bridge, or
  * by letting the one-shot timer fire for a task bridge) before destroying
  * the bridge; a fire on a destroyed bridge dereferences freed memory.
+ * Destroying the bridge does not cancel or wait for accepted work. Its
+ * callbacks, context and their dependencies remain valid until that work
+ * returns; destroying the pool drains and joins its accepted callbacks.
  *
  * @param bridge Bridge handle. NULL is a no-op.
  * @thread_safety unsafe — no reactor fire may submit through @p bridge when

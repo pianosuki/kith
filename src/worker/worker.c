@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "kith/types.h"
@@ -283,6 +284,17 @@ KITH_API void kith_worker_destroy(kith_worker_t *pool)
     if (pool == nullptr)
     {
         return;
+    }
+    // A worker cannot join itself. Reject before mutating or freeing the pool:
+    // its task node and queue are still needed after the callback returns.
+    const pthread_t current = pthread_self();
+    for (uint32_t i = 0u; i < pool->worker_count; ++i)
+    {
+        if (pthread_equal(current, pool->threads[i]) != 0)
+        {
+            (void)fprintf(stderr, "kith_worker_destroy: cannot destroy a pool from its own task\n");
+            abort();
+        }
     }
     // Signal shutdown and wake every idle worker. The worker loop drains the
     // remaining queued tasks before exiting (it only returns when the queue

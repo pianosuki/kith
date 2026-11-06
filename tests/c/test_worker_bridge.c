@@ -68,8 +68,7 @@ static void ready_user_cb(int fd, unsigned int events, void *arg)
     const ssize_t drained = read(fd, &val, sizeof(val));
     (void)drained;
     kith_reactor_stop(c->reactor);
-    // The release store publishes the completed stop: a waiter that
-    // observes the flag may destroy the reactor.
+    // The release store publishes this callback's completed stop.
     atomic_store_explicit(c->fired, 1u, memory_order_release);
 }
 
@@ -123,9 +122,11 @@ static int test_bridge_ready(void)
 
     CHECK(kith_reactor_del(reactor, efd) == 0);
     kith_worker_bridge_destroy(bridge);
+    // Readiness can submit more than one callback before the eventfd drains.
+    // Keep the reactor and descriptor alive until every accepted callback exits.
+    kith_worker_destroy(pool);
     close(efd);
     kith_reactor_destroy(reactor);
-    kith_worker_destroy(pool);
     return failures;
 }
 
@@ -143,8 +144,7 @@ static void task_user_cb(void *arg)
 {
     struct task_ctx *c = arg;
     kith_reactor_stop(c->reactor);
-    // The release store publishes the completed stop: a waiter that
-    // observes the flag may destroy the reactor.
+    // The release store publishes this callback's completed stop.
     atomic_store_explicit(c->fired, 1u, memory_order_release);
 }
 
@@ -188,8 +188,8 @@ static int test_bridge_task(void)
     CHECK(atomic_load_explicit(&fired, memory_order_acquire) == 1u);
 
     kith_worker_bridge_destroy(bridge);
-    kith_reactor_destroy(reactor);
     kith_worker_destroy(pool);
+    kith_reactor_destroy(reactor);
     return failures;
 }
 

@@ -601,6 +601,16 @@ static uint32_t spatial_pow2_at_least(uint32_t v)
     return p;
 }
 
+void spatial_native_server_planes(kith_server_t *server,
+                                  kith_sim_t **out_sim,
+                                  kith_fabric_t **out_fabric,
+                                  kith_gateway_t **out_gateway)
+{
+    *out_sim = kith_server_sim(server);
+    *out_fabric = kith_server_fabric(server);
+    *out_gateway = kith_server_gateway(server);
+}
+
 int spatial_native_create(const struct spatial_native_params *params, spatial_native_t **out_native)
 {
     if (params == nullptr || out_native == nullptr || params->size != sizeof(*params) ||

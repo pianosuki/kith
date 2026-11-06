@@ -1224,9 +1224,8 @@ kith_gateway_params_t server_gateway_params(struct kith_server *s)
     // breaches the field's own below-one-tick rule once the tick interval
     // drops under 8 ms. Resolve the 0 path here to min(default, half the
     // tick — matching compose_budget_us above): rates at or under 62 Hz
-    // keep the default, higher rates clamp, and a 0 ms integer interval
-    // (tick_hz above 1000) resolves to 0, which the gateway's own 0
-    // resolution then backs up to the default. An explicit caller value
+    // keep the default, higher rates clamp, and legacy rates above 1000
+    // retain zero, which the gateway resolves to its default. An explicit caller value
     // passes through unclamped.
     p.delivery_wait_budget_us = s->delivery_wait_budget_us;
     if (p.delivery_wait_budget_us == 0u)
@@ -1575,82 +1574,78 @@ static int server_drain_coord_bus(struct kith_server *s)
  * per-tick game-logic callback dispatch
  *-------------------------------------------------------------------------*/
 
-// Heap-allocated work record for a single tick callback. The reactor
-// allocates one per tick and submits it to the worker pool; the worker
-// invokes the callback and frees the record. Carrying fn/tick/user_data by
-// value decouples a running callback from a concurrent unregister or
-// re-register (two ticks may be in flight on the pool if a callback is
-// slow), with no use-after-free. The record carries the allocator it was
-// allocated with, so the pool-side free routes through it independently of
-// the server handle's lifetime.
+// Callback snapshots own their work record; the server outlives the drained pool.
 struct server_tick_work
 {
     const kith_allocator_t *allocator;
     kith_server_tick_fn fn;
     uint64_t tick;
     void *user_data;
+    struct kith_server *server;
+    bool python_bound;
+    bool native_serial;
 };
 
 static void server_tick_worker_task(void *arg)
 {
     struct server_tick_work *work = arg;
-    // Every task on this path carries a python-bound callback. A foreign C
-    // thread entering a finalizing interpreter has no graceful path there:
-    // refuse the entry and release the record.
-    if (kith_python_finalizing())
+    if (!work->python_bound || !kith_python_finalizing())
     {
-        kith_free(work->allocator, work);
+        work->fn(work->tick, work->user_data);
+    }
+    if (work->native_serial)
+    {
+        atomic_store_explicit(&work->server->tick_native_busy, false, memory_order_release);
+    }
+    kith_free(work->allocator, work);
+}
+
+static void server_submit_tick(struct kith_server *s, struct server_tick_work *snapshot)
+{
+    bool serial = snapshot->native_serial;
+    if (serial && atomic_exchange_explicit(&s->tick_native_busy, true, memory_order_acquire))
+    {
+        atomic_fetch_add_explicit(&s->tick_dropped, 1u, memory_order_relaxed);
         return;
     }
-    work->fn(work->tick, work->user_data);
-    kith_free(work->allocator, work);
+    struct server_tick_work *work = nullptr;
+    if (s->workers != nullptr)
+    {
+        work = kith_alloc(s->allocator, sizeof(*work));
+    }
+    if (work != nullptr)
+    {
+        *work = *snapshot;
+        if (kith_worker_submit(s->workers, server_tick_worker_task, work) == 0)
+        {
+            return;
+        }
+        kith_free(s->allocator, work);
+    }
+    if (serial)
+    {
+        atomic_store_explicit(&s->tick_native_busy, false, memory_order_release);
+    }
+    atomic_fetch_add_explicit(&s->tick_dropped, 1u, memory_order_relaxed);
 }
 
 void server_dispatch_tick_hook(struct kith_server *s, uint64_t tick)
 {
-    kith_server_tick_fn fn;
-    void *user_data;
-    kith_server_handler_flag_t flags;
+    struct server_tick_work work = {.allocator = s->allocator, .tick = tick, .server = s};
     pthread_mutex_lock(&s->tick_lock);
-    fn = s->tick_fn;
-    user_data = s->tick_user_data;
-    flags = s->tick_flags;
+    work.fn = s->tick_fn;
+    work.user_data = s->tick_user_data;
+    work.python_bound = (s->tick_flags & KITH_SERVER_HANDLER_PYTHON) != 0u;
+    work.native_serial = (s->tick_flags & KITH_SERVER_HANDLER_POOL) != 0u;
     pthread_mutex_unlock(&s->tick_lock);
-    if (fn == nullptr)
+    if (work.fn == nullptr)
     {
         return;
     }
-    if ((flags & KITH_SERVER_HANDLER_PYTHON) != 0u)
+    if (work.python_bound || work.native_serial)
     {
-        // A Python-bound tick callback never runs on the reactor thread:
-        // with no pool attached, or when the pool's queue is exhausted,
-        // the callback is dropped and counted. server_create always builds
-        // a pool, so the no-pool case is only reachable to an embedder
-        // that bypassed it.
-        if (s->workers == nullptr)
-        {
-            atomic_fetch_add_explicit(&s->tick_dropped, 1u, memory_order_relaxed);
-            return;
-        }
-        struct server_tick_work *work = kith_alloc(s->allocator, sizeof(*work));
-        if (work == nullptr)
-        {
-            atomic_fetch_add_explicit(&s->tick_dropped, 1u, memory_order_relaxed);
-            return;
-        }
-        work->allocator = s->allocator;
-        work->fn = fn;
-        work->tick = tick;
-        work->user_data = user_data;
-        if (kith_worker_submit(s->workers, server_tick_worker_task, work) != 0)
-        {
-            kith_free(s->allocator, work);
-            atomic_fetch_add_explicit(&s->tick_dropped, 1u, memory_order_relaxed);
-        }
+        server_submit_tick(s, &work);
         return;
     }
-    // C callback (no KITH_SERVER_HANDLER_PYTHON flag): dispatches inline.
-    // A C callback never enters the interpreter, so the reactor's
-    // never-blocks-on-Python invariant holds.
-    fn(tick, user_data);
+    work.fn(tick, work.user_data);
 }

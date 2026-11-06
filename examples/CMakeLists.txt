@@ -18,5 +18,5 @@ target_include_directories(spatial_native_core PRIVATE ${PROJECT_SOURCE_DIR}/exa
 # The global default hides symbols; this module's surface is its own game
 # ABI consumed by ctypes (examples/spatial/native.py), so it exports it.
 set_target_properties(spatial_native_core PROPERTIES C_VISIBILITY_PRESET default)
-target_link_libraries(spatial_native_core PRIVATE kith_sim kith_fabric kith_gateway Threads::Threads)
+target_link_libraries(spatial_native_core PRIVATE kith_sim kith_fabric kith_gateway kith_server Threads::Threads)
 set_target_properties(spatial_native_core PROPERTIES OUTPUT_NAME spatial_native_core)

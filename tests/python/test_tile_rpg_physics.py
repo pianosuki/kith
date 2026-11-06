@@ -165,12 +165,15 @@ class TestRegister:
         finally:
             bad_path.unlink(missing_ok=True)
 
-    def test_temp_grid_file_is_removed_after_load(self) -> None:
+    def test_temp_grid_file_is_removed_after_load(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         # The register helper writes a temporary grid file for
         # load_behavior and unlinks it after; the temporary dir does not
         # grow per call.
+        monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
         tmx_path = _write_tmx(_wall_tmx(2, 2))
-        tmp_dir = Path(tempfile.gettempdir())
+        tmp_dir = tmp_path
         try:
             server = Server(topology="embedded")
             try:

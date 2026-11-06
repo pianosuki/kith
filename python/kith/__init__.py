@@ -318,7 +318,12 @@ class Server:
         listen_host: Gateway listen host, or ``None`` to bind all interfaces.
         listen_port: Gateway listen port; 0 (the default) selects an
             OS-assigned ephemeral port, readable via :attr:`listen_port`.
-        tick_hz: Simulation tick rate in Hz; 0 selects the default.
+        tick_hz: Target server tick rate in Hz; 0 uses the configuration
+            source or the 20 Hz default. Rates 1..1000 use a
+            millisecond-resolution rational schedule and skip
+            missed deadlines without catch-up bursts. Larger rates retain
+            legacy best-effort scheduling. Applications choose model-step
+            durations separately; see ``docs/guides/server_timing.md``.
         python_workers: Python handler worker pool size; 0 selects the default
             (1 under the GIL).
         replication_type_id: Message type id the gateway uses to encode
@@ -392,6 +397,7 @@ class Server:
 
     __slots__ = (
         "_bridge",
+        "_callback_context",
         "_closed",
         "_config",
         "_destroyed_handler",
@@ -435,7 +441,7 @@ class Server:
         configure_all(bridge)
 
         self._bridge = bridge
-        self._handle: object = None
+        self._handle: ctypes._Pointer[kith_server_t] | None = None
         self._config: Config | None = None
         self._closed: bool = True
         # Set when no run loop is in flight (the default state). Cleared on
@@ -450,6 +456,7 @@ class Server:
         # observes "no run in flight" can destroy the handle while a run
         # thread is between announcing itself and entering the C call.
         self._lifecycle_lock = threading.Lock()
+        self._callback_context = threading.local()
         # Borrowed-view model instances the facade created on the server's
         # sim handle; destroyed on close before the server is released.
         self._models: list[SimModel] = []
@@ -792,6 +799,37 @@ class Server:
     # borrowed handle in an owning Gateway/Sim/Control object (that close
     # frees the server's plane) and never destroys a borrowed handle.
 
+    @property
+    def native_handle(self) -> int:
+        """Borrow the server's native address for an application-owned C library.
+
+        Pass this address as ``kith_server_t *`` to native code linked against
+        the same Kith runtime. Public C server accessors provide borrowed plane
+        handles. Keep this Server, the native library and callback state alive
+        until :meth:`close` has drained all callbacks. The address and derived
+        plane handles become invalid when close destroys the server. Never
+        destroy them from native code. A native destructor called after close
+        must release only application-owned resources without dereferencing
+        any borrowed Kith handle.
+
+        Returns:
+            Nonzero borrowed server address; no ownership is transferred.
+
+        Raises:
+            KithStateError: When the server is closed.
+
+        Thread safety:
+            @thread_safety safe-if the caller serializes all uses of the
+            returned address against close. Retrieving it does not pin it.
+        """
+        with self._lifecycle_lock:
+            handle = self._handle
+            if self._closed or handle is None:
+                raise KithStateError(gen_types.kith_error.KITH_ESTATE, "server handle is closed")
+            address = ctypes.cast(handle, ctypes.c_void_p).value
+            assert address is not None
+            return address
+
     def _borrowed_gateway(self) -> object:
         return self._bridge.server().kith_server_gateway(self._handle)
 
@@ -868,6 +906,19 @@ class Server:
         check_error(rc, f"kith_gateway_register_handler: msg_type={msg_type}")
         self._handlers[msg_type] = (trampoline, handler)
 
+    def _guard_callback[**P, R](self, handler: Callable[P, R]) -> Callable[P, R]:
+        context = self._callback_context
+
+        def _wrapped(*args: P.args, **kwargs: P.kwargs) -> R:
+            depth = getattr(context, "depth", 0)
+            context.depth = depth + 1
+            try:
+                return handler(*args, **kwargs)
+            finally:
+                context.depth = depth
+
+        return _wrapped
+
     def _build_handler_trampoline(self, handler: Callable[..., None]) -> object:
         guarded = _bridge.guarded_handler(handler, "message handler")
 
@@ -882,7 +933,7 @@ class Server:
             session = Session(self._bridge, self._borrowed_gateway(), session_ptr, borrowed=True)
             guarded(int(msg_type), data, session)
 
-        return gen_gateway.kith_gateway_msg_handler_fn(_trampoline)
+        return gen_gateway.kith_gateway_msg_handler_fn(self._guard_callback(_trampoline))
 
     def register_tick_handler(self, handler: Callable[[int], None]) -> None:
         """Register a Python callback invoked once per tick on a worker thread.
@@ -897,7 +948,9 @@ class Server:
         recording the tick's input batch for replay) belongs here rather than
         in a per-input handler, collapsing a per-input publish cadence to a
         per-tick cadence. The callback runs asynchronously: its publishes are
-        observed by the next tick's gateway refresh.
+        eligible at a gateway refresh after publication products are
+        updated. Worker completion, refresh policy and delivery determine
+        observation time; there is no fixed one-tick delivery guarantee.
 
         An exception the callback raises is caught at the dispatch boundary
         and counted in ``kith_python_handler_exceptions_total``; the first
@@ -939,7 +992,7 @@ class Server:
         def _trampoline(tick: int, _user_data: object) -> None:
             guarded(int(tick))
 
-        return gen_server.kith_server_tick_fn(_trampoline)
+        return gen_server.kith_server_tick_fn(self._guard_callback(_trampoline))
 
     def register_sim_model(self, name: str, config: SimModelConfig) -> SimModel:
         """Instantiate a named simulation model with ``config``.
@@ -1330,7 +1383,7 @@ class Server:
             )
             guarded(info)
 
-        return gen_gateway.kith_gateway_session_destroyed_fn(_trampoline)
+        return gen_gateway.kith_gateway_session_destroyed_fn(self._guard_callback(_trampoline))
 
     def register_zone(self, name: str, *, map_path: str | None = None) -> int:
         """Reserve a named zone id, optionally loading a behavior grid.
@@ -1516,7 +1569,7 @@ class Server:
                     pass
             return 0
 
-        return gen_control.kith_control_handler_fn(_trampoline)
+        return gen_control.kith_control_handler_fn(self._guard_callback(_trampoline))
 
     # -----------------------------------------------------------------------
     # teardown
@@ -1547,17 +1600,26 @@ class Server:
         (the caller owns it).
 
         Raises:
+            KithStateError: When called from this server's own handler callback.
+                Request shutdown and close from an owning thread instead.
             KithError: When shutdown is requested and the run loop does not
                 exit within the drain window (``KITH_ETIMEDOUT``).
 
         Thread safety:
-            @thread_safety safe-if no run is in flight, or the run is in
-            flight on another thread (``close`` requests shutdown and blocks
-            until the run loop exits before destroying the handle). Unsafe
+            @thread_safety safe-if called outside this server's callbacks and
+            any active run is on another thread (``close`` requests shutdown
+            and blocks until the run loop exits before destroying the handle). Unsafe
             when called from the run-loop thread itself while a run is in
             flight: the wait is skipped (a thread cannot join itself) and
             the C runtime assertion catches the contract violation.
         """
+        # Check before taking the lifecycle lock: another owner may hold it
+        # while draining this callback. Waiting for that owner deadlocks.
+        if getattr(self._callback_context, "depth", 0):
+            raise KithStateError(
+                gen_types.kith_error.KITH_ESTATE,
+                "cannot close a server from its own callback; request shutdown instead",
+            )
         # The lifecycle lock makes the in-flight decision atomic against
         # run() startup: either this close observes the announcement and
         # waits below, or a concurrent run() has not started yet and its

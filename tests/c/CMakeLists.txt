@@ -116,6 +116,13 @@ target_link_libraries(test_worker_basic PRIVATE kith_worker kith_util)
 target_compile_definitions(test_worker_basic PRIVATE _GNU_SOURCE)
 add_test(NAME test_worker_basic COMMAND test_worker_basic)
 
+add_executable(test_worker_self_destroy test_worker_self_destroy.c)
+target_link_libraries(test_worker_self_destroy PRIVATE kith_worker)
+target_compile_definitions(test_worker_self_destroy PRIVATE _POSIX_C_SOURCE=200809L)
+add_test(NAME test_worker_self_destroy
+    COMMAND bash -c "ulimit -c 0 && exec \"$1\"" -- "$<TARGET_FILE:test_worker_self_destroy>"
+)
+
 add_executable(test_worker_bridge test_worker_bridge.c)
 target_link_libraries(test_worker_bridge PRIVATE kith_worker kith_reactor kith_util)
 target_compile_definitions(test_worker_bridge PRIVATE _GNU_SOURCE)
@@ -516,6 +523,16 @@ target_link_libraries(test_server_wiring PRIVATE kith_gateway kith_config kith_l
 target_compile_definitions(test_server_wiring PRIVATE _GNU_SOURCE)
 target_include_directories(test_server_wiring PRIVATE ${PROJECT_SOURCE_DIR}/src)
 add_test(NAME test_server_wiring COMMAND test_server_wiring)
+
+add_executable(test_server_native_tick test_server_native_tick.c
+    ${PROJECT_SOURCE_DIR}/src/server/wiring.c
+    ${PROJECT_SOURCE_DIR}/src/server/wire.c)
+target_link_libraries(test_server_native_tick PRIVATE kith_server kith_gateway kith_config kith_logger
+    kith_metrics kith_proto kith_net kith_reactor kith_worker kith_state kith_db
+    kith_aoi kith_sim kith_fabric kith_coord kith_control kith_util Threads::Threads)
+target_compile_definitions(test_server_native_tick PRIVATE _GNU_SOURCE)
+target_include_directories(test_server_native_tick PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_server_native_tick COMMAND test_server_native_tick)
 
 add_executable(test_python_handler_exceptions test_python_handler_exceptions.c
     ${PROJECT_SOURCE_DIR}/src/server/wiring.c

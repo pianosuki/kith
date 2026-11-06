@@ -16,8 +16,9 @@ sim. A mismatch fails loudly at the first call, not
 silently: the core validates ``size`` and ``abi_version`` at create.
 
 Payload and plane-handle lifetimes: the plane handles are borrowed from the
-facade and must outlive the core (the composition root closes the core after
-the server facade, so the gateway is quiesced before the core is released).
+facade and expire when it closes. The composition root closes the core after
+the server facade has drained the gateway; core destruction frees only its own
+resources and never dereferences expired plane handles.
 """
 
 from __future__ import annotations
@@ -35,7 +36,7 @@ from kith._generated import version as gen_version
 from kith.exceptions import check_error
 
 
-__all__ = ["SpatialNative", "load_lib"]
+__all__ = ["SpatialNative", "borrow_server_planes", "load_lib"]
 
 
 # Must mirror struct spatial_move_record in native_core.h (26 payload bytes
@@ -109,6 +110,13 @@ def _locate_lib() -> Path:
 def load_lib() -> ctypes.CDLL:
     """Load the native core shared library and bind its surface."""
     lib = ctypes.CDLL(str(_locate_lib()))
+    lib.spatial_native_server_planes.argtypes = (
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_void_p),
+    )
+    lib.spatial_native_server_planes.restype = None
     lib.spatial_native_create.argtypes = (ctypes.POINTER(_Params), ctypes.c_void_p)
     lib.spatial_native_create.restype = ctypes.c_int
     lib.spatial_native_destroy.argtypes = (ctypes.c_void_p,)
@@ -169,6 +177,22 @@ def load_lib() -> ctypes.CDLL:
     )
     lib.spatial_native_flush.restype = ctypes.c_int
     return lib
+
+
+def borrow_server_planes(
+    server_address: int,
+) -> tuple[ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]:
+    """Borrow sim, fabric and gateway through the public C server accessors.
+
+    The caller keeps the owning server alive and excludes concurrent close.
+    These pointers expire at server destruction and must never be freed here.
+    """
+    lib = load_lib()
+    sim, fabric, gateway = ctypes.c_void_p(), ctypes.c_void_p(), ctypes.c_void_p()
+    lib.spatial_native_server_planes(
+        server_address, ctypes.byref(sim), ctypes.byref(fabric), ctypes.byref(gateway)
+    )
+    return sim, fabric, gateway
 
 
 def _actor_to_c(actor: Actor) -> gen_sim.kith_sim_actor_t:

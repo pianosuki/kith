@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <pthread.h>
 
@@ -118,6 +119,14 @@ static int test_tick_hook_null_args(void)
     CHECK(make_server(&s) == 0);
     // A NULL callback is rejected even with a valid server.
     CHECK(kith_server_register_tick_handler(s, nullptr, nullptr, KITH_SERVER_HANDLER_NONE) ==
+          kith_error_return(KITH_EINVAL));
+    CHECK(
+        kith_server_register_tick_handler(s,
+                                          tick_handler_c_inline,
+                                          nullptr,
+                                          KITH_SERVER_HANDLER_PYTHON | KITH_SERVER_HANDLER_POOL) ==
+        kith_error_return(KITH_EINVAL));
+    CHECK(kith_server_register_tick_handler(s, tick_handler_c_inline, nullptr, 4u) ==
           kith_error_return(KITH_EINVAL));
     CHECK(kith_server_tick_drops(s, nullptr) == kith_error_return(KITH_EINVAL));
     // A valid read returns 0 and the monotonic count starts at zero.
@@ -252,10 +261,69 @@ static int test_tick_hook_unregister_roundtrip_not_dispatched(void)
     return failures;
 }
 
+struct slow_tick_ctx
+{
+    pthread_t reactor_tid;
+    _Atomic bool entered;
+    _Atomic bool release;
+    _Atomic bool completed;
+    _Atomic bool on_reactor;
+    unsigned polls;
+};
+
+static void slow_native_tick(uint64_t tick, void *data)
+{
+    (void)tick;
+    struct slow_tick_ctx *ctx = data;
+    atomic_store(&ctx->on_reactor, pthread_equal(pthread_self(), ctx->reactor_tid) != 0);
+    atomic_store(&ctx->entered, true);
+    while (!atomic_load(&ctx->release))
+    {
+        struct timespec delay = {.tv_nsec = 1000000};
+        (void)nanosleep(&delay, nullptr);
+    }
+    atomic_store(&ctx->completed, true);
+}
+
+static int release_native_tick(void *data)
+{
+    struct slow_tick_ctx *ctx = data;
+    ctx->polls++;
+    if (ctx->polls >= 8u)
+    {
+        atomic_store(&ctx->release, true);
+        return 1;
+    }
+    return 0;
+}
+
+// The reactor keeps polling while one native callback occupies its worker slot.
+static int test_native_tick_busy_drops_and_drains(void)
+{
+    int failures = 0;
+    kith_server_t *server = nullptr;
+    CHECK(make_server(&server) == 0);
+    struct slow_tick_ctx ctx = {.reactor_tid = pthread_self()};
+    CHECK(kith_server_register_tick_handler(
+              server, slow_native_tick, &ctx, KITH_SERVER_HANDLER_POOL) == 0);
+    CHECK(kith_server_register_poll_observer(server, release_native_tick, &ctx) == 0);
+    CHECK(kith_server_run(server) == 0);
+    uint64_t drops = 0;
+    CHECK(kith_server_tick_drops(server, &drops) == 0);
+    kith_server_destroy(server);
+    CHECK(atomic_load(&ctx.entered));
+    CHECK(atomic_load(&ctx.completed));
+    CHECK(!atomic_load(&ctx.on_reactor));
+    CHECK(ctx.polls >= 8u);
+    CHECK(drops >= 1u);
+    return failures;
+}
+
 int main(void)
 {
     int rc = 0;
     rc |= test_tick_hook_null_args();
+    rc |= test_native_tick_busy_drops_and_drains();
     rc |= test_tick_hook_python_dispatches_to_worker();
     rc |= test_tick_hook_c_handler_runs_inline();
     rc |= test_tick_hook_unregister_roundtrip_not_dispatched();

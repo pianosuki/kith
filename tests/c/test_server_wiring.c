@@ -3,10 +3,7 @@
  * where that default still sits below one tick interval, clamps to half
  * the tick where it does not (62 Hz is the equality boundary and stays
  * unclamped, 63 Hz is the first clamp rate), passes explicit caller
- * values through unclamped, and writes 0 at tick rates above 1000 where
- * the integer tick interval is 0 ms — the gateway's own 0 resolution
- * then selects the default, so the effective budget at those rates is
- * unchanged. The view and cache refresh intervals follow the same
+ * values through unclamped. The view and cache refresh intervals follow the same
  * explicit-passes-unclamped law with the tick interval as the 0
  * derivation, and the view-set capacity forwards raw for the gateway's
  * own 0 resolution. Compiled against src/server/wiring.c so the internal
@@ -42,8 +39,8 @@ static int test_wait_budget_resolution(void)
         {20u, 0u, 8000u},       // default intact: half-tick 25000 >= 8000
         {62u, 0u, 8000u},       // equality boundary: 16 ms * 500 == 8000
         {63u, 0u, 7500u},       // first clamp rate: 15 ms * 500 == 7500
+        {2000u, 0u, 0u},        // legacy zero interval; gateway re-resolves
         {100u, 0u, 5000u},      // clamp tracks half the tick
-        {2000u, 0u, 0u},        // integer interval 0 ms; gateway re-resolves
         {100u, 12000u, 12000u}, // explicit value passes unclamped
         {20u, 4000u, 4000u},    // explicit below the default passes too
     };
@@ -66,9 +63,7 @@ static int test_view_tuning_forward(void)
     int failures = 0;
     // The view and cache refresh intervals resolve a caller 0 to the tick
     // interval (the composition root's derivation), pass explicit values
-    // through unclamped, and leave the 0 ms integer interval at tick rates
-    // above 1000 for the gateway's own 0 resolution to back up to its
-    // default — the same shape the wait budget's 2000 Hz case pins.
+    // through unclamped.
     static const struct
     {
         uint16_t tick_hz;
@@ -78,8 +73,8 @@ static int test_view_tuning_forward(void)
         uint32_t expected_cache;
     } intervals[] = {
         {20u, 0u, 0u, 50u, 50u},       // 0 selects the tick interval
+        {2000u, 0u, 0u, 0u, 0u},       // legacy zero interval; gateway re-resolves
         {63u, 0u, 0u, 15u, 15u},       // derivation tracks the tick
-        {2000u, 0u, 0u, 0u, 0u},       // integer interval 0 ms; gateway re-resolves
         {20u, 200u, 300u, 200u, 300u}, // explicit wider than the tick passes
         {20u, 25u, 10u, 25u, 10u},     // explicit below the tick passes too
     };

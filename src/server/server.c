@@ -91,6 +91,7 @@ static bool server_config_validate(const kith_server_params_t *config, kith_erro
     atomic_init(&s->status, KITH_SERVER_STATUS_CREATED);
     atomic_init(&s->run_in_flight, false);
     atomic_init(&s->tick_dropped, 0u);
+    atomic_init(&s->tick_native_busy, false);
     // The tick-handler registration mutex is initialized before
     // server_wiring_create so the create-failure path (which calls
     // server_wiring_destroy) and kith_server_destroy both balance it with a
@@ -336,7 +337,9 @@ KITH_API uint16_t kith_server_control_port(const kith_server_t *server)
                                                              void *user_data,
                                                              kith_server_handler_flag_t flags)
 {
-    if (server == nullptr || fn == nullptr)
+    if (server == nullptr || fn == nullptr ||
+        (flags != KITH_SERVER_HANDLER_NONE && flags != KITH_SERVER_HANDLER_PYTHON &&
+         flags != KITH_SERVER_HANDLER_POOL))
     {
         return kith_error_return(KITH_EINVAL);
     }
