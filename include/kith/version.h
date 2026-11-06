@@ -19,11 +19,11 @@
 /** Major component of the framework release version. */
 #define KITH_VERSION_MAJOR 1
 /** Minor component of the framework release version. */
-#define KITH_VERSION_MINOR 0
+#define KITH_VERSION_MINOR 1
 /** Patch component of the framework release version. */
-#define KITH_VERSION_PATCH 1
+#define KITH_VERSION_PATCH 0
 /** The dotted release version string. */
-#define KITH_VERSION_STRING "1.0.1"
+#define KITH_VERSION_STRING "1.1.0"
 /** Current generation of the size-versioned public structs. */
 #define KITH_ABI_VERSION 1u
 
