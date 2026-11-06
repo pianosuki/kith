@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "kith/util/wall_clock.h"
 #include "server/server_internal.h"
+#include "server/timing.h"
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -172,7 +174,10 @@ static void server_tick_cb(void *ctx)
     s->tick_count++;
     server_dispatch_tick_hook(s, s->tick_count);
 
-    uint64_t next = now + s->tick_interval_ms;
+    // Read fresh time after callback work: the reactor's cached sample
+    // predates that work. Above 1000 Hz the legacy cached-time path remains.
+    uint64_t scheduling_now = s->tick_hz > 1000u ? now : kith_wall_clock_ns() / 1'000'000u;
+    uint64_t next = server_tick_deadline(s->tick_epoch_ms, scheduling_now, s->tick_hz);
     int rc = kith_reactor_schedule(s->reactor, next, server_tick_cb, s);
     if (rc != 0)
     {
@@ -231,7 +236,9 @@ static void server_tick_cb(void *ctx)
 
     atomic_store_explicit(&server->status, KITH_SERVER_STATUS_RUNNING, memory_order_release);
 
-    uint64_t now = kith_reactor_now_ms(server->reactor);
+    uint64_t now = server->tick_hz > 1000u ? kith_reactor_now_ms(server->reactor)
+                                           : kith_wall_clock_ns() / 1'000'000u;
+    server->tick_epoch_ms = now;
     int rc = kith_reactor_schedule(server->reactor, now, server_tick_cb, server);
     if (rc != 0)
     {

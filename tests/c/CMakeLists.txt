@@ -534,6 +534,10 @@ target_link_libraries(test_python_exit_gate PRIVATE kith_server kith_gateway kit
 target_compile_definitions(test_python_exit_gate PRIVATE _GNU_SOURCE)
 add_test(NAME test_python_exit_gate COMMAND test_python_exit_gate)
 
+add_executable(test_server_timing test_server_timing.c)
+target_include_directories(test_server_timing PRIVATE ${PROJECT_SOURCE_DIR}/src)
+add_test(NAME test_server_timing COMMAND test_server_timing)
+
 add_executable(test_sim_storage test_sim_storage.c)
 target_link_libraries(test_sim_storage PRIVATE kith_sim)
 add_test(NAME test_sim_storage COMMAND test_sim_storage)

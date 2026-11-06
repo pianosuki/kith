@@ -128,8 +128,10 @@ struct kith_server
     /** Cell-cache refresh interval forwarded to the gateway at create time;
      *  0 selects the tick interval (server_gateway_params). */
     uint32_t cache_refresh_interval_ms;
-    /** Tick interval in milliseconds, derived as 1000 / tick_hz. */
+    /** Minimum tick spacing used for gateway budgets and refresh defaults. */
     uint32_t tick_interval_ms;
+    /** Monotonic epoch for the current run's rational deadline grid. */
+    uint64_t tick_epoch_ms;
     /** Last value read from kith_gateway_dispatch_drops; the tick path
      *  records the per-tick delta as kith_gateway_dispatch_dropped_total.
      *  The gateway
