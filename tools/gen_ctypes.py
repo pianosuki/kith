@@ -34,6 +34,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -41,7 +42,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import cast
 
-from clang.cindex import Cursor, CursorKind, Index, TranslationUnit, Type, TypeKind
+from clang.cindex import (
+    Cursor,
+    CursorKind,
+    Diagnostic,
+    Index,
+    TranslationUnit,
+    Type,
+    TypeKind,
+)
 
 
 _GENERATED_BY = "tools/gen_ctypes.py"
@@ -131,7 +140,15 @@ class HeaderDecls:
 def _system_include_args() -> list[str]:
     """Return the toolchain's system include directory arguments."""
     out = subprocess.run(
-        ["clang", "-E", "-v", "-xc", "/dev/null", "-o", "/dev/null"],
+        [
+            os.environ.get("KITH_BINDINGS_CLANG", "clang"),
+            "-E",
+            "-v",
+            "-xc",
+            "/dev/null",
+            "-o",
+            "/dev/null",
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -757,9 +774,9 @@ def _collect_module_decls(
             args=parse_args,
             options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
         )
-        for diag in tu.diagnostics:
-            if diag.severity >= 3:
-                print(f"warning: {header}: {diag.spelling}", file=sys.stderr)
+        errors = [diag.spelling for diag in tu.diagnostics if diag.severity >= Diagnostic.Error]
+        if errors:
+            raise RuntimeError(f"libclang could not parse {header}: {'; '.join(errors)}")
         part = _collect_decls(tu, header, module, registry)
         decls.enums.extend(part.enums)
         decls.structs.extend(part.structs)
@@ -801,7 +818,11 @@ def generate(include_root: Path, out_dir: Path) -> list[str]:
     # registry is complete (cross-module references resolve correctly).
     for module, _decls in all_decls.items():
         refreshed = _collect_module_decls(
-            index, module, _headers_for_module(module, include_root), parse_args, registry
+            index,
+            module,
+            _headers_for_module(module, include_root),
+            parse_args,
+            registry,
         )
         if refreshed is None:
             continue
@@ -843,7 +864,7 @@ def main(argv: list[str]) -> int:
 
     try:
         modules = generate(args.include_root, args.out)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

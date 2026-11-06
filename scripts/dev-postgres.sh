@@ -28,7 +28,7 @@
 
 set -euo pipefail
 
-image="postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336"
+image="postgres:18.6@sha256:bd5dfa494a5a259704365813dbfa5fa6b3e69be7348d43b547f540c730478583"
 name="kith-dev-postgres18"
 volume="kith-dev-postgres18-data"
 requested_port="${KITH_DEV_PG_PORT:-5432}"

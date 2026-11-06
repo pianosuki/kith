@@ -1,17 +1,17 @@
 # Releases
 
-The CMake project version owns the distribution version. Update it together
-with the version header, regenerate the ctypes bindings, and add the matching
+The CMake project version owns the distribution version. Update it together with
+the version header, regenerate the ctypes bindings, and add the matching
 changelog heading. A compatible runtime or packaging correction increments the
-patch version. An additive public feature increments the minor version; a
-breaking public API or ABI change requires a major version. Dependency updates
+patch version. Public API additions or deprecations increment the minor version;
+a breaking public API or ABI change requires a major version. Dependency updates
 alone do not create a new public feature.
 
 ## Native artifacts
 
-`uv build` produces an sdist and a host-platform wheel. The wheel contains
-the framework libraries and resolves their native dependencies from the build
-host's system ABI. A local Linux wheel is suitable for that host and compatible
+`uv build` produces an sdist and a host-platform wheel. The wheel contains the
+framework libraries and resolves their native dependencies from the build host's
+system ABI. A local Linux wheel is suitable for that host and compatible
 deployments; its tag does not promise cross-distribution compatibility.
 
 The release workflow repairs the wheel with auditwheel against the
@@ -30,50 +30,53 @@ copy. Source builds continue to use system libraries and their security updates.
 
 The portable wheel uses a release-only PostgreSQL client built from a
 SHA-256-pinned upstream archive in a private prefix. TLS through OpenSSL,
-password/SCRAM and certificate authentication remain available. LDAP lookup
-and GSSAPI authentication are excluded from this wheel configuration; source
+password/SCRAM and certificate authentication remain available. LDAP lookup and
+GSSAPI authentication are excluded from this wheel configuration; source
 installs retain the host libpq's authentication capabilities. Applications
 requiring those optional mechanisms use a source build against their configured
-system library. This restriction concerns the packaged libpq configuration;
-the public KITH SQL and database parameter interfaces remain unchanged.
-The 1.0.0 Ubuntu wheel linked the host's full libpq, whose optional
-LDAP/GSSAPI facilities could therefore be available. The portable candidate
-does not preserve those indirect authentication capabilities; source installation
-is the compatibility path for applications requiring them.
+system library. This restriction concerns the packaged libpq configuration; the
+public KITH SQL and database parameter interfaces remain unchanged. The 1.0.0
+Ubuntu wheel linked the host's full libpq, whose optional LDAP/GSSAPI facilities
+could therefore be available. The portable candidate does not preserve those
+indirect authentication capabilities; source installation is the compatibility
+path for applications requiring them.
 
-The portable Redis client is hiredis 1.5.0, built from a SHA-256-pinned
-upstream archive. It includes the current parser overflow/depth and Linux
-nonblocking connection fixes. The upstream optional TLS peer-verification API
-change does not affect KITH, which uses the non-TLS hiredis async API.
-Native source builds continue to exercise the host libraries; the portable
-artifact owns its independently pinned native clients.
+The portable Redis client is hiredis 1.5.0, built from a SHA-256-pinned upstream
+archive. It includes the current parser overflow/depth and Linux nonblocking
+connection fixes. The upstream optional TLS peer-verification API change does
+not affect KITH, which uses the non-TLS hiredis async API. Native source builds
+continue to exercise the host libraries; the portable artifact owns its
+independently pinned native clients.
 
 The notice collector permits only the reviewed libpq, OpenSSL, hiredis and
 liburing SONAMEs. An unexpected graft fails the build. Review both its license
 and complete redistribution requirements before changing that allowlist;
-retaining notices alone does not satisfy every license's source obligations.
-The wheel includes actual Ubuntu package copyright files, common-license texts
-and the upstream PostgreSQL copyright from the verified archive, with package
+retaining notices alone does not satisfy every license's source obligations. The
+wheel includes actual Ubuntu package copyright files, common-license texts and
+the upstream PostgreSQL copyright from the verified archive, with package
 versions and source provenance in its manifest and SBOM.
 
 ## Verification and publication
 
 Run `scripts/verify.sh` before every commit. Run `scripts/ci-local.sh` against
 the final candidate to reproduce the push jobs in Ubuntu containers, including
-their provisioning and PostgreSQL service. Check the compiler matrix as well
-as standard and free-threaded Python. Scheduled sanitizer, fuzz, coverage and
-stress jobs have separate commands in their workflows. Release performance
-certification follows `docs/guides/scaling_checklist.md` on the reference host.
-Retain the exact tree identity, environment and complete logs with each result.
+their provisioning and PostgreSQL service. Check the compiler matrix as well as
+standard and free-threaded Python 3.14 and 3.15, using the exact reviewed
+patches pinned in CI. Confirm the actual GIL mode before and after loading the
+package; an interpreter name alone does not establish free-threaded execution.
+Scheduled sanitizer, fuzz, coverage and stress jobs have separate commands in
+their workflows. Release performance certification follows
+`docs/guides/scaling_checklist.md` on the reference host. Retain the exact tree
+identity, environment and complete logs with each result.
 
 Build and install the sdist in a clean environment with `uv`, then run
 `scripts/wheel_smoke.py` outside the source checkout. Install the repaired wheel
 in clean standard and free-threaded environments and run the same smoke. Verify
 that the bridge selects the installed package's libraries, reports the package
 version, boots a listener and shuts down cleanly. Repeat the wheel smoke on a
-different supported distribution without installing the native build dependencies.
-Run affected downstream tests with the installed candidate in an isolated
-environment; preserve the downstream's inherited environment.
+different supported distribution without installing the native build
+dependencies. Run affected downstream tests with the installed candidate in an
+isolated environment; preserve the downstream's inherited environment.
 
 Pushes and publication are human-owned. Before a tag push, review the complete
 verification results and the exact commit range. The tag must match the project

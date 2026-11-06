@@ -10,13 +10,15 @@
 # job's provisioning mode followed by the job's own steps from
 # .github/workflows/. The runner's postgres:18.6 service container is
 # reproduced alongside on a private network for the jobs that attach one.
-# If every job passes, CI passes.
+# Local results provide evidence for the candidate; hosted checks remain
+# required because runner inputs and environments can differ.
 #
 # Jobs (default: all, in workflow order):
 #   lint           ci.yml lint          — provision lint, then verify.sh lint
 #   build          ci.yml build         — provision build, then verify.sh build
 #   build-gcc      sanitizers.yml gcc-portability — provision build-gcc, then
 #                                         verify.sh build
+#   build-315, build-gcc-315, free-threaded-315 select Python 3.15.2.
 #   free-threaded  ci.yml free-threaded — provision free-threaded, the job's
 #                                         cmake configure/build, then
 #                                         verify.sh free-threaded
@@ -25,13 +27,15 @@
 #                                         reference generation step
 #
 # Documented deltas from the runner:
-#   - No actions/cache: hook environments, pip wheels, and the
-#     free-threaded interpreter are re-fetched per container.
+#   - Hook environments, pip wheels, and interpreters are re-fetched per
+#     container. The checksum-verified LLVM archive has a shared download cache.
 #   - actions/checkout is replaced by the bind mount, so the two build
 #     trees land in build/ci and build/ci-ft (KITH_BUILD_DIR / KITH_LIB
 #     follow) instead of the workflow's build/debug — CMake refuses to
 #     reconfigure a cache whose source root differs from the developer's
 #     own build/debug. The relocation is the only configure difference.
+#   - Standard Python comes from uv standalone instead of setup-python's
+#     Ubuntu builds. Equal patch versions do not establish artifact parity.
 #   - The commits job's event-derived push range falls back to
 #     verify.sh's origin/main fork-point resolution.
 #   - The pages artifact upload and Pages deploy are runner-side
@@ -43,7 +47,7 @@
 # KITH_CI_HOST_NETWORK=1 uses host networking when Docker bridge egress is
 # unavailable. The database binds an ephemeral loopback port in that mode;
 # service discovery differs from the hosted runner, and host configuration
-# remains unchanged.
+# remains unchanged. KITH_CI_LLVM_CACHE selects the archive download cache.
 #
 # The host user must be non-root for the same reason the container user is.
 
@@ -51,7 +55,7 @@ set -euo pipefail
 
 image="kith-ci"
 dockerfile="ci/ubuntu-24.04/Dockerfile"
-pg_image="postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336"
+pg_image="postgres:18.6@sha256:bd5dfa494a5a259704365813dbfa5fa6b3e69be7348d43b547f540c730478583"
 
 cd "$(dirname "$0")/.."
 
@@ -62,14 +66,17 @@ fi
 
 jobs=("$@")
 if [ "${#jobs[@]}" -eq 0 ]; then
-    jobs=(lint build build-gcc free-threaded commits pages)
+    jobs=(lint build build-315 build-gcc build-gcc-315 free-threaded free-threaded-315 commits pages)
 fi
 for job in "${jobs[@]}"; do
     case "$job" in
-        lint|build|build-gcc|free-threaded|commits|pages) ;;
+        lint|build|build-315|build-gcc|build-gcc-315|free-threaded|free-threaded-315|commits|pages) ;;
         *) echo "ci-local.sh: unknown job: $job" >&2; exit 1 ;;
     esac
 done
+
+llvm_cache="${KITH_CI_LLVM_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/kith/llvm}"
+mkdir -p "$llvm_cache"
 
 echo "==> ci-local.sh: building image $image"
 build_net_args=()
@@ -98,7 +105,7 @@ trap cleanup EXIT
 need_pg=false
 for job in "${jobs[@]}"; do
     case "$job" in
-        build|build-gcc|free-threaded) need_pg=true ;;
+        build|build-315|build-gcc|build-gcc-315|free-threaded|free-threaded-315) need_pg=true ;;
     esac
 done
 
@@ -190,14 +197,13 @@ if [ -f "$GITHUB_ENV" ]; then
 fi
 EOF
 
-# The build jobs use actions/setup-python on the runner. A standalone
-# interpreter reproduces that step without replacing the container's APT
-# Python, which remains the provisioning bootstrap.
+# Install the local build interpreter; APT Python remains the provisioning
+# bootstrap.
 cat > "$job_tmp/setup-python.sh" <<'EOF'
-python3 -m pip install --user --break-system-packages uv==0.13.1
+python3 -m pip install --user --break-system-packages uv==0.13.7
 export PATH="$HOME/.local/bin:$PATH"
-uv python install 3.14.8
-uv venv --seed --system-site-packages --python 3.14.8 "$HOME/runner-python"
+uv python install "${KITH_PYTHON_VERSION:-3.14.10}"
+uv venv --seed --system-site-packages --python "${KITH_PYTHON_VERSION:-3.14.10}" "$HOME/runner-python"
 export PATH="$HOME/runner-python/bin:$PATH"
 EOF
 
@@ -215,12 +221,32 @@ job_scripts=(
 . /job/apply-env.sh
 KITH_PROTO_LIB=build/ci/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci/libkith_client.so.1 \
 KITH_C_COMPILER=clang KITH_BUILD_DIR=build/ci ./scripts/verify.sh build"
+    "build-315|export KITH_PYTHON_VERSION=3.15.2
+. /job/setup-python.sh
+./scripts/provision-ci.sh build
+. /job/apply-env.sh
+KITH_PROTO_LIB=build/ci/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci/libkith_client.so.1 \
+KITH_C_COMPILER=clang KITH_BUILD_DIR=build/ci ./scripts/verify.sh build"
     "build-gcc|. /job/setup-python.sh
 ./scripts/provision-ci.sh build-gcc
 . /job/apply-env.sh
 KITH_PROTO_LIB=build/ci-gcc/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci-gcc/libkith_client.so.1 \
 KITH_C_COMPILER=gcc-14 KITH_BUILD_DIR=build/ci-gcc ./scripts/verify.sh build"
-    "free-threaded|./scripts/provision-ci.sh free-threaded
+    "build-gcc-315|export KITH_PYTHON_VERSION=3.15.2
+. /job/setup-python.sh
+./scripts/provision-ci.sh build-gcc
+. /job/apply-env.sh
+KITH_PROTO_LIB=build/ci-gcc/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci-gcc/libkith_client.so.1 \
+KITH_C_COMPILER=gcc-14 KITH_BUILD_DIR=build/ci-gcc ./scripts/verify.sh build"
+    "free-threaded|export KITH_PYTHON_VERSION=3.14.10
+./scripts/provision-ci.sh free-threaded
+. /job/apply-env.sh
+cmake --preset debug -B build/ci-ft
+cmake --build build/ci-ft
+KITH_PROTO_LIB=build/ci-ft/libkith_proto.so.1 KITH_CLIENT_LIB=build/ci-ft/libkith_client.so.1 \
+KITH_BUILD_DIR=build/ci-ft ./scripts/verify.sh free-threaded"
+    "free-threaded-315|export KITH_PYTHON_VERSION=3.15.2
+./scripts/provision-ci.sh free-threaded
 . /job/apply-env.sh
 cmake --preset debug -B build/ci-ft
 cmake --build build/ci-ft
@@ -247,7 +273,7 @@ for wanted in "${jobs[@]}"; do
             if [ "${KITH_CI_HOST_NETWORK:-0}" = 1 ]; then
                 net_args=(--network host)
             fi
-            if [ "$name" = "build" ] || [ "$name" = "build-gcc" ] || [ "$name" = "free-threaded" ]; then
+            if [[ "$name" == build* || "$name" == free-threaded* ]]; then
                 pg_args=(
                     -e KITH_PG_HOST="$pg_host"
                     -e KITH_PG_PORT="$pg_port"
@@ -270,6 +296,8 @@ for wanted in "${jobs[@]}"; do
             -e HOST_UID="$(id -u)" \
             -e HOST_GID="$(id -g)" \
             -e CI=true \
+            -e KITH_LLVM_CACHE=/llvm-cache \
+            -v "$llvm_cache":/llvm-cache \
             "${pg_args[@]}" \
             -v "$PWD":/work -w /work \
             -v "$job_tmp":/job:ro \

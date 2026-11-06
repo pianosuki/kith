@@ -59,4 +59,12 @@ if ! grep -q '"' "$db"; then
     exit 0
 fi
 
-exec run-clang-tidy -p "$build_dir" -quiet -hide-progress -warnings-as-errors '*'
+# The analyzer is qualified separately from the compiler. LLVM 23 introduces
+# new C style checks; the existing policy remains pinned to the validated 22 lane.
+tidy="${KITH_CLANG_TIDY:-clang-tidy-22}"
+if ! command -v "$tidy" >/dev/null 2>&1; then
+    echo "error: $tidy not found; install the qualified LLVM 22 analyzer" >&2
+    exit 2
+fi
+exec run-clang-tidy -clang-tidy-binary "$(command -v "$tidy")" \
+    -p "$build_dir" -quiet -hide-progress -warnings-as-errors '*'

@@ -1,7 +1,7 @@
 """Self-test for tools/check_adr_style.py.
 
 Drives the record house-style checker against fixture texts covering the
-legal shapes (full record, path pointers, decision-content tokens) and at
+legal shapes (full record, amendments, decision-content tokens) and at
 least one violation per mechanical rule (filename, title, status, skeleton,
 H2 set, trailers, blockquotes, voice, vocabulary, code identifiers, CLI
 flags, counts, self-demotion). The committed records are additionally
@@ -162,6 +162,9 @@ def test_blockquote_is_flagged() -> None:
         "the interpreter raises `KeyboardInterrupt`",
         "the metric `bootstrap_ms_p95` is thresholded",
         "the run passes `--delivery-workers 2`",
+        "the build asserts FLT_EVAL_METHOD is 0",
+        "the build pins `-ffp-contract=off`",
+        "the trade-off is the one `struct iovec` makes",
     ],
 )
 def test_code_identifiers_are_flagged(line: str) -> None:
@@ -180,14 +183,8 @@ def test_code_identifiers_are_flagged(line: str) -> None:
         "the publisher mints `update_seq` per applied input",
         "the gate reads `move_missing_ratio_certified`",
         "the companion `move_missing_ratio` stays reported",
-        "the build asserts FLT_EVAL_METHOD is 0",
-        "the build pins `-ffp-contract=off`",
         "the spans generalize into OpenTelemetry",
-        "the layout is owned by `include/kith/util/rng.h`",
-        "the thresholds live in `docs/guides/scaling_checklist.md`",
-        "the headers live in `src/` and `include/`",
         "the presets are `full`, `delta`, and `tiered`",
-        "the trade-off is the one `struct iovec` makes",
     ],
 )
 def test_decision_content_tokens_are_allowed(line: str) -> None:
@@ -265,3 +262,35 @@ def test_committed_corpus_is_clean() -> None:
         for line_no, matched, description in checker.check_file(path):
             failures.append(f"{path.name}:{line_no}: {description}: '{matched}'")
     assert failures == [], "\n".join(failures)
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "`include/kith/util/rng.h`",
+        "docs/guides/scaling_checklist.md",
+        "`src/`",
+        "server.h",
+        "[guide](../guides/releases.md)",
+        "`custom/file.py`",
+    ],
+)
+def test_implementation_references_are_rejected(reference: str) -> None:
+    violations = _violations(_record(body=f"The implementation is {reference}."))
+    assert any("implementation filename or path" in reason for _, _, reason in violations)
+
+
+def test_contract_amendment_is_allowed() -> None:
+    assert (
+        _violations(_record(body="**Amendment (admission):** native ticks use bounded admission."))
+        == []
+    )
+
+
+def test_amendment_heading_is_rejected() -> None:
+    violations = _violations(_record(body="### Amendment: admission"))
+    assert any("labelled inline" in reason for _, _, reason in violations)
+
+
+def test_superseded_status_is_allowed() -> None:
+    assert _violations(_record(status="Superseded by ADR-0043")) == []

@@ -44,11 +44,12 @@ cd "$(dirname "$0")/.."
 # absent so a contributor knows exactly what to install before re-running.
 required_tools=(
     "clang|clang 22+ (apt: clang-22, brew: llvm@22, or https://releases.llvm.org)"
-    "clang-format-23|clang-format 23 (uv tool install clang-format==23.1.3, then ln -s ~/.local/bin/clang-format ~/.local/bin/clang-format-23; or apt.llvm.org: clang-format-23)"
+    "clang-tidy-22|qualified LLVM 22 analyzer (apt: clang-tidy-22, or the development container)"
+    "clang-format-23|clang-format 23 (uv tool install clang-format==23.1.5, then ln -s ~/.local/bin/clang-format ~/.local/bin/clang-format-23; or apt.llvm.org: clang-format-23)"
     "cmake|cmake 4.4+ (pip install cmake==4.4.4, or https://cmake.org/download)"
     "ninja|ninja 1.13+ (apt: ninja-build, brew: ninja, pip: ninja==1.13.2)"
     "python3|python 3.14+ (https://www.python.org, or uv: uv python install 3.14)"
-    "uv|uv 0.12+ (pip install uv, or https://docs.astral.sh/uv/getting-started/installation/)"
+    "uv|uv 0.13.7+ (pip install uv, or https://docs.astral.sh/uv/getting-started/installation/)"
     "pre-commit|pre-commit 3.0+ (pip install pre-commit, or brew: pre-commit)"
 )
 
@@ -88,11 +89,11 @@ uv sync
 # means the first `scripts/verify.sh free-threaded` run does not pause to
 # download. Best-effort: on platforms without a freethreaded build, warn and
 # continue (verify.sh's free-threaded stage auto-installs when it can too).
-printf '\n==> setup.sh: free-threaded interpreter (3.14t)\n'
-if uv python install 3.14t >/dev/null 2>&1; then
+printf '\n==> setup.sh: free-threaded interpreters (3.14 and 3.15)\n'
+if uv python install 3.14.10t 3.15.2t >/dev/null 2>&1; then
     printf '  ok   free-threaded interpreter ready\n'
 else
-    echo "  warn: could not install a 3.14t build on this platform;" \
+    echo "  warn: could not install every supported free-threaded build on this platform;" \
          "the free-threaded stage will attempt it on demand." >&2
 fi
 

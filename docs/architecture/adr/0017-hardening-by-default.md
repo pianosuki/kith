@@ -20,10 +20,9 @@ report and CI fails if any artifact drops below the required hardening set.
 origin-based library search paths within the package to resolve their bundled
 libraries. The release repair tool may emit RPATH for transitive dependencies;
 absolute build paths and writable external search directories remain forbidden.
-The wheel packaging contract is documented in `docs/guides/releases.md`.
 
 ## Consequences
 
-Positive — every release is hardened by construction and a regression is
-caught by CI rather than by a downstream incident. Negative — build-time
-overhead and marginally larger binaries, acceptable for the security posture.
+Positive — every release is hardened by construction and a regression is caught
+by CI rather than by a downstream incident. Negative — build-time overhead and
+marginally larger binaries, acceptable for the security posture.

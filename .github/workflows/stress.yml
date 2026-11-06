@@ -48,6 +48,12 @@ concurrency:
 jobs:
   smoke-dense:
     name: Dense machinery canary (free-threaded)
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.14.10", "3.15.2"]
+    env:
+      KITH_PYTHON_VERSION: ${{ matrix.python }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -61,7 +67,7 @@ jobs:
           key: uv-${{ runner.os }}-stress-${{ hashFiles('scripts/provision-ci.sh') }}
           restore-keys: |
             uv-${{ runner.os }}-stress-
-      - name: Provision (clang 22, libclang bindings, cmake, uv, free-threaded python)
+      - name: Provision (LLVM 23.1.5, libclang bindings, cmake, uv, free-threaded python)
         run: ./scripts/provision-ci.sh free-threaded
       - name: Build the C shared libraries
         run: |
@@ -70,9 +76,9 @@ jobs:
       - name: Resolve the free-threaded interpreter
         id: ft
         run: |
-          ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+          ft_python="$(uv python find "cpython-${KITH_PYTHON_VERSION}+freethreaded-linux-x86_64-gnu" 2>/dev/null || true)"
           if [ -z "$ft_python" ] || [ ! -x "$ft_python" ]; then
-            echo "free-threaded interpreter (python3.14t) not found" >&2
+            echo "free-threaded interpreter (${KITH_PYTHON_VERSION}) not found" >&2
             exit 1
           fi
           "$ft_python" -c "import sys; sys.exit(0 if not sys._is_gil_enabled() else 1)"
@@ -91,12 +97,18 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: smoke-dense-report
+          name: smoke-dense-report-${{ matrix.python }}
           path: smoke-dense-report.json
           retention-days: 28
 
   smoke-distributed:
     name: Distributed machinery canary (free-threaded)
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.14.10", "3.15.2"]
+    env:
+      KITH_PYTHON_VERSION: ${{ matrix.python }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -110,7 +122,7 @@ jobs:
           key: uv-${{ runner.os }}-stress-${{ hashFiles('scripts/provision-ci.sh') }}
           restore-keys: |
             uv-${{ runner.os }}-stress-
-      - name: Provision (clang 22, libclang bindings, cmake, uv, free-threaded python)
+      - name: Provision (LLVM 23.1.5, libclang bindings, cmake, uv, free-threaded python)
         run: ./scripts/provision-ci.sh free-threaded
       - name: Build the C shared libraries
         run: |
@@ -119,9 +131,9 @@ jobs:
       - name: Resolve the free-threaded interpreter
         id: ft
         run: |
-          ft_python="$(uv python find python3.14t 2>/dev/null || true)"
+          ft_python="$(uv python find "cpython-${KITH_PYTHON_VERSION}+freethreaded-linux-x86_64-gnu" 2>/dev/null || true)"
           if [ -z "$ft_python" ] || [ ! -x "$ft_python" ]; then
-            echo "free-threaded interpreter (python3.14t) not found" >&2
+            echo "free-threaded interpreter (${KITH_PYTHON_VERSION}) not found" >&2
             exit 1
           fi
           "$ft_python" -c "import sys; sys.exit(0 if not sys._is_gil_enabled() else 1)"
@@ -140,6 +152,6 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: smoke-distributed-report
+          name: smoke-distributed-report-${{ matrix.python }}
           path: smoke-distributed-report.json
           retention-days: 28

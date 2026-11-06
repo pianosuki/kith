@@ -1,31 +1,29 @@
 #!/usr/bin/env bash
 #
 # Single source of truth for CI provisioning: the apt packages, pip installs,
-# and clang tool symlinks that every GitHub Actions job needs. Both the CI
+# and native tool selection that every GitHub Actions job needs. Both the CI
 # workflow (.github/workflows/ci.yml) and the local Docker CI image
-# (ci/ubuntu-24.04/Dockerfile) call this script, so a dependency added here
-# appears in both environments with no drift.
+# (ci/ubuntu-24.04/Dockerfile) call this script to share dependency selections.
 #
 # Usage:
 #   scripts/provision-ci.sh <job>
 #
 # Jobs (install only that job's deps):
-#   lint           clang 22 driver + libclang C library, pip: pre-commit
+#   lint           stable LLVM 23 + LLVM 22 binding parser, pip: pre-commit
 #                  (vermin, PyYAML, ruff, and clang2 python bindings are
 #                  provisioned by pre-commit into each hook's own env; only
 #                  the C library and driver are needed from apt here)
-#   build          clang 22 toolchain + dev libs + the compiler-rt runtimes
-#                  (libclang-rt-22-dev) + liburing built from source, pip:
+#   build          stable LLVM 23 compiler/runtimes, LLVM 22 analyzer + dev libs
+#                  + liburing built from source, pip:
 #                  cmake, ninja, pytest, pytest-xdist, PyYAML, ruff,
 #                  clang-format 23; abigail-tools + checksec (best effort)
 #   build-gcc      everything build installs plus gcc-14, the second
 #                  compiler leg of the CI matrix (noble's default gcc is 13,
 #                  below the GCC 14 floor in cmake/framework.cmake; g++ is
 #                  not needed, the framework is pure C)
-#   coverage       everything build installs plus llvm-22 (ships llvm-cov
-#                  and llvm-profdata, version-suffixed only), pip: coverage
-#   free-threaded  clang 22 + libclang C library + the compiler-rt runtimes
-#                  (libclang-rt-22-dev) + liburing built from source, pip:
+#   coverage       everything build installs, pip: coverage
+#   free-threaded  stable LLVM 23 + LLVM 22 binding parser
+#                  + liburing built from source, pip:
 #                  cmake, ninja, uv, clang-format 23
 #   sdist          the from-source contract floor: clang 22 + lld + liburing
 #                  built from source + the dev libraries (libpq, libhiredis)
@@ -118,14 +116,20 @@ setup_llvm_apt() {
     fi
 }
 
-symlink_clang_tools() {
-    # Force-link so clang-22 wins even when the base image ships an older
-    # default clang at /usr/bin/clang. Idempotent across `all` sections.
-    for tool in "$@"; do
-        if [ -e "/usr/bin/${tool}-22" ]; then
-            run_priv ln -sf "/usr/bin/${tool}-22" "/usr/bin/${tool}"
-        fi
-    done
+setup_native_llvm() {
+    # Stable compiler tools are separate from the LLVM 22 binding parser.
+    run_priv apt-get install -y --no-install-recommends \
+        xz-utils libstdc++6 libzstd1 zlib1g libtinfo6 libedit2 libxml2
+    export KITH_LLVM_PREFIX="${KITH_LLVM_PREFIX:-$HOME/.local/share/kith/llvm-23.1.5}"
+    bash "$(dirname "$0")/install-llvm.sh" "$KITH_LLVM_PREFIX" \
+        "${KITH_LLVM_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/kith/llvm}"
+    export PATH="$KITH_LLVM_PREFIX/native-bin:$PATH"
+    if [ -n "${GITHUB_PATH:-}" ]; then
+        echo "$KITH_LLVM_PREFIX/native-bin" >> "$GITHUB_PATH"
+    fi
+    if [ -n "${GITHUB_ENV:-}" ]; then
+        echo "KITH_LLVM_PREFIX=$KITH_LLVM_PREFIX" >> "$GITHUB_ENV"
+    fi
 }
 
 pip_user() {
@@ -165,7 +169,7 @@ build_liburing() {
     # also builds liburing's tests and examples, which hardcode gcc. clang
     # builds the library; nothing else is installed.
     (cd "$srcdir" \
-        && ./configure --prefix=/usr/local --cc=clang-22 --cxx=clang++-22 >/dev/null \
+        && ./configure --prefix=/usr/local --cc=clang --cxx=clang++ >/dev/null \
         && make -j"$(nproc)" library >/dev/null)
     run_priv make -C "$srcdir" install >/dev/null
     run_priv ldconfig
@@ -174,23 +178,20 @@ build_liburing() {
 }
 
 setup_libclang_env() {
-    # libclang1-22 installs a versioned soname (e.g. libclang-22.so.1) under
-    # the multiarch directory; clang.cindex searches for the unversioned
-    # libclang.so by default and fails on a clean runner where no dev symlink
-    # exists. Point the bindings at the versioned library file directly so the
-    # ctypes drift hook, the build job's pytest, and the free-threaded venv all
-    # load the system libclang. Idempotent; the env var is inherited by all
-    # child processes (pre-commit hook envs, pytest, uv venvs).
+    # clang2 22 requires the matching C library and include-discovery driver,
+    # independently of the native compiler selected on PATH.
     local lib
-    lib="$(ldconfig -p 2>/dev/null | grep -o '/[^ ]*libclang-[0-9]*\.so\.[0-9]*' | head -1)"
-    if [ -z "$lib" ]; then
-        lib="$(find /usr/lib /usr/local/lib -name 'libclang-[0-9]*.so.*' 2>/dev/null | head -1)"
+    lib="$(ldconfig -p 2>/dev/null | awk '/libclang-22\.so/ {print $NF; exit}')"
+    if [ -z "$lib" ] || [ ! -f "$lib" ] || ! command -v clang-22 >/dev/null 2>&1; then
+        echo "provision-ci.sh: the LLVM 22 binding parser is incomplete" >&2
+        exit 1
     fi
-    if [ -n "$lib" ]; then
-        export LIBCLANG_LIBRARY_FILE="$lib"
-        if [ -n "${GITHUB_ENV:-}" ]; then
-            echo "LIBCLANG_LIBRARY_FILE=$lib" >> "$GITHUB_ENV"
-        fi
+    export LIBCLANG_LIBRARY_FILE="$lib"
+    KITH_BINDINGS_CLANG="$(command -v clang-22)"
+    export KITH_BINDINGS_CLANG
+    if [ -n "${GITHUB_ENV:-}" ]; then
+        echo "LIBCLANG_LIBRARY_FILE=$lib" >> "$GITHUB_ENV"
+        echo "KITH_BINDINGS_CLANG=$KITH_BINDINGS_CLANG" >> "$GITHUB_ENV"
     fi
 }
 
@@ -206,7 +207,7 @@ provision_lint() {
     # python3-pip provisions the system interpreter's pip for the --user install.
     run_priv apt-get install -y --no-install-recommends \
         clang-22 libclang1-22 python3-pip
-    symlink_clang_tools clang clang-tidy ld.lld
+    setup_native_llvm
     # Only pre-commit is pip-installed here: the lint hooks (vermin, PyYAML,
     # ruff, mypy, codespell, clang2) each provision their own isolated env
     # from the .pre-commit-config.yaml additional_dependencies, so the
@@ -225,24 +226,23 @@ provision_build() {
     # job's own use (the CMake check-all targets drive the checkers via
     # system python, not via pre-commit hook envs).
     #
-    # libclang-rt-22-dev carries the compiler-rt runtimes the asan-ubsan and
-    # fuzz presets link (static ASan/UBSan/libFuzzer archives and the shared
-    # ASan runtime the pytest legs preload). clang-22 only Recommends it deep
-    # in its chain, so --no-install-recommends drops it unless named here.
+    # The stable LLVM archive supplies compiler-rt, libFuzzer, and coverage
+    # runtimes alongside the compiler that consumes them.
     run_priv apt-get install -y --no-install-recommends \
-        clang-22 clang++-22 clang-tidy-22 lld-22 ninja-build \
-        libclang-rt-22-dev \
+        clang-22 clang-tidy-22 ninja-build \
         libclang1-22 libhiredis-dev libpq-dev \
         python3-pip pkg-config
+    setup_native_llvm
     build_liburing
-    symlink_clang_tools clang clang++ clang-tidy ld.lld run-clang-tidy
-    pip_user cmake==4.4.4 ninja==1.13.2 PyYAML==6.0.3 pytest==9.1.1 pytest-xdist==3.8.0 \
-        ruff==0.17.1 clang2==22.1.8.post0 clang-format==23.1.3
+    pip_user cmake==4.4.4 ninja==1.13.2 PyYAML==6.0.3 pytest==9.2.0 pytest-xdist==3.8.0 \
+        ruff==0.17.4 clang2==22.1.8.post0 clang-format==23.1.5 \
+        mdformat==1.0.0 mdformat-gfm==1.0.0 \
+        markdown-it-py==4.2.0 mdit-py-plugins==0.6.1 mdurl==0.1.2 wcwidth==0.9.4
     # The formatter ships as the clang-format PyPI wheel; expose it under the
     # versioned name the CMake check and scripts/format.sh resolve.
     ln -sf "$HOME/.local/bin/clang-format" "$HOME/.local/bin/clang-format-23"
     clang --version
-    run-clang-tidy --version || true
+    clang-tidy-22 --version
     setup_libclang_env
     # ABI and hardening audit tools: required by verify.sh's build stage,
     # which fails closed when either is missing (no silent skip). A failed
@@ -259,16 +259,9 @@ provision_build_gcc() {
 }
 
 provision_coverage() {
-    # Everything the build section installs, plus the source-based coverage
-    # reporters. llvm-22 ships llvm-cov and llvm-profdata as
-    # version-suffixed binaries only, and none of the toolchain above
-    # depends on that package, so it is installed by name. The profile
-    # runtime -fprofile-instr-generate links against rides the compiler-rt
-    # package the build section already names.
+    # Coverage readers and compiler-rt come from the same stable archive.
     provision_build
-    run_priv apt-get install -y --no-install-recommends llvm-22
-    symlink_clang_tools llvm-cov llvm-profdata
-    pip_user coverage==7.16.2
+    pip_user coverage==7.17.2
 }
 
 provision_free_threaded() {
@@ -276,26 +269,24 @@ provision_free_threaded() {
     # libclang1-22 is the C library the ctypes drift checker loads; the
     # bindings themselves are installed by verify.sh into the free-threaded
     # venv (clang2 pip wheel), so python3-clang-22 is not needed here. The
-    # free-threaded sanitizer leg builds the asan-ubsan preset through this
-    # provisioning, so libclang-rt-22-dev is named here as in build.
+    # stable archive also supplies the free-threaded sanitizer runtimes.
     run_priv apt-get install -y --no-install-recommends \
-        clang-22 clang++-22 lld-22 ninja-build \
-        libclang-rt-22-dev \
+        clang-22 ninja-build \
         libclang1-22 libhiredis-dev libpq-dev \
         python3-pip pkg-config
+    setup_native_llvm
     build_liburing
-    symlink_clang_tools clang clang++ ld.lld
     # uv provisions the free-threaded interpreter (cpython-3.14+freethreaded)
-    # so verify.sh can drive the suite under python3.14t without a separate
+    # so verify.sh can drive each selected free-threaded minor without a separate
     # install step. Both the GitHub Actions free-threaded job and the Docker
     # CI image (via `provision-ci.sh all`) call this, so the interpreter is
     # present in both environments. The pip wheel is the official
     # distribution, pinned like every other tool above; the interpreter pin
     # names the exact CPython build uv must resolve.
-    pip_user cmake==4.4.4 ninja==1.13.2 uv==0.13.1
+    pip_user cmake==4.4.4 ninja==1.13.2 uv==0.13.7
     clang --version
     setup_libclang_env
-    uv python install cpython-3.14.8+freethreaded-linux-x86_64-gnu
+    uv python install "cpython-${KITH_PYTHON_VERSION:-3.14.10}+freethreaded-linux-x86_64-gnu"
 }
 
 provision_sdist() {
@@ -308,8 +299,12 @@ provision_sdist() {
     # clang-tidy, no clang-format, no ruff.
     run_priv apt-get install -y --no-install-recommends \
         clang-22 clang++-22 lld-22 libhiredis-dev libpq-dev pkg-config
+    # This leg deliberately checks the supported compiler floor.
+    export PATH="/usr/lib/llvm-22/bin:$PATH"
+    if [ -n "${GITHUB_PATH:-}" ]; then
+        echo "/usr/lib/llvm-22/bin" >> "$GITHUB_PATH"
+    fi
     build_liburing
-    symlink_clang_tools clang ld.lld
     clang --version
 }
 

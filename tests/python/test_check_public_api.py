@@ -101,3 +101,34 @@ def test_main_returns_zero_on_good_fixture(
         ]
     )
     assert rc == 0
+
+
+@pytest.mark.parametrize(
+    ("bad_header", "diagnostic"),
+    [
+        ("int broken = ;\n", "expected expression"),
+        ('#include "absent_fixture_header.h"\n', "file not found"),
+    ],
+)
+def test_parse_errors_fail_without_rewriting_baseline(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], bad_header: str, diagnostic: str
+) -> None:
+    include = tmp_path / "include"
+    headers = include / "kith"
+    headers.mkdir(parents=True)
+    (headers / "bad.h").write_text(bad_header, encoding="utf-8")
+    baseline = tmp_path / "baseline.txt"
+    baseline.write_text("existing baseline\n", encoding="utf-8")
+    args = [
+        "check_public_api.py",
+        "--include-root",
+        str(include),
+        "--baseline",
+        str(baseline),
+    ]
+    for extra in ([], ["--update-baseline"]):
+        assert checker.main([*args, *extra]) == 2
+        captured = capsys.readouterr()
+        assert diagnostic in captured.err
+        assert "OK:" not in captured.out
+        assert baseline.read_text(encoding="utf-8") == "existing baseline\n"

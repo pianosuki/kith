@@ -5,7 +5,7 @@
 # libraries (liburing, libpq, libhiredis). Local wheels use that host ABI;
 # the release workflow repairs portable wheels and bundles their native
 # dependencies before distribution through PyPI and GitHub release assets.
-requires = ["hatchling>=1.32.4", "cmake>=4.4.4", "ninja>=1.13.2"]
+requires = ["hatchling>=1.33.0", "cmake>=4.4.4", "ninja>=1.13.2"]
 build-backend = "hatchling.build"
 
 [project]
@@ -34,6 +34,7 @@ classifiers = [
     "Programming Language :: C",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Free Threading :: 3 - Stable",
     "Topic :: Games/Entertainment",
@@ -73,12 +74,14 @@ Changelog = "https://github.com/pianosuki/kith/blob/main/CHANGELOG.md"
 # with exclude-newer for reproducible installs across machines and CI.
 dev = [
     "clang2>=22.1.8",
-    "ruff>=0.17.1",
-    "mypy>=2.4.0",
-    "pytest>=9.1.1",
+    "ruff>=0.17.4",
+    "mypy>=2.4.1",
+    "mdformat==1.0.0",
+    "mdformat-gfm==1.0.0",
+    "pytest>=9.2.0",
     "pytest-xdist>=3.8.0",
     "pyyaml>=6.0",
-    "vermin>=1.9.1",
+    "vermin>=1.9.2",
 ]
 # Dev opt-in for the visual example's integration surface (the same pin
 # as the runtime extra): `uv sync --group visual` makes the client
@@ -91,40 +94,13 @@ visual = ["arcade==4.0.0.dev8"]
 # generated. Keeps CI and local installs bit-identical for a given lock.
 # Pinned in UTC so the cutoff is independent of the local machine timezone;
 # bump deliberately when pulling in newer dependency releases.
-exclude-newer = "2026-08-09T17:00:00Z"
+exclude-newer = "2026-11-06T04:04:48Z"
 # Require a uv version that understands exclude-newer and PEP 735 groups.
 required-version = ">=0.12.0"
 # Managed venv targets the project's requires-python.
 python-preference = "managed"
-# Per-package windows for releases that published after the global cutoff:
-# the isolated build environment (hatchling, cmake, ninja) and the dev
-# tools matching the pre-commit hook revs (ruff 0.17.1, mypy 2.4.0).
-# Every other dependency stays frozen at the global cutoff. This
-# sub-table must stay last: a table header claims every key that follows
-# it.
-[tool.uv.exclude-newer-package]
-hatchling = "2026-10-18T00:00:00Z"
-cmake = "2026-10-18T00:00:00Z"
-clang-format = "2026-10-18T00:00:00Z"
-ninja = "2026-08-31T00:00:00Z"
-mypy = "2026-10-02T00:00:00Z"
-ruff = "2026-10-18T00:00:00Z"
-# The native parser and runtime use separately reviewed release windows.
-ast-serialize = "2026-10-18T00:00:00Z"
-librt = "2026-10-02T00:00:00Z"
-# The visual example's window stack, published after the global
-# cutoff; arcade pins its pyglet build exactly, and the pair is what
-# the example verifies against.
-arcade = "2026-10-18T00:00:00Z"
-pyglet = "2026-10-18T00:00:00Z"
-pillow = "2026-10-18T00:00:00Z"
-pluggy = "2026-10-18T00:00:00Z"
-iniconfig = "2026-10-18T00:00:00Z"
-pygments = "2026-10-18T00:00:00Z"
-vermin = "2026-10-18T00:00:00Z"
-
 # ---------------------------------------------------------------------------
-# Ruff: formatter + linter (pre-commit hook rev v0.17.1)
+# Ruff: formatter + linter (pre-commit hook rev v0.17.4)
 # ---------------------------------------------------------------------------
 
 [tool.ruff]
@@ -180,7 +156,7 @@ line-ending = "lf"
 docstring-code-format = true
 
 # ---------------------------------------------------------------------------
-# mypy: static type checking (pre-commit hook rev v2.4.0)
+# mypy: static type checking (isolated pre-commit hook pins 2.4.1)
 # ---------------------------------------------------------------------------
 
 [tool.mypy]

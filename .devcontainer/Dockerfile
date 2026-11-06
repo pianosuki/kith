@@ -1,5 +1,5 @@
-# One-click development environment for kith: Clang 22, clangd, lld, CMake
-# 4.4, Ninja, Python 3.14, uv, pre-commit, plus the native build dependencies
+# One-click development environment for kith: Clang 23.1.5, clangd, lld, CMake
+# 4.4, Ninja, Python 3.14/3.15, uv, pre-commit, plus the native build dependencies
 # (liburing for the io_uring reactor backend, libpq and libhiredis for the db
 # and state libraries, libabigail for local ABI diffs). Built on the
 # devcontainers base image so Codespaces and VS Code Dev Containers get a
@@ -14,7 +14,7 @@
 # Bumping is deliberate: re-resolve the tag's digest and update both.
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04@sha256:d94c97dd9cacf183d0a6fd12a8e87b526e9e928307674ae9c94139139c0c6eae
 
-ARG LLVM_VERSION=22
+ARG BINDINGS_LLVM_VERSION=22
 ARG NINJA_VERSION=1.13.2
 ARG LIBURING_VERSION=2.15
 
@@ -35,18 +35,16 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # --- Third-party APT repositories + their packages ------------------------
-# LLVM apt (apt.llvm.org): Clang, clangd, lld, clang-format, clang-tidy, and
-# the matching dev headers, all at ${LLVM_VERSION}.
+# LLVM apt supplies the matching binding parser and headers. The stable
+# native compiler and analysis tools come from the verified archive below.
 # Kitware apt: recent CMake (>= 4.4); noble's stock cmake is too old.
 # GitHub CLI apt: recent gh; noble's stock gh is older.
 # deadsnakes PPA: Python 3.14 (noble ships 3.12).
 #
-# The versioned LLVM tools are exposed under their unversioned names via
-# update-alternatives so the build (CC=clang) and clangd resolve to this
-# toolchain. run-clang-tidy is included so scripts/run-clang-tidy.sh works.
+# The binding parser is selected explicitly; PATH selects the native tools.
 RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
     | gpg --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg \
- && echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${LLVM_VERSION} main" \
+ && echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${BINDINGS_LLVM_VERSION} main" \
     > /etc/apt/sources.list.d/llvm.list \
  && wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc \
     | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg \
@@ -60,20 +58,20 @@ RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
  && add-apt-repository -y ppa:deadsnakes/ppa \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
-        clang-${LLVM_VERSION} clangd-${LLVM_VERSION} lld-${LLVM_VERSION} \
-        clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} \
-        libclang-${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev \
+        clang-${BINDINGS_LLVM_VERSION} clang-tidy-${BINDINGS_LLVM_VERSION} libclang-${BINDINGS_LLVM_VERSION}-dev \
         cmake \
         python3.14 python3.14-dev python3.14-venv \
-        gh \
- && rm -rf /var/lib/apt/lists/* \
- && for tool in clang clang++ clangd clang-format clang-tidy ld.lld \
-                llvm-config run-clang-tidy; do \
-        if [ -e "/usr/bin/${tool}-${LLVM_VERSION}" ]; then \
-            update-alternatives --install "/usr/bin/${tool}" "${tool}" \
-                "/usr/bin/${tool}-${LLVM_VERSION}" 100; \
-        fi; \
-    done
+        gh libzstd1 zlib1g libtinfo6 libedit2 libxml2 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Stable compiler/tools use the same verified archive as CI. The parser stays
+# on LLVM 22 to match the supported clang2 package.
+COPY scripts/install-llvm.sh /tmp/install-llvm.sh
+RUN bash /tmp/install-llvm.sh /opt/kith/llvm-23.1.5 /tmp/llvm-cache \
+ && rm -rf /tmp/llvm-cache /tmp/install-llvm.sh
+ENV PATH="/opt/kith/llvm-23.1.5/native-bin:${PATH}" \
+    KITH_BINDINGS_CLANG=/usr/bin/clang-22 \
+    LIBCLANG_LIBRARY_FILE=/usr/lib/llvm-22/lib/libclang.so
 
 # --- Ninja (pinned, checksummed) ------------------------------------------
 # noble's ninja-build is 1.11, below the 1.12 floor; pull the official binary.
@@ -111,8 +109,18 @@ RUN curl -fsSL "https://github.com/axboe/liburing/archive/refs/tags/liburing-${L
 # the tag's digest and update both. Installed to /usr/local/bin so it is
 # available to every user; postCreateCommand runs as the non-root "vscode"
 # user.
-COPY --from=ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56d7ef30279f7d64048519ab901ada336 \
+COPY --from=ghcr.io/astral-sh/uv:0.13.7@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 \
      /uv /uvx /usr/local/bin/
+
+# Exact compatibility runtimes are shared read-only; project environments stay
+# owned by the contributor. System tools still use /usr/bin/python3.
+ENV UV_PYTHON_INSTALL_DIR=/opt/kith-python
+RUN uv python install --no-bin 3.14.10 3.15.2 3.14.10t 3.15.2t \
+ && chmod -R a+rX /opt/kith-python \
+ && ln -sf "$(uv python find 3.14.10)" /usr/local/bin/python3 \
+ && ln -sf "$(uv python find 3.14.10)" /usr/local/bin/python \
+ && ln -sf "$(uv python find 3.14.10)" /usr/local/bin/python3.14 \
+ && ln -sf "$(uv python find 3.15.2)" /usr/local/bin/python3.15
 
 # --- pre-commit ----------------------------------------------------------
 # Installed as a uv tool into a world-readable tool directory so the binary
@@ -121,16 +129,9 @@ COPY --from=ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56
 RUN UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
     uv tool install --python python3.14 pre-commit==4.7.0 \
  && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin \
-    uv tool install --python python3.14 clang-format==23.1.3 \
+    uv tool install --python python3.14 clang-format==23.1.5 \
  && ln -s /usr/local/bin/clang-format /usr/local/bin/clang-format-23 \
  && chmod -R a+rX /opt/uv-tools
-
-# --- Interactive Python defaults -----------------------------------------
-# Point PATH-resolved "python3"/"python" at Python 3.14 so a contributor's
-# terminal and CMake's find_package(Python3) match the project target, while
-# system tooling that calls /usr/bin/python3 (3.12) directly is unaffected.
-RUN ln -sf /usr/bin/python3.14 /usr/local/bin/python3 \
- && ln -sf /usr/bin/python3.14 /usr/local/bin/python
 
 # --- Build defaults ------------------------------------------------------
 ENV CC=clang \

@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose an enhancement or new capability
+title: "feature: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: >-
+        The problem or unmet need this addresses. Keep it framework-level, not
+        game-specific; game-specific extensions belong in user code, not the core.
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What you would like the framework to do.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches and why they are less suitable.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: Affects the public C ABI (`include/`)
+        - label: Adds a runtime dependency
+        - label: Changes a plane invariant or topology contract

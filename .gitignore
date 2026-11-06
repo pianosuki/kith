@@ -12,6 +12,7 @@ __pycache__/
 .venv/
 # Dedicated venv for the free-threaded interpreter stage of verify.sh.
 .venv-ft/
+.venv-ft-*/
 .cache/
 
 # Build artifacts (tracked in releases, not in the source tree)

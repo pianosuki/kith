@@ -2,13 +2,13 @@
 #
 # Apply every formatter the repository enforces, in place. This is the single
 # fix entry point: clang-format over C/H, ruff format + ruff check --fix over
-# Python, and the trivial whitespace/line-ending/BOM fixers over both. Run it
+# Python, mdformat over Markdown, and trivial whitespace fixers over code. Run it
 # when a gate reports formatting violations; rerun scripts/verify.sh afterward
 # to confirm the gate is green.
 #
-# Idempotent: a second run is a no-op on already-compliant files. Never fails
-# a build: it only fixes. Verification lives in scripts/verify.sh and the
-# check-* CMake targets; this script is their fix-side counterpart.
+# Idempotent: a second run is a no-op on already-compliant files. Tool failures
+# stop formatting. Verification lives in scripts/verify.sh and the check-*
+# CMake targets; this script is their fix-side counterpart.
 #
 # Usage:
 #   scripts/format.sh
@@ -27,6 +27,11 @@ if ! command -v clang-format-23 >/dev/null 2>&1; then
 fi
 if ! command -v ruff >/dev/null 2>&1; then
     echo "format.sh: 'ruff' not found; run 'uv sync' or 'pip install ruff'" >&2
+    exit 1
+fi
+
+if ! command -v mdformat >/dev/null 2>&1; then
+    echo "format.sh: 'mdformat' not found; run 'uv sync'" >&2
     exit 1
 fi
 
@@ -49,6 +54,14 @@ if [ -n "$py_files" ]; then
     # shellcheck disable=SC2086
     ruff check --fix $py_files
 fi
+
+echo "==> format.sh: mdformat (Markdown)"
+while IFS= read -r -d '' file; do
+    case "$file" in
+        third_party/*|tools/fixtures/*) continue ;;
+    esac
+    mdformat "$file"
+done < <(git ls-files -z "*.md")
 
 echo "==> format.sh: trivial whitespace/line-ending/BOM fixers"
 # Apply the same four invariants check_trivial_fixers.py verifies. These are

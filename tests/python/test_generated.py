@@ -41,20 +41,20 @@ def _strip_comments(text: str) -> str:
     return text
 
 
-def _count_kith_api(header: Path) -> int:
-    """Count ``KITH_API`` function declarations in a header by text scan.
+def _api_function_names(header: Path) -> set[str]:
+    """Read public function names independently of the generator's AST walk.
 
     Independent of the generator's libclang traversal so a generator defect
-    that drops a function is caught here rather than mirrored in the count.
+    that substitutes or drops a function cannot pass by retaining the count.
     """
     text = _strip_comments(header.read_text(encoding="utf-8"))
-    count = 0
+    lines: list[str] = []
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("#define") and "KITH_API" in stripped:
             continue
-        count += len(re.findall(r"\bKITH_API\b", line))
-    return count
+        lines.append(line)
+    return set(re.findall(r"\bKITH_API\b[^;]*?\b(kith_\w+)\s*\(", "\n".join(lines)))
 
 
 def _headers_for_module(module: str) -> list[Path]:
@@ -73,6 +73,22 @@ def _function_names_in_module(mod: ModuleType) -> list[str]:
 
 
 _MODULES_WITH_HEADERS = [m for m in gen_ctypes._MODULE_ORDER if _headers_for_module(m)]
+
+
+@pytest.fixture
+def small_bindings(tmp_path: Path) -> tuple[Path, Path]:
+    """Generate one public declaration for drift-checker contract tests."""
+    include = tmp_path / "include"
+    headers = include / "kith" / "proto"
+    headers.mkdir(parents=True)
+    (headers / "proto.h").write_text(
+        '#define KITH_API __attribute__((visibility("default")))\n'
+        "KITH_API int kith_fixture_probe(void);\n",
+        encoding="utf-8",
+    )
+    generated = tmp_path / "_generated"
+    gen_ctypes.generate(include, generated)
+    return include, generated
 
 
 # ---------------------------------------------------------------------------
@@ -100,13 +116,16 @@ class TestFunctionCoverage:
 
     @pytest.mark.parametrize("module", _MODULES_WITH_HEADERS)
     def test_every_api_function_has_a_table_entry(self, module: str) -> None:
-        header_count = sum(_count_kith_api(header) for header in _headers_for_module(module))
+        header_names = {
+            name for header in _headers_for_module(module) for name in _api_function_names(header)
+        }
         gen_mod = importlib.import_module(f"kith._generated.{module}")
         gen_names = _function_names_in_module(gen_mod)
-        assert len(gen_names) == header_count, (
-            f"{module}: header declares {header_count} KITH_API functions but "
-            f"_FUNCTIONS has {len(gen_names)} entries"
+        assert set(gen_names) == header_names, (
+            f"{module}: missing={header_names - set(gen_names)}, "
+            f"unexpected={set(gen_names) - header_names}"
         )
+        assert len(gen_names) == len(header_names), f"{module}: duplicate function entries"
 
     def test_server_function_names_match_header(self) -> None:
         from kith._generated import server as gen_server
@@ -260,27 +279,20 @@ class TestConfigure:
 
 
 class TestDriftChecker:
-    def test_check_drift_returns_zero_when_current(self) -> None:
-        assert drift.check_drift(_INCLUDE_ROOT, _REPO_ROOT / "python" / "kith" / "_generated") == 0
+    def test_check_drift_returns_zero_when_current(self, small_bindings: tuple[Path, Path]) -> None:
+        include, generated = small_bindings
+        assert drift.check_drift(include, generated) == 0
 
-    def test_check_drift_returns_one_on_tampered_file(self, tmp_path: Path) -> None:
-        # Copy the checked-in bindings into a scratch dir and corrupt one file
-        # so the drift checker detects the divergence.
-        checked_in = _REPO_ROOT / "python" / "kith" / "_generated"
-        staged = tmp_path / "_generated"
-        staged.mkdir()
-        for py in checked_in.rglob("*.py"):
-            dest = staged / py.relative_to(checked_in)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(py.read_bytes())
-
-        # Tamper: drop a function entry from server.py's _FUNCTIONS table.
-        server_file = staged / "server.py"
-        text = server_file.read_text(encoding="utf-8")
-        text = text.replace('"kith_server_status"', '"kith_server_status_tampered"')
-        server_file.write_text(text, encoding="utf-8")
-
-        assert drift.check_drift(_INCLUDE_ROOT, staged) == 1
+    def test_check_drift_returns_one_on_tampered_file(
+        self, small_bindings: tuple[Path, Path]
+    ) -> None:
+        include, generated = small_bindings
+        module = generated / "proto.py"
+        original = module.read_text(encoding="utf-8")
+        tampered = original.replace("kith_fixture_probe", "kith_fixture_changed")
+        assert tampered != original
+        module.write_text(tampered, encoding="utf-8")
+        assert drift.check_drift(include, generated) == 1
 
     def test_check_drift_refuses_a_missing_generated_dir(self, tmp_path: Path) -> None:
         # No generated bindings directory at all: a setup error, never a
@@ -304,3 +316,36 @@ class TestGeneratorRoundTrip:
                 a = (checked_in / rel).read_bytes()
                 b = (tmp_out / rel).read_bytes()
                 assert a == b, f"{rel} differs after regeneration"
+
+
+@pytest.mark.parametrize(
+    ("bad_header", "diagnostic"),
+    [
+        ("int broken = ;\n", "expected expression"),
+        ('#include "absent_fixture_header.h"\n', "file not found"),
+    ],
+)
+def test_generator_rejects_parse_errors_before_writing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], bad_header: str, diagnostic: str
+) -> None:
+    include = tmp_path / "include"
+    headers = include / "kith" / "proto"
+    headers.mkdir(parents=True)
+    (headers / "proto.h").write_text(
+        '#define KITH_API __attribute__((visibility("default")))\n'
+        "KITH_API int kith_fixture_probe(void);\n" + bad_header,
+        encoding="utf-8",
+    )
+    generated = tmp_path / "generated"
+    generated.mkdir()
+    sentinel = generated / "proto.py"
+    sentinel.write_text("existing bindings\n", encoding="utf-8")
+    assert (
+        gen_ctypes.main(["gen_ctypes.py", "--include-root", str(include), "--out", str(generated)])
+        == 2
+    )
+    assert diagnostic in capsys.readouterr().err
+    assert sentinel.read_text(encoding="utf-8") == "existing bindings\n"
+    assert drift.check_drift(include, generated) == 2
+    assert diagnostic in capsys.readouterr().err
+    assert sorted(p.name for p in generated.iterdir()) == ["proto.py"]

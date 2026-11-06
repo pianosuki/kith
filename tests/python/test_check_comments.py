@@ -215,7 +215,7 @@ def test_syntax_error_falls_back_to_comments() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_whole_corpus_is_free_of_record_citations() -> None:
+def test_whole_corpus_record_and_divider_rules() -> None:
     root = Path(__file__).resolve().parents[2]
     tracked = subprocess.run(
         ["git", "ls-files", "--", "*.py", "*.c", "*.h"],
@@ -230,8 +230,8 @@ def test_whole_corpus_is_free_of_record_citations() -> None:
         if rel.startswith("tools/fixtures/"):
             continue
         for line_no, matched, description in checker.check_file(root / rel, root):
-            if description == "record citation":
-                flagged.append(f"{rel}:{line_no}: {matched}")
+            if description == "record citation" or description.startswith("divider"):
+                flagged.append(f"{rel}:{line_no}: {description}: {matched}")
     assert flagged == []
 
 
@@ -456,23 +456,3 @@ def test_shell_stays_review_enforced() -> None:
     # Shell heredocs and quoting make mechanical comment extraction
     # unsound, so the floor extracts nothing from a shell script.
     assert _file_violations("scripts/sample.sh", "# TODO tighten the bounds\n") == []
-
-
-def test_whole_corpus_divider_scan_is_clean() -> None:
-    root = Path(__file__).resolve().parents[2]
-    tracked = subprocess.run(
-        ["git", "ls-files", "--", "*.py", "*.c", "*.h"],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.splitlines()
-    assert tracked, "git ls-files returned nothing; run from the checkout"
-    flagged: list[str] = []
-    for rel in tracked:
-        if rel.startswith("tools/fixtures/"):
-            continue
-        for line_no, matched, description in checker.check_file(root / rel, root):
-            if description.startswith("divider"):
-                flagged.append(f"{rel}:{line_no}: {description}: {matched}")
-    assert flagged == []

@@ -7,8 +7,7 @@ mechanical house-style violations (AGENTS.md §7.2):
   - Filename shape: NNNN-lowercase-slug.md; the number matches the title.
   - Title: first heading is `# ADR-NNNN: <title>`.
   - Status: exactly one `**Status:**` line whose value is exactly
-    `Accepted`. (After v1.0.0 a superseded record reads `Superseded by
-    ADR-NNNN`; the vocabulary extends when the first supersession lands.)
+    `Accepted` or `Superseded by ADR-NNNN`. Amendments keep `Accepted`.
   - Skeleton: a record carries `## Context`, `## Decision`, and
     `## Consequences`, in that order, and no other H2 sections.
   - No citation trailers (trailing `Refs` lines) and no blockquotes:
@@ -19,10 +18,9 @@ mechanical house-style violations (AGENTS.md §7.2):
     markers.
   - No code coupling: no code identifiers (kith-prefixed names, macros,
     snake_case, CamelCase, CLI flag spellings). A contract's concrete
-    surface is owned by its public header; records point at owning
-    headers and docs by path (spans containing `/` are paths and are
-    exempt), and the decision-content tokens in the allowlist — names
-    that are themselves the decision — stay.
+    surface lives outside the record. Implementation filenames and paths
+    are forbidden, including in code spans and links. Decision-content tokens
+    in the allowlist — names that are themselves the decision — stay.
   - No client/actor/session/instance counts: gate language uses class
     and operating-point phrasing. Digit-adjacent counts are flagged;
     spelled-out counts ("hundreds of instances") are a documented gap
@@ -52,6 +50,12 @@ _STATUS_RE = re.compile(r"^\*\*Status:\*\* (.+)$")
 _H2_RE = re.compile(r"^## (.+)$")
 _SKELETON = ("Context", "Decision", "Consequences")
 _CODE_SPAN_RE = re.compile(r"`[^`]*`")
+_IMPLEMENTATION_REF_RE = re.compile(
+    r"\b(?:src|include|docs|tests|tools|scripts|python|examples|cmake|build)/[^\s`<>)]*"
+    r"|\b[\w.-]+\.(?:h|c|cpp|py|md|sh|cmake|toml|ya?ml|json|txt|so)(?:\.[0-9]+)*\b"
+)
+_AMENDMENT_HEADING_RE = re.compile(r"^#{1,6}\s+Amendment\b", re.IGNORECASE)
+_SUPERSEDED_RE = re.compile(r"Superseded by ADR-\d{4}")
 
 _PRONOUN_RE = re.compile(
     r"\b(i|we|our|ours|ourselves|us|you|your|yours|yourself|"
@@ -79,9 +83,9 @@ _SNAKE_ALLOWLIST = frozenset(
         "kith_gateway_broadcast_dropped_total",
     }
 )
-_UPPER_ALLOWLIST = frozenset({"FLT_EVAL_METHOD"})
+_UPPER_ALLOWLIST: frozenset[str] = frozenset()
 _CAMEL_ALLOWLIST = frozenset({"OpenTelemetry"})
-_FLAG_ALLOWLIST = frozenset({"-ffp-contract=off"})
+_FLAG_ALLOWLIST: frozenset[str] = frozenset()
 
 # Identifier shapes, longest-family first. Mixed-case snake tails
 # (PyErr_CheckSignals-class) get their own rule because neither the
@@ -106,19 +110,15 @@ _THREAD_COUNT_RE = re.compile(r"\b\d+\s+(?:threads?|workers?)\b")
 _SELF_DEMOTION_RE = re.compile(r"\badditive (?:per|under) ADR-\d{4}\b|\bis an additive component\b")
 
 
-def _token_surface(line: str) -> str:
-    """Line with path-like code spans blanked, other spans left intact.
-
-    Paths (spans containing `/`) are the owning-header pointers the house
-    style allows; identifiers inside other spans are still checked.
-    """
-    return _CODE_SPAN_RE.sub(lambda match: " " if "/" in match.group(0) else match.group(0), line)
-
-
 def _token_violations(line: str) -> list[tuple[str, str]]:
     """Returns (matched, description) for code-coupling hits on a line."""
-    surface = _token_surface(line)
+    surface = line
     violations: list[tuple[str, str]] = []
+    for span in _CODE_SPAN_RE.findall(line):
+        if "/" in span:
+            violations.append((span, "implementation path in code span"))
+        if re.search(r"\b(?:struct|enum|typedef)\s+\w+", span):
+            violations.append((span, "type code identifier"))
     for regex, allowlist, description in (
         (_SNAKE_RE, _SNAKE_ALLOWLIST, "snake_case code identifier"),
         (
@@ -191,8 +191,10 @@ def check_text(text: str, number: str) -> list[tuple[int, str, str]]:
 
     if status_line is None:
         violations.append((0, "", "missing `**Status:**` line"))
-    elif status_line != "Accepted":
-        violations.append((status_no, status_line, "status is not exactly `Accepted`"))
+    elif status_line != "Accepted" and not _SUPERSEDED_RE.fullmatch(status_line):
+        violations.append(
+            (status_no, status_line, "status is not exactly `Accepted` or `Superseded by ADR-NNNN`")
+        )
 
     names = [name for _, name in h2_seen]
     for expected in _SKELETON:
@@ -206,6 +208,10 @@ def check_text(text: str, number: str) -> list[tuple[int, str, str]]:
             violations.append((line_no, name, "H2 section outside the house skeleton"))
 
     for line_no, line in enumerate(lines, start=1):
+        if _AMENDMENT_HEADING_RE.match(line):
+            violations.append((line_no, line, "amendment must be labelled inline prose"))
+        for reference in _IMPLEMENTATION_REF_RE.finditer(line):
+            violations.append((line_no, reference.group(0), "implementation filename or path"))
         if _TRAILER_RE.match(line):
             violations.append((line_no, line, "trailing citation trailer; cite inline"))
         if _BLOCKQUOTE_RE.match(line):

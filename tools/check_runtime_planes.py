@@ -30,6 +30,7 @@ invokes with no arguments; it runs only when .c/.h files are staged.
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -42,11 +43,12 @@ except ImportError:
     yaml = None
 
 try:
-    from clang.cindex import CursorKind, Index, TranslationUnit
+    from clang.cindex import CursorKind, Diagnostic, Index, TranslationUnit
 except ImportError:  # pragma: no cover - the hook provisions clang2
     Index = None
     TranslationUnit = None
     CursorKind = None
+    Diagnostic = None
 
 INCLUDE_RE = re.compile(r'^\s*#\s*include\s+"([^"]+)"')
 
@@ -145,7 +147,15 @@ def _system_include_args() -> list[str]:
     import subprocess
 
     out = subprocess.run(
-        ["clang", "-E", "-v", "-xc", "/dev/null", "-o", "/dev/null"],
+        [
+            os.environ.get("KITH_BINDINGS_CLANG", "clang"),
+            "-E",
+            "-v",
+            "-xc",
+            "/dev/null",
+            "-o",
+            "/dev/null",
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -192,8 +202,10 @@ def scan_forbidden_writes(
     translation unit under ``src/<pattern>/`` calling ``kith_<target>_set_*``
     is flagged.
     """
-    if Index is None or not forbidden_writes:
+    if not forbidden_writes:
         return []
+    if Index is None or Diagnostic is None:
+        raise RuntimeError("libclang Python bindings are required for the data-flow check")
 
     parse_args = ["-std=c23", f"-I{include_root}", f"-I{src_root}", *_system_include_args()]
     index = Index.create()
@@ -209,14 +221,18 @@ def scan_forbidden_writes(
         target_list = ", ".join(targets)
         for src_file in sorted(tu_dir.rglob("*.c")):
             src_rel = src_file.relative_to(src_root).as_posix()
+            # The gateway target builds with this feature macro even in C23 mode.
+            source_args = (
+                [*parse_args, "-D_GNU_SOURCE"] if src_rel.startswith("gateway/") else parse_args
+            )
             tu = index.parse(
                 str(src_file),
-                args=parse_args,
+                args=source_args,
                 options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
             )
-            for diag in tu.diagnostics:
-                if diag.severity >= 3:
-                    print(f"warning: {src_rel}: {diag.spelling}", file=sys.stderr)
+            errors = [diag.spelling for diag in tu.diagnostics if diag.severity >= Diagnostic.Error]
+            if errors:
+                raise RuntimeError(f"libclang could not parse {src_rel}: {'; '.join(errors)}")
             for cursor in tu.cursor.walk_preorder():
                 if cursor.kind != CursorKind.CALL_EXPR:
                     continue
@@ -269,7 +285,11 @@ def main(argv: list[str]) -> int:
     src_root = Path("src")
     if src_root.is_dir():
         include_root = Path("include") if Path("include").is_dir() else src_root.parent / "include"
-        all_violations.extend(scan_forbidden_writes(src_root, forbidden_writes, include_root))
+        try:
+            all_violations.extend(scan_forbidden_writes(src_root, forbidden_writes, include_root))
+        except RuntimeError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
 
     if all_violations:
         print("Runtime-plane invariant violations detected:")

@@ -6,6 +6,8 @@
  * src/) never sees it.
  */
 
+#include <time.h>
+
 /* Forward declaration so the call parses cleanly under -std=c23 (the symbol
  * does not exist in the real headers; the fixture only exercises the call
  * detection). */
@@ -16,6 +18,8 @@ void fixture_view_local_helper(void);
 
 void fixture_view_calls_mutator(void *actor)
 {
+    struct timespec now;
+    (void)clock_gettime(CLOCK_MONOTONIC, &now);
     kith_sim_set_actor_pos(actor, 0, 0, 0);
     fixture_view_local_helper();
 }

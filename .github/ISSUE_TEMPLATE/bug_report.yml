@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a defect in the framework
+title: "bug: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the defect.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: |
+        - kith version:
+        - Python version (standard / free-threaded):
+        - Operating system:
+        - Compiler and version:
+        - CMake version:
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant log output, stack traces, or reproduction commands.

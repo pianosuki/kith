@@ -42,13 +42,22 @@ The committed pre-commit hook runs with no arguments (defaults).
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from clang.cindex import Cursor, CursorKind, Index, TranslationUnit, Type, TypeKind
+from clang.cindex import (
+    Cursor,
+    CursorKind,
+    Diagnostic,
+    Index,
+    TranslationUnit,
+    Type,
+    TypeKind,
+)
 
 
 HERE = Path(__file__).parent
@@ -111,7 +120,15 @@ class Violation:
 def _system_include_args() -> list[str]:
     """Return the toolchain's system include directory arguments."""
     out = subprocess.run(
-        ["clang", "-E", "-v", "-xc", "/dev/null", "-o", "/dev/null"],
+        [
+            os.environ.get("KITH_BINDINGS_CLANG", "clang"),
+            "-E",
+            "-v",
+            "-xc",
+            "/dev/null",
+            "-o",
+            "/dev/null",
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -482,6 +499,18 @@ def _public_headers(include_root: Path) -> list[Path]:
     return sorted(p for p in kith.rglob("*.h") if p.is_file())
 
 
+def _parse_header(header: Path, index: Index, parse_args: list[str]) -> TranslationUnit:
+    tu = index.parse(
+        str(header),
+        args=parse_args,
+        options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
+    )
+    errors = [diag.spelling for diag in tu.diagnostics if diag.severity >= Diagnostic.Error]
+    if errors:
+        raise RuntimeError(f"libclang could not parse {header}: {'; '.join(errors)}")
+    return tu
+
+
 def _scan_header(
     header: Path,
     include_root: Path,
@@ -490,14 +519,7 @@ def _scan_header(
     exposed_tags: set[str],
 ) -> list[Violation]:
     header_rel = header.resolve().relative_to(include_root.resolve()).as_posix()
-    tu = index.parse(
-        str(header),
-        args=parse_args,
-        options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
-    )
-    for diag in tu.diagnostics:
-        if diag.severity >= 3:
-            print(f"warning: {header_rel}: {diag.spelling}", file=sys.stderr)
+    tu = _parse_header(header, index, parse_args)
 
     violations: list[Violation] = []
     seen_typedefs: set[str] = set()
@@ -602,11 +624,7 @@ def _collect_exposed_tags(
     """
     tags: set[str] = set()
     for header in headers:
-        tu = index.parse(
-            str(header),
-            args=parse_args,
-            options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
-        )
+        tu = _parse_header(header, index, parse_args)
         for cursor in tu.cursor.walk_preorder():
             if (
                 cursor.kind == CursorKind.STRUCT_DECL
@@ -705,7 +723,11 @@ def main(argv: list[str]) -> int:
         print(f"error: no public headers under {include_root}/kith/", file=sys.stderr)
         return 2
 
-    violations = scan_public_api(include_root)
+    try:
+        violations = scan_public_api(include_root)
+    except RuntimeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
     if args.update_baseline:
         write_baseline(args.baseline, violations)

@@ -55,6 +55,7 @@ import sys
 import sysconfig
 from pathlib import Path
 
+from hatchling.builders.config import BuilderConfig
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
@@ -208,7 +209,7 @@ def _select_c_compiler() -> tuple[str | None, bool]:
     return None, False
 
 
-class BundleCLibsHook(BuildHookInterface):  # type: ignore[misc]
+class BundleCLibsHook(BuildHookInterface[BuilderConfig]):
     """Build hook that compiles the C shared libraries into the wheel."""
 
     def initialize(self, version: str, build_data: dict[str, object]) -> None:

@@ -1,0 +1,8 @@
+[run]
+source = python/kith
+omit = */_generated/*
+branch = True
+core = sysmon
+patch = subprocess
+parallel = True
+sigterm = True

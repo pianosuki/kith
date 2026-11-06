@@ -21,7 +21,7 @@
 # project(kith VERSION ...) line, which the gate job pins to the tag.
 #
 # Compiler matrix: the Clang leg produces the artifacts attached to the
-# release — Clang 22 is the toolchain CI, the hardening gates, and the LTO
+# release — Clang 23.1.5 is the toolchain CI, the hardening gates, and the LTO
 # contract are validated against. The GCC leg is a portability check that
 # the same source builds and imports under GCC (the build hook disables LTO
 # for non-clang toolchains because their LTO objects cannot be linked by the
@@ -103,19 +103,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python 3.14
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Set up Python 3.14.10
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version: "3.14.10"
       # The from-source contract floor: compiler and dev libraries only.
       # cmake and ninja come from the pip build environment and the
       # dev-checker toolchain is absent, so the smoke below configures the
       # tarball exactly as a from-source user does.
-      - name: Provision (clang 22 toolchain, dev libraries)
+      - name: Provision (clang 22 compiler floor, dev libraries)
         run: ./scripts/provision-ci.sh sdist
       - name: Build the sdist
         run: |
-          python -m pip install uv==0.13.1
+          python -m pip install uv==0.13.7
           uv build --sdist
       # The sdist is the asset a C-toolchain user builds: install it the way
       # pip does (source -> wheel through the hatch hook -> install) and boot
@@ -148,11 +148,11 @@ jobs:
             cc: gcc-14
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python 3.14
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Set up Python 3.14.10
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
-      - name: Provision (clang 22 toolchain, dev libs, cmake, ninja)
+          python-version: "3.14.10"
+      - name: Provision (clang 23.1.5 toolchain, dev libs, cmake, ninja)
         run: ./scripts/provision-ci.sh build
       - name: Provision GCC 14 (gcc leg)
         if: ${{ matrix.compiler == 'gcc' }}
@@ -182,13 +182,13 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
         run: |
-          python -m pip install uv==0.13.1
+          python -m pip install uv==0.13.7
           uv build --wheel --out-dir raw-dist
           python tools/check_wheel_elf_paths.py raw-dist/*.whl
       - name: Repair and validate the portable wheel
         run: |
           uv tool install auditwheel==6.8.2
-          uv tool install patchelf==0.19.1.0
+          uv tool install patchelf==0.19.3.0
           auditwheel repair --plat manylinux_2_38_x86_64 --only-plat raw-dist/*.whl --wheel-dir dist
           python tools/license_release_wheel.py raw-dist/*.whl dist/*.whl
           auditwheel show dist/*.whl
@@ -205,11 +205,27 @@ jobs:
           path: dist/*.whl
           if-no-files-found: error
 
-  smoke-free-threaded:
-    name: Free-threaded wheel smoke (python3.14t)
+  smoke-python:
+    name: Wheel runtime smoke (Python ${{ matrix.python }})
     needs: wheel
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: "3.14.10"
+            base: "3.14.10"
+            free_threaded: "0"
+          - python: "3.14.10t"
+            base: "3.14.10"
+            free_threaded: "1"
+          - python: "3.15.2"
+            base: "3.15.2"
+            free_threaded: "0"
+          - python: "3.15.2t"
+            base: "3.15.2"
+            free_threaded: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The release wheel comes from the clang leg; the gcc wheel exists for
@@ -219,25 +235,33 @@ jobs:
         with:
           name: wheel-clang
           path: dist
-      - name: Provision (clang 22 toolchain, uv, free-threaded python)
+      - name: Provision (clang 23.1.5 toolchain, uv, free-threaded python)
+        env:
+          KITH_PYTHON_VERSION: ${{ matrix.base }}
         run: ./scripts/provision-ci.sh free-threaded
-      - name: Install the wheel under python3.14t
+      - name: Install the wheel under the selected interpreter
         run: |
-          ft_python="$(uv python find python3.14t)"
+          uv python install "${{ matrix.python }}"
+          ft_python="$(uv python find '${{ matrix.python }}')"
           uv venv --python "$ft_python" /tmp/ft-smoke
           uv pip install --python /tmp/ft-smoke/bin/python dist/*.whl
-      - name: Exercise the bridge on the free-threaded interpreter
+      - name: Exercise native concurrency on the selected interpreter
+        env:
+          EXPECT_FREE_THREADED: ${{ matrix.free_threaded }}
         run: |
           /tmp/ft-smoke/bin/python - <<'PY'
           import ctypes
+          import os
           import sys
           import threading
 
-          assert sys._is_gil_enabled() is False, "expected a free-threaded interpreter"
+          expected = os.environ["EXPECT_FREE_THREADED"] == "1"
+          assert (not sys._is_gil_enabled()) is expected, "unexpected interpreter GIL mode"
 
           from kith import _bridge
 
           bridge = _bridge.load()
+          assert (not sys._is_gil_enabled()) is expected, "import changed GIL mode"
           print(bridge.mode, bridge.version_string)
           assert bridge.version_string, "empty version string"
 
@@ -282,6 +306,12 @@ jobs:
     needs: wheel
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - python:3.14-slim-trixie@sha256:af8a5aa14780025dbfbcfbc81bd8a91ebd87711dd5b0f48ed71090949dd7cb1d
+          - python:3.15.2-slim-trixie@sha256:e97b88e416c3c01eb427b21fd8cd3ebf006e6ee38afcfcc3cae1c54ee2ab0a75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -292,7 +322,7 @@ jobs:
         run: |
           docker run --rm --security-opt seccomp=unconfined \
             -v "$PWD/dist:/wheels:ro" -v "$PWD/scripts:/smoke:ro" \
-            python:3.14-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 sh -ec '
+            ${{ matrix.image }} sh -ec '
               test ! -e /usr/lib/x86_64-linux-gnu/libhiredis.so.1.1.0
               python -m venv /tmp/runtime
               /tmp/runtime/bin/pip install --no-index /wheels/*.whl
@@ -398,7 +428,7 @@ jobs:
 
   draft-release:
     name: Draft GitHub release
-    needs: [sdist, wheel, checksums, smoke-free-threaded, smoke-portable, sbom, attest]
+    needs: [sdist, wheel, checksums, smoke-python, smoke-portable, sbom, attest]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -474,4 +504,4 @@ jobs:
       # PyPI trusted publisher (and the pending publisher that creates the
       # project on first upload) must name this repository and workflow.
       - name: Publish to PyPI via trusted publishing
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
