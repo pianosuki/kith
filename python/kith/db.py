@@ -22,10 +22,9 @@ handlers.
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import ctypes
 import threading
-from collections.abc import Sequence
+from collections.abc import Coroutine, Sequence
 from types import TracebackType
 from typing import cast
 
@@ -65,6 +64,31 @@ def _resolve(fut: asyncio.Future[object], value: object) -> None:
 def _fail(fut: asyncio.Future[object], exc: KithError) -> None:
     if not fut.done():
         fut.set_exception(exc)
+
+
+async def _complete_transaction[T](operation: Coroutine[object, object, T]) -> T:
+    """Settle an owned phase before delivering cancellation to its caller."""
+    task = asyncio.create_task(operation)
+    cancellation = None
+    while not task.done():
+        try:
+            await asyncio.shield(task)
+        except asyncio.CancelledError as exc:
+            if task.cancelled():
+                raise
+            if cancellation is None:
+                cancellation = exc
+        except Exception:
+            break
+    if cancellation is not None:
+        try:
+            task.result()
+        except Exception as exc:
+            cancellation.add_note(f"Transaction operation also failed: {exc}")
+            for note in getattr(exc, "__notes__", ()):
+                cancellation.add_note(note)
+        raise cancellation
+    return task.result()
 
 
 def _encode_params(params: Sequence[str | int | None]) -> list[bytes | None]:
@@ -691,18 +715,27 @@ class Transaction:
     context exits — code after the block observes the committed state,
     which is the commit-before-acknowledge ordering when the block's
     result feeds a facade send. On an exception it issues ROLLBACK and
-    re-raises; a rollback failure cannot mask the original error and is
-    swallowed after the session release.
+    re-raises; a rollback failure is attached to the original error without
+    masking it. A failed rollback keeps the connection pinned until
+    :meth:`Database.close` rather than returning an open
+    transaction to the pool.
 
     Statements ride :meth:`query`, one at a time — the pool serializes a
     session's operations and a second submit while one is in flight
     answers with the saturation error, so awaiting each statement is the
     contract, not an optimization.
 
-    Abandoning the context (a coroutine cancelled while suspended inside
-    the block) leaves the session open; its connection stays pinned and
-    exclusive, harming capacity but not correctness, until
-    :meth:`Database.close` sweeps it.
+    Entry and statement cancellation wait for an accepted native operation
+    to complete. Cancellation during entry or escaping the block rolls
+    back and releases the session. Repeated cancellation cannot interrupt
+    that cleanup. During error cleanup, the original exception takes
+    precedence over additional cancellation. Native statements have no
+    cancellation API, so this wait can exceed an asyncio timeout. Once
+    clean context exit starts, its commit proceeds even if the caller is cancelled;
+    cancellation does not imply that the transaction was not committed.
+    A failed release is reported and any retained session is reclaimed by
+    :meth:`Database.close`. The event loop must stay running through exit,
+    and the context must exit before the database is closed.
     """
 
     __slots__ = ("_database", "_session")
@@ -740,19 +773,23 @@ class Transaction:
                 gen_types.kith_error.KITH_ESTATE,
                 "transaction is not active (not entered, or exited)",
             )
-        return await self._database._session_query(session, sql, params)
+        return await _complete_transaction(self._database._session_query(session, sql, params))
 
     async def __aenter__(self) -> Transaction:
-        self._session = await self._database._session_open()
         try:
-            await self._database._session_query(self._session, "BEGIN", ())
-        except BaseException:
-            session = self._session
-            self._session = None
-            with contextlib.suppress(KithError):
-                await self._database._session_close(session)
+            await _complete_transaction(self._enter())
+        except BaseException as exc:
+            try:
+                await _complete_transaction(self._exit(exc))
+            except BaseException as cleanup:
+                if not isinstance(cleanup, asyncio.CancelledError):
+                    exc.add_note(f"Transaction cleanup also failed: {cleanup}")
             raise
         return self
+
+    async def _enter(self) -> None:
+        self._session = await self._database._session_open()
+        await self._database._session_query(self._session, "BEGIN", ())
 
     async def __aexit__(
         self,
@@ -760,19 +797,52 @@ class Transaction:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> bool:
+        try:
+            await _complete_transaction(self._exit(exc))
+        except BaseException as cleanup:
+            if exc is None:
+                raise
+            if not isinstance(cleanup, asyncio.CancelledError):
+                exc.add_note(f"Transaction cleanup also failed: {cleanup}")
+        return False
+
+    async def _exit(self, error: BaseException | None) -> None:
         session = self._session
         self._session = None
         if session is None:
-            return False
-        if exc_type is None:
+            return
+        if error is None:
             try:
                 await self._database._session_query(session, "COMMIT", ())
-            finally:
-                with contextlib.suppress(KithError):
-                    await self._database._session_close(session)
-            return False
-        with contextlib.suppress(KithError):
+            except BaseException as exc:
+                await self._rollback_release(session, exc)
+                raise
+            await self._release(session)
+            return
+        await self._rollback_release(session, error)
+
+    async def _rollback_release(self, session: object, error: BaseException) -> None:
+        try:
             await self._database._session_query(session, "ROLLBACK", ())
-        with contextlib.suppress(KithError):
+        except KithError as cleanup:
+            error.add_note(
+                f"Transaction rollback failed: {cleanup}; "
+                "session remains reserved until Database.close()"
+            )
+            return
+        try:
+            await self._release(session)
+        except KithError as cleanup:
+            error.add_note(
+                f"Transaction release failed: {cleanup}; "
+                "Database.close() reclaims any remaining session"
+            )
+
+    async def _release(self, session: object) -> None:
+        try:
             await self._database._session_close(session)
-        return False
+        except KithError as exc:
+            exc.add_note(
+                "Session release was not confirmed; Database.close() reclaims any remaining session"
+            )
+            raise

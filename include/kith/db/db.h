@@ -180,8 +180,9 @@ typedef struct kith_db_reply kith_db_reply_t;
  *              the duration of this call; copy any data that must outlive
  *              the callback.
  * @thread_safety unsafe — called on the reactor's event-loop thread.
- *                 The callback must not block or call back into the
- *                 reactor.
+ *                 The callback may request shutdown with kith_reactor_stop.
+ *                 It must not block or call other reactor APIs. A stop
+ *                 request does not permit destroying handles in the callback.
  */
 typedef void (*kith_db_reply_fn)(kith_db_reply_t *reply);
 
@@ -558,9 +559,10 @@ kith_db_session_open(kith_db_t *db, kith_db_session_open_fn callback, void *user
  * session's other operations: the callback reports -KITH_EBUSY when an
  * operation is still in flight on the session — the session stays open
  * and the caller retries after its reply — and 0 once the connection is
- * unpinned. After the call returns, the session must not be used; an
- * operation submitted before the close may still be queued and its reply
- * still fires.
+ * unpinned. After successful submission, the session must not be used
+ * until its callback reports a busy status; a rejected submission also
+ * retains the session. An operation submitted before the close may still
+ * be queued and its reply still fires.
  *
  * Releasing a session whose transaction bracket is still open leaves the
  * bracket on the pooled connection for the next user; the caller commits
@@ -579,8 +581,9 @@ kith_db_session_open(kith_db_t *db, kith_db_session_open_fn callback, void *user
  *                concurrently and no operation on this session is being
  *                submitted. May be called from any thread; the callback
  *                fires on the reactor thread.
- * @ownership callee — @p session is consumed by the call (freed when the
- *           release completes).
+ * @ownership callee — @p session is freed on successful completion.
+ *           A rejected submission or busy completion retains the session
+ *           for the caller to release.
  */
 [[nodiscard]] KITH_API int kith_db_session_close(kith_db_session_t *session,
                                                  kith_db_session_close_fn callback,

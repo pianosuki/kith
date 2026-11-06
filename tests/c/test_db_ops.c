@@ -46,6 +46,8 @@ static int db_ops_create_reactor(kith_reactor_t **out)
 // per-query result, passed as user_data so the callback can record each
 // query's outcome independently.
 // ---------------------------------------------------------------------------
+static atomic_bool g_postgres_established;
+
 struct op_result
 {
     int status;
@@ -62,6 +64,10 @@ static void op_callback(kith_db_reply_t *reply)
 {
     struct op_result *r = kith_db_reply_user_data(reply);
     r->status = kith_db_reply_status(reply);
+    if (r->status == 0)
+    {
+        atomic_store(&g_postgres_established, true);
+    }
     r->received = true;
     r->err_str = kith_db_reply_err_str(reply);
     r->n_rows = kith_db_reply_n_rows(reply);
@@ -88,23 +94,50 @@ static int g_expected_replies = 0;
 static int g_received_replies = 0;
 static bool g_timed_out = false;
 static int g_skipped_tests = 0;
+static bool g_postgres_required = false;
+static uint64_t g_wait_deadline_ms = 0;
 
 static void timeout_stop_cb(void *ctx)
 {
     (void)ctx;
-    g_timed_out = true;
-    kith_reactor_stop(g_run_reactor);
+    if (g_run_reactor != nullptr && g_received_replies < g_expected_replies &&
+        kith_reactor_now_ms(g_run_reactor) >= g_wait_deadline_ms)
+    {
+        g_timed_out = true;
+        kith_reactor_stop(g_run_reactor);
+    }
 }
 
 static void run_until_replies(kith_reactor_t *reactor, int expected, int timeout_ms)
 {
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
+    {
+        (void)fprintf(stderr, "db ops: cannot read reply-wait clock\n");
+        exit(EXIT_FAILURE);
+    }
     g_run_reactor = reactor;
     g_expected_replies = expected;
     g_received_replies = 0;
     g_timed_out = false;
-    uint64_t deadline = kith_reactor_now_ms(reactor) + (uint64_t)timeout_ms;
-    (void)kith_reactor_schedule(reactor, deadline, timeout_stop_cb, nullptr);
-    (void)kith_reactor_run(reactor);
+    g_wait_deadline_ms =
+        (uint64_t)now.tv_sec * 1000u + (uint64_t)now.tv_nsec / 1000000u + (uint64_t)timeout_ms;
+    int rc = kith_reactor_schedule(reactor, g_wait_deadline_ms, timeout_stop_cb, nullptr);
+    if (rc == 0)
+    {
+        rc = kith_reactor_run(reactor);
+    }
+    g_run_reactor = nullptr;
+    if (rc != 0 || g_timed_out || g_received_replies != expected)
+    {
+        (void)fprintf(stderr,
+                      "db ops: reply wait failed: expected=%d received=%d timeout=%d rc=%d\n",
+                      expected,
+                      g_received_replies,
+                      g_timed_out,
+                      rc);
+        exit(EXIT_FAILURE);
+    }
 }
 
 static void counting_callback(kith_db_reply_t *reply)
@@ -117,18 +150,23 @@ static void counting_callback(kith_db_reply_t *reply)
     }
 }
 
-static int skip_unreachable(kith_db_t *db, kith_reactor_t *reactor, const char *which)
+static int skip_unreachable(kith_db_t *db, kith_reactor_t *reactor, const char *which, int failures)
 {
-    (void)fprintf(stderr, "db ops: Postgres not reachable, skipping %s test\n", which);
     kith_db_destroy(db);
     kith_reactor_destroy(reactor);
+    if (failures != 0 || g_postgres_required || atomic_load(&g_postgres_established))
+    {
+        (void)fprintf(stderr, "db ops: Postgres unavailable in %s test\n", which);
+        return failures + 1;
+    }
+    (void)fprintf(stderr, "db ops: Postgres not reachable, skipping %s test\n", which);
     g_skipped_tests++;
     return 0;
 }
 
 static bool result_unreachable(const struct op_result *r)
 {
-    return !r->received || r->status == -(int)KITH_ECONNRESET;
+    return r->received && r->status == -(int)KITH_ECONNRESET;
 }
 
 // ---------------------------------------------------------------------------
@@ -281,26 +319,6 @@ static int test_create_copies_param_strings(void)
 }
 
 // ---------------------------------------------------------------------------
-// postgres reachability probe
-// ---------------------------------------------------------------------------
-
-static bool postgres_available(void)
-{
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0)
-    {
-        return false;
-    }
-    struct sockaddr_in addr = {0};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(5432);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    int rc = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
-    close(fd);
-    return rc == 0;
-}
-
-// ---------------------------------------------------------------------------
 // shared setup
 // ---------------------------------------------------------------------------
 
@@ -322,8 +340,12 @@ static void fill_pg_params(kith_db_params_t *params, uint32_t min_c, uint32_t ma
     {
         char *end = nullptr;
         long parsed = strtol(port, &end, 10);
-        params->port =
-            (end != port && parsed > 0 && parsed <= UINT16_MAX) ? (uint16_t)parsed : 5432u;
+        if (end == port || *end != '\0' || parsed <= 0 || parsed > UINT16_MAX)
+        {
+            (void)fprintf(stderr, "db ops: invalid KITH_PG_PORT\n");
+            exit(EXIT_FAILURE);
+        }
+        params->port = (uint16_t)parsed;
     }
     else
     {
@@ -405,7 +427,7 @@ static int test_exec_select(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "SELECT");
+        return skip_unreachable(db, reactor, "SELECT", failures);
     }
     CHECK(res.status == 0);
     CHECK(res.n_rows == 1);
@@ -437,7 +459,7 @@ static int test_exec_params(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "PARAMS");
+        return skip_unreachable(db, reactor, "PARAMS", failures);
     }
     CHECK(res.status == 0);
     CHECK(res.n_rows == 1);
@@ -467,7 +489,7 @@ static int test_exec_null_param(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "NULL-PARAM");
+        return skip_unreachable(db, reactor, "NULL-PARAM", failures);
     }
     CHECK(res.status == 0);
     CHECK(res.n_rows == 1);
@@ -497,7 +519,7 @@ static int test_exec_command(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "COMMAND");
+        return skip_unreachable(db, reactor, "COMMAND", failures);
     }
     CHECK(res.status == 0);
     CHECK(res.n_rows == 0);
@@ -525,7 +547,7 @@ static int test_exec_sql_error(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "SQL-ERROR");
+        return skip_unreachable(db, reactor, "SQL-ERROR", failures);
     }
     CHECK(res.status != 0);
     CHECK(res.err_str != nullptr);
@@ -585,7 +607,7 @@ static int test_execsql_select(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "EXEC-SQL SELECT");
+        return skip_unreachable(db, reactor, "EXEC-SQL SELECT", failures);
     }
     CHECK(res.status == 0);
     CHECK(res.n_rows == 1);
@@ -618,7 +640,7 @@ static int test_execsql_params(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "EXEC-SQL PARAMS");
+        return skip_unreachable(db, reactor, "EXEC-SQL PARAMS", failures);
     }
     CHECK(res.status == 0);
     CHECK(res.n_rows == 1);
@@ -648,7 +670,7 @@ static int test_execsql_sql_error(void)
 
     if (result_unreachable(&res))
     {
-        return skip_unreachable(db, reactor, "EXEC-SQL ERROR");
+        return skip_unreachable(db, reactor, "EXEC-SQL ERROR", failures);
     }
     CHECK(res.status != 0);
     CHECK(res.err_str != nullptr);
@@ -919,7 +941,7 @@ static int test_off_thread_submission(void)
 
         if (w.submit_failures == 0 && !g_reply_off_thread && result_unreachable(&w.result))
         {
-            return skip_unreachable(db, reactor, "off-thread");
+            return skip_unreachable(db, reactor, "off-thread", failures);
         }
         CHECK(w.submit_failures == 0);
         CHECK(!g_timed_out);
@@ -958,7 +980,7 @@ static void pump_phase_callback(kith_db_reply_t *reply)
     atomic_fetch_add(&g_pump_replies, 1);
 }
 
-static bool await_pump_replies(int want, int timeout_ms)
+static void await_pump_replies(int want, int timeout_ms)
 {
     struct timespec step = {.tv_sec = 0, .tv_nsec = 2'000'000};
     int waited = 0;
@@ -967,7 +989,13 @@ static bool await_pump_replies(int want, int timeout_ms)
         nanosleep(&step, nullptr);
         waited += 2;
     }
-    return atomic_load(&g_pump_replies) >= want;
+    int received = atomic_load(&g_pump_replies);
+    if (received < want)
+    {
+        (void)fprintf(
+            stderr, "db ops: pump reply wait failed: expected=%d received=%d\n", want, received);
+        exit(EXIT_FAILURE);
+    }
 }
 
 static void *reactor_pump(void *arg)
@@ -1000,16 +1028,13 @@ static int test_off_thread_pool_create(void)
     struct op_result first_res = {0};
     atomic_store(&g_pump_replies, 0);
     CHECK(kith_db_exec(first, "select_one", nullptr, 0, pump_phase_callback, &first_res) == 0);
-    CHECK(await_pump_replies(1, 3000));
+    await_pump_replies(1, 3000);
     if (result_unreachable(&first_res))
     {
         atomic_store(&g_pump_stop, true);
         kith_reactor_stop(reactor);
         CHECK(pthread_join(pump, nullptr) == 0);
-        (void)fprintf(stderr, "db ops: Postgres not reachable, skipping off-thread pool create\n");
-        kith_db_destroy(first);
-        kith_reactor_destroy(reactor);
-        return failures;
+        return skip_unreachable(first, reactor, "off-thread pool create", failures);
     }
     CHECK(first_res.status == 0);
 
@@ -1018,7 +1043,7 @@ static int test_off_thread_pool_create(void)
     struct op_result second_res = {0};
     atomic_store(&g_pump_replies, 0);
     CHECK(kith_db_exec(second, "select_one", nullptr, 0, pump_phase_callback, &second_res) == 0);
-    CHECK(await_pump_replies(1, 3000));
+    await_pump_replies(1, 3000);
     CHECK(second_res.status == 0);
     CHECK(second_res.n_rows == 1);
     CHECK(second_res.value_len == 1);
@@ -1069,16 +1094,13 @@ static int test_destroy_cancels_pending_query(void)
     struct op_result probe_res = {0};
     atomic_store(&g_pump_replies, 0);
     CHECK(kith_db_exec(db, "select_one", nullptr, 0, pump_phase_callback, &probe_res) == 0);
-    CHECK(await_pump_replies(1, 3000));
+    await_pump_replies(1, 3000);
     if (result_unreachable(&probe_res))
     {
         atomic_store(&g_pump_stop, true);
         kith_reactor_stop(reactor);
         CHECK(pthread_join(pump, nullptr) == 0);
-        (void)fprintf(stderr, "db ops: Postgres not reachable, skipping destroy cancel test\n");
-        kith_db_destroy(db);
-        kith_reactor_destroy(reactor);
-        return failures;
+        return skip_unreachable(db, reactor, "destroy cancel", failures);
     }
     CHECK(probe_res.status == 0);
 
@@ -1088,18 +1110,18 @@ static int test_destroy_cancels_pending_query(void)
     struct op_result drain_probe_res = {0};
     atomic_store(&g_pump_replies, 0);
     CHECK(kith_db_exec(db, "select_one", nullptr, 0, pump_phase_callback, &drain_probe_res) == 0);
-    CHECK(await_pump_replies(1, 3000));
-    CHECK(drain_probe_res.status == 0);
+    await_pump_replies(1, 3000);
 
     // The 2.0 s server-side sleep outlasts the probe round-trip and the
     // shutdown below, so the only reply since the reset is the probe's.
     CHECK(atomic_load(&g_pump_replies) == 1);
-    CHECK(slow_res.received == false);
 
     atomic_store(&g_pump_stop, true);
     kith_reactor_stop(reactor);
     CHECK(pthread_join(pump, nullptr) == 0);
 
+    CHECK(drain_probe_res.received);
+    CHECK(drain_probe_res.status == 0);
     CHECK(atomic_load(&g_pump_replies) == 1);
     CHECK(slow_res.received == false);
 
@@ -1116,27 +1138,26 @@ struct db_leg
 {
     int (*run)(void);
     bool env_gated;
-    bool needs_service;
 };
 
 static const struct db_leg k_legs[] = {
-    {test_invalid_args, false, false},
-    {test_execsql_invalid_args, false, false},
-    {test_create_copies_param_strings, false, false},
-    {test_exec_without_registration_slot, true, false},
-    {test_exec_pool_saturation, true, false},
-    {test_connect_deadline_silent_listener, true, false},
-    {test_exec_select, true, true},
-    {test_exec_params, true, true},
-    {test_exec_null_param, true, true},
-    {test_exec_command, true, true},
-    {test_exec_sql_error, true, true},
-    {test_execsql_select, true, true},
-    {test_execsql_params, true, true},
-    {test_execsql_sql_error, true, true},
-    {test_off_thread_submission, true, true},
-    {test_off_thread_pool_create, true, true},
-    {test_destroy_cancels_pending_query, true, true},
+    {test_invalid_args, false},
+    {test_execsql_invalid_args, false},
+    {test_create_copies_param_strings, false},
+    {test_exec_without_registration_slot, true},
+    {test_exec_pool_saturation, true},
+    {test_connect_deadline_silent_listener, true},
+    {test_exec_select, true},
+    {test_exec_params, true},
+    {test_exec_null_param, true},
+    {test_exec_command, true},
+    {test_exec_sql_error, true},
+    {test_execsql_select, true},
+    {test_execsql_params, true},
+    {test_execsql_sql_error, true},
+    {test_off_thread_submission, true},
+    {test_off_thread_pool_create, true},
+    {test_destroy_cancels_pending_query, true},
 };
 
 int main(void)
@@ -1147,16 +1168,14 @@ int main(void)
     {
         (void)fprintf(stderr, "db ops: KITH_SKIP_POSTGRES=1, skipping integration tests\n");
     }
-    const bool service_up = postgres_available();
-    if (!service_up)
-    {
-        (void)fprintf(stderr, "db ops: Postgres not reachable, skipping integration tests\n");
-    }
+    g_postgres_required = getenv("KITH_PG_HOST") != nullptr || getenv("KITH_PG_PORT") != nullptr ||
+                          getenv("KITH_PG_DB") != nullptr || getenv("KITH_PG_USER") != nullptr ||
+                          getenv("KITH_PG_PASSWORD") != nullptr;
 
     int failures = 0;
     for (size_t i = 0; i < sizeof(k_legs) / sizeof(k_legs[0]); i++)
     {
-        if ((k_legs[i].env_gated && env_skip) || (k_legs[i].needs_service && !service_up))
+        if (k_legs[i].env_gated && env_skip)
         {
             g_skipped_tests++;
             continue;

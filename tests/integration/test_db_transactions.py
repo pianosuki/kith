@@ -17,9 +17,11 @@ build rather than hiding behind a skip.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import gc
 import os
 import socket
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +29,8 @@ import pytest
 from _helpers import needs_build
 
 import kith
+import kith.db as db_module
+from kith._generated import types as gen_types
 from kith.exceptions import KithError, KithStateError
 
 
@@ -294,6 +298,280 @@ def test_transaction_rejects_unentered_context(pg_env: dict[str, Any]) -> None:
             txn = db.transaction()
             with pytest.raises(KithStateError, match="not active"):
                 await txn.query("SELECT 1")
+        finally:
+            db.close()
+
+    _run(_body())
+
+
+class _CompletionGate:
+    """Hold copied callback values on the real loop at an ownership boundary."""
+
+    def __init__(self, boundary: str) -> None:
+        self.loop = asyncio.get_running_loop()
+        self.ready = asyncio.Event()
+        self.repeat_ready = asyncio.Event()
+        self.operation: asyncio.Task[None] | None = None
+        self.delivered_before_cancel = False
+        self.phase = ""
+        self._boundary = boundary
+        self._captured = False
+        self._repeat_captured = False
+        self._disabled = False
+        self._held: tuple[Callable[..., None], tuple[object, ...]] | None = None
+        self._resolve = db_module._resolve
+
+    def open_callback(self, callback: Callable[..., None], *args: object) -> None:
+        if not self._disabled and self._boundary == "open-before-callback" and not self._captured:
+            self._captured = True
+            self._held = callback, args
+            self.ready.set()
+            return
+        callback(*args)
+
+    def resolve(self, future: asyncio.Future[object], value: object) -> None:
+        if not self._disabled:
+            if (
+                self._boundary == "open-after-delivery"
+                and self._captured
+                and not self._repeat_captured
+                and self.phase == "BEGIN"
+            ):
+                self._repeat_captured = True
+                self._held = self._resolve, (future, value)
+                self.repeat_ready.set()
+                return
+            target = {
+                "open-before-delivery": "OPEN",
+                "open-after-delivery": "OPEN",
+                "begin-pending": "BEGIN",
+                "query-pending": "SELECT 7",
+                "close-pending": "CLOSE",
+            }.get(self._boundary)
+            if not self._captured and self.phase == target:
+                self._captured = True
+                if self._boundary == "open-after-delivery":
+                    self._resolve(future, value)
+                    self.delivered_before_cancel = future.done() and not future.cancelled()
+                    assert self.operation is not None
+                    self.operation.cancel()
+                else:
+                    self._held = self._resolve, (future, value)
+                self.ready.set()
+                return
+        self._resolve(future, value)
+
+    def release(self) -> None:
+        self._disabled = True
+        held, self._held = self._held, None
+        if held is not None:
+            callback, args = held
+            self.loop.call_soon(callback, *args)
+
+
+class _GatedDatabase(kith.Database):
+    """Observe real session commands while the gate owns callback delivery."""
+
+    def __init__(self, gate: _CompletionGate, env: dict[str, Any]) -> None:
+        self.gate = gate
+        self.statements: list[str] = []
+        self.close_calls = 0
+        super().__init__(
+            **env,
+            min_connections=1,
+            max_connections=1,
+            loop=gate.loop,
+        )
+
+    def _on_open(self, session: object, status: int, user_data: int | None) -> None:
+        self.gate.loop.call_soon_threadsafe(
+            self.gate.open_callback, super()._on_open, session, status, user_data
+        )
+
+    async def _session_open(self) -> object:
+        self.gate.phase = "OPEN"
+        return await super()._session_open()
+
+    async def _session_query(
+        self, session: object, sql: str, params: Sequence[str | int | None]
+    ) -> db_module.Reply:
+        self.statements.append(sql)
+        self.gate.phase = sql
+        return await super()._session_query(session, sql, params)
+
+    async def _session_close(self, session: object) -> None:
+        self.close_calls += 1
+        self.gate.phase = "CLOSE"
+        await super()._session_close(session)
+
+
+async def _ready_turn() -> None:
+    """Run callbacks already queued before this explicit loop barrier."""
+    loop = asyncio.get_running_loop()
+    ready: asyncio.Future[None] = loop.create_future()
+    loop.call_soon(ready.set_result, None)
+    await ready
+
+
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        "open-before-callback",
+        "open-before-delivery",
+        "open-after-delivery",
+        "begin-pending",
+        "query-pending",
+        "close-pending",
+    ],
+)
+def test_transaction_cancellation_retains_native_ownership(
+    pg_env: dict[str, Any], boundary: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def _body() -> None:
+        gate = _CompletionGate(boundary)
+        monkeypatch.setattr(db_module, "_resolve", gate.resolve)
+        db = _GatedDatabase(gate, pg_env)
+        operation: asyncio.Task[None] | None = None
+        try:
+            assert (await db.query("SELECT 1")).rows == (("1",),)
+            transaction = db.transaction()
+
+            async def _transaction() -> None:
+                async with transaction:
+                    assert (await transaction.query("SELECT 7")).rows == (("7",),)
+
+            operation = asyncio.create_task(_transaction())
+            gate.operation = operation
+            async with asyncio.timeout(5):
+                await gate.ready.wait()
+                if boundary == "open-after-delivery":
+                    assert gate.delivered_before_cancel
+                else:
+                    operation.cancel()
+                await _ready_turn()
+                assert not operation.done(), "cancellation abandoned an accepted native phase"
+                if boundary == "open-after-delivery":
+                    await gate.repeat_ready.wait()
+                operation.cancel()
+                await _ready_turn()
+                assert not operation.done(), "repeated cancellation interrupted owned cleanup"
+                gate.release()
+                with pytest.raises(asyncio.CancelledError):
+                    await operation
+
+                assert transaction._session is None
+                assert db.close_calls == 1
+                assert not db._pending
+                expected = ["BEGIN"]
+                if boundary in {"query-pending", "close-pending"}:
+                    expected.append("SELECT 7")
+                expected.append("COMMIT" if boundary == "close-pending" else "ROLLBACK")
+                assert db.statements == expected
+
+                # One slot proves release; distinct transaction ids prove that
+                # release did not return an open SQL bracket to that slot.
+                first = await db.query("SELECT txid_current()")
+                second = await db.query("SELECT txid_current()")
+                assert first.n_rows == second.n_rows == 1
+                assert first.value(0, 0) != second.value(0, 0)
+        finally:
+            gate.release()
+            try:
+                if operation is not None:
+                    if not operation.done():
+                        operation.cancel()
+                    with contextlib.suppress(asyncio.CancelledError, KithError):
+                        async with asyncio.timeout(5):
+                            await operation
+            finally:
+                db.close()
+
+    _run(_body())
+
+
+class _ScriptedSessionDatabase(kith.Database):
+    """Inject completed phase failures without a server or native timing."""
+
+    def __init__(self, failures: dict[str, KithError]) -> None:
+        self.failures = failures
+        self.statements: list[str] = []
+        self.close_calls = 0
+        self.native_owned = False
+        self.handle = object()
+
+    async def _session_open(self) -> object:
+        self.native_owned = True
+        return self.handle
+
+    async def _session_query(
+        self, session: object, sql: str, params: Sequence[str | int | None]
+    ) -> db_module.Reply:
+        assert session is self.handle
+        assert not params
+        self.statements.append(sql)
+        if sql in self.failures:
+            raise self.failures[sql]
+        return db_module.Reply(())
+
+    async def _session_close(self, session: object) -> None:
+        assert session is self.handle
+        self.close_calls += 1
+        if "CLOSE" in self.failures:
+            raise self.failures["CLOSE"]
+        self.native_owned = False
+
+    def close(self) -> None:
+        self.native_owned = False
+
+
+def test_transaction_commit_failure_rolls_back_before_release() -> None:
+    async def _body() -> None:
+        primary = KithError(gen_types.kith_error.KITH_EIO, "commit rejected")
+        db = _ScriptedSessionDatabase({"COMMIT": primary})
+        with pytest.raises(KithError) as failure:
+            async with db.transaction():
+                pass
+        assert failure.value is primary
+        assert db.statements == ["BEGIN", "COMMIT", "ROLLBACK"]
+        assert db.close_calls == 1
+        assert not db.native_owned
+
+    _run(_body())
+
+
+def test_transaction_rollback_failure_retains_session_and_primary_error() -> None:
+    async def _body() -> None:
+        primary = RuntimeError("body rejected")
+        rollback = KithError(gen_types.kith_error.KITH_EIO, "rollback rejected")
+        db = _ScriptedSessionDatabase({"ROLLBACK": rollback})
+        try:
+            with pytest.raises(RuntimeError) as failure:
+                async with db.transaction():
+                    raise primary
+            assert failure.value is primary
+            assert any(str(rollback) in note for note in getattr(primary, "__notes__", ()))
+            assert db.statements == ["BEGIN", "ROLLBACK"]
+            assert db.close_calls == 0
+            assert db.native_owned
+        finally:
+            db.close()
+
+    _run(_body())
+
+
+def test_transaction_close_submission_failure_is_reported_and_retains_session() -> None:
+    async def _body() -> None:
+        primary = KithStateError(gen_types.kith_error.KITH_EBUSY, "release submission rejected")
+        db = _ScriptedSessionDatabase({"CLOSE": primary})
+        try:
+            with pytest.raises(KithStateError) as failure:
+                async with db.transaction():
+                    pass
+            assert failure.value is primary
+            assert any("Database.close" in note for note in getattr(primary, "__notes__", ()))
+            assert db.statements == ["BEGIN", "COMMIT"]
+            assert db.close_calls == 1
+            assert db.native_owned
         finally:
             db.close()
 

@@ -42,6 +42,8 @@ static int session_create_reactor(kith_reactor_t **out)
     return kith_reactor_create(&params, nullptr, out);
 }
 
+static atomic_bool g_postgres_established;
+
 struct op_result
 {
     int status;
@@ -57,6 +59,10 @@ static void op_callback(kith_db_reply_t *reply)
 {
     struct op_result *r = kith_db_reply_user_data(reply);
     r->status = kith_db_reply_status(reply);
+    if (r->status == 0)
+    {
+        atomic_store(&g_postgres_established, true);
+    }
     r->received = true;
     r->err_str = kith_db_reply_err_str(reply);
     r->n_rows = kith_db_reply_n_rows(reply);
@@ -85,12 +91,28 @@ static int g_expected_replies = 0;
 static int g_received_replies = 0;
 static bool g_timed_out = false;
 static int g_skipped_tests = 0;
+static bool g_postgres_required = false;
+static uint64_t g_wait_deadline_ms = 0;
+
+static void counting_callback(kith_db_reply_t *reply)
+{
+    op_callback(reply);
+    g_received_replies++;
+    if (g_received_replies >= g_expected_replies)
+    {
+        kith_reactor_stop(g_run_reactor);
+    }
+}
 
 static void open_callback(kith_db_session_t *session, int status, void *user_data)
 {
     struct session_result *r = user_data;
     r->session = session;
     r->status = status;
+    if (status == 0)
+    {
+        atomic_store(&g_postgres_established, true);
+    }
     r->received = true;
     g_received_replies++;
     if (g_received_replies >= g_expected_replies)
@@ -120,49 +142,83 @@ static void close_callback(int status, void *user_data)
 static void timeout_stop_cb(void *ctx)
 {
     (void)ctx;
-    g_timed_out = true;
-    kith_reactor_stop(g_run_reactor);
+    if (g_run_reactor != nullptr && g_received_replies < g_expected_replies &&
+        kith_reactor_now_ms(g_run_reactor) >= g_wait_deadline_ms)
+    {
+        g_timed_out = true;
+        kith_reactor_stop(g_run_reactor);
+    }
 }
 
 static void run_until_replies(kith_reactor_t *reactor, int expected, int timeout_ms)
 {
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0)
+    {
+        (void)fprintf(stderr, "db session: cannot read reply-wait clock\n");
+        exit(EXIT_FAILURE);
+    }
     g_run_reactor = reactor;
     g_expected_replies = expected;
     g_received_replies = 0;
     g_timed_out = false;
-    uint64_t deadline = kith_reactor_now_ms(reactor) + (uint64_t)timeout_ms;
-    (void)kith_reactor_schedule(reactor, deadline, timeout_stop_cb, nullptr);
-    (void)kith_reactor_run(reactor);
+    g_wait_deadline_ms =
+        (uint64_t)now.tv_sec * 1000u + (uint64_t)now.tv_nsec / 1000000u + (uint64_t)timeout_ms;
+    int rc = kith_reactor_schedule(reactor, g_wait_deadline_ms, timeout_stop_cb, nullptr);
+    if (rc == 0)
+    {
+        rc = kith_reactor_run(reactor);
+    }
+    g_run_reactor = nullptr;
+    if (rc != 0 || g_timed_out || g_received_replies != expected)
+    {
+        (void)fprintf(stderr,
+                      "db session: reply wait failed: expected=%d received=%d timeout=%d rc=%d\n",
+                      expected,
+                      g_received_replies,
+                      g_timed_out,
+                      rc);
+        exit(EXIT_FAILURE);
+    }
 }
 
-static int skip_unreachable(kith_db_t *db, kith_reactor_t *reactor, const char *which)
+static int skip_unreachable(kith_db_t *db, kith_reactor_t *reactor, const char *which, int failures)
 {
-    (void)fprintf(stderr, "db session: Postgres not reachable, skipping %s test\n", which);
     kith_db_destroy(db);
     kith_reactor_destroy(reactor);
+    if (failures != 0 || g_postgres_required || atomic_load(&g_postgres_established))
+    {
+        (void)fprintf(stderr, "db session: Postgres unavailable in %s test\n", which);
+        return failures + 1;
+    }
+    (void)fprintf(stderr, "db session: Postgres not reachable, skipping %s test\n", which);
     g_skipped_tests++;
     return 0;
 }
 
-static bool result_unreachable(const struct op_result *r)
+static int finish_failed_open(kith_db_t *db,
+                              kith_reactor_t *reactor,
+                              const struct session_result *result,
+                              const char *which,
+                              int failures)
 {
-    return !r->received || r->status == -(int)KITH_ECONNRESET;
+    if (result->received && result->status == -(int)KITH_ECONNRESET)
+    {
+        return skip_unreachable(db, reactor, which, failures);
+    }
+    (void)fprintf(stderr,
+                  "db session: failed open in %s test: received=%d status=%d\n",
+                  which,
+                  result->received,
+                  result->status);
+    kith_db_destroy(db);
+    kith_reactor_destroy(reactor);
+    return failures + 1;
 }
 
-static bool postgres_available(void)
+static bool result_unreachable(const struct op_result *r)
 {
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0)
-    {
-        return false;
-    }
-    struct sockaddr_in addr = {0};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(5432);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    int rc = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
-    close(fd);
-    return rc == 0;
+    return r->received && r->status == -(int)KITH_ECONNRESET;
 }
 
 static void fill_pg_params(kith_db_params_t *params, uint32_t min_c, uint32_t max_c)
@@ -181,8 +237,12 @@ static void fill_pg_params(kith_db_params_t *params, uint32_t min_c, uint32_t ma
     {
         char *end = nullptr;
         long parsed = strtol(port, &end, 10);
-        params->port =
-            (end != port && parsed > 0 && parsed <= UINT16_MAX) ? (uint16_t)parsed : 5432u;
+        if (end == port || *end != '\0' || parsed <= 0 || parsed > UINT16_MAX)
+        {
+            (void)fprintf(stderr, "db session: invalid KITH_PG_PORT\n");
+            exit(EXIT_FAILURE);
+        }
+        params->port = (uint16_t)parsed;
     }
     else
     {
@@ -211,6 +271,31 @@ setup_pool(kith_reactor_t **out_reactor, kith_db_t **out_db, uint32_t min_c, uin
         return -1;
     }
     return 0;
+}
+
+static int refused_endpoint_bind(uint16_t *out_port)
+{
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0)
+    {
+        return -1;
+    }
+    struct sockaddr_in addr = {0};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+    {
+        close(fd);
+        return -1;
+    }
+    socklen_t addr_len = sizeof(addr);
+    if (getsockname(fd, (struct sockaddr *)&addr, &addr_len) != 0)
+    {
+        close(fd);
+        return -1;
+    }
+    *out_port = ntohs(addr.sin_port);
+    return fd;
 }
 
 // A pool's eager establishment is asynchronous, but a session open either
@@ -274,11 +359,19 @@ static int test_session_open_dead_endpoint(void)
     kith_reactor_t *reactor = nullptr;
     kith_db_t *db = nullptr;
 
+    uint16_t port = 0;
+    int endpoint = refused_endpoint_bind(&port);
+    CHECK(endpoint >= 0);
+    if (endpoint < 0)
+    {
+        return failures;
+    }
+
     CHECK(session_create_reactor(&reactor) == 0);
     kith_db_params_t params;
     fill_pg_params(&params, 1u, 1u);
     params.host = "127.0.0.1";
-    params.port = 5431u; // nothing listens here
+    params.port = port;
     params.connect_timeout_ms = 500;
     CHECK(kith_db_create(&params, reactor, nullptr, &db) == 0);
 
@@ -293,6 +386,7 @@ static int test_session_open_dead_endpoint(void)
 
     kith_db_destroy(db);
     kith_reactor_destroy(reactor);
+    close(endpoint);
     return failures;
 }
 
@@ -302,7 +396,7 @@ static int test_session_open_dead_endpoint(void)
 
 static int exec_wait(kith_reactor_t *reactor, kith_db_t *db, const char *sql, struct op_result *res)
 {
-    if (kith_db_exec_sql(db, sql, nullptr, 0, op_callback, res) != 0)
+    if (kith_db_exec_sql(db, sql, nullptr, 0, counting_callback, res) != 0)
     {
         return -1;
     }
@@ -315,7 +409,7 @@ static int exec_wait_session(kith_reactor_t *reactor,
                              const char *sql,
                              struct op_result *res)
 {
-    if (kith_db_session_exec(session, sql, nullptr, 0, op_callback, res) != 0)
+    if (kith_db_session_exec(session, sql, nullptr, 0, counting_callback, res) != 0)
     {
         return -1;
     }
@@ -349,7 +443,6 @@ static int test_session_txn_commit_rollback(void)
     kith_db_t *db = nullptr;
 
     CHECK(setup_pool(&reactor, &db, 1u, 4u) == 0);
-    CHECK(reset_pin_table(reactor, db) == 0);
 
     struct session_result open_res = {0};
     struct op_result begin = {0};
@@ -362,9 +455,10 @@ static int test_session_txn_commit_rollback(void)
     run_until_replies(reactor, 1, 3000);
     if (open_res.session == nullptr)
     {
-        return skip_unreachable(db, reactor, "TXN-COMMIT open");
+        return finish_failed_open(db, reactor, &open_res, "TXN-COMMIT open", failures);
     }
     CHECK(open_res.status == 0);
+    CHECK(reset_pin_table(reactor, db) == 0);
 
     CHECK(exec_wait_session(reactor, open_res.session, "BEGIN", &begin) == 0);
     CHECK(exec_wait_session(reactor,
@@ -427,13 +521,13 @@ static int test_session_exclusion(void)
 
     CHECK(kith_db_session_open(db, open_callback, &open_res) == 0);
     run_until_replies(reactor, 1, 3000);
-    if (open_res.session == nullptr && open_res.status == -(int)KITH_ECONNRESET)
+    if (open_res.session == nullptr)
     {
-        return skip_unreachable(db, reactor, "EXCLUSION open");
+        return finish_failed_open(db, reactor, &open_res, "EXCLUSION open", failures);
     }
     CHECK(open_res.status == 0);
 
-    CHECK(kith_db_exec_sql(db, "SELECT 1", nullptr, 0, op_callback, &pool_exec) == 0);
+    CHECK(kith_db_exec_sql(db, "SELECT 1", nullptr, 0, counting_callback, &pool_exec) == 0);
     run_until_replies(reactor, 1, 3000);
     CHECK(pool_exec.status == -(int)KITH_EBUSY);
 
@@ -441,7 +535,7 @@ static int test_session_exclusion(void)
     run_until_replies(reactor, 1, 3000);
     CHECK(close_res.status == 0);
 
-    CHECK(kith_db_exec_sql(db, "SELECT 1", nullptr, 0, op_callback, &after_close) == 0);
+    CHECK(kith_db_exec_sql(db, "SELECT 1", nullptr, 0, counting_callback, &after_close) == 0);
     run_until_replies(reactor, 1, 3000);
     CHECK(after_close.status == 0);
 
@@ -469,7 +563,7 @@ static int test_session_open_saturation(void)
     run_until_replies(reactor, 2, 3000);
     if (first.session == nullptr && first.status == -(int)KITH_ECONNRESET)
     {
-        return skip_unreachable(db, reactor, "SATURATION first open");
+        return finish_failed_open(db, reactor, &first, "SATURATION first open", failures);
     }
     CHECK(first.status == 0);
     CHECK(second.received);
@@ -505,11 +599,11 @@ static int test_session_close_while_in_flight(void)
     run_until_replies(reactor, 1, 3000);
     if (open_res.session == nullptr)
     {
-        return skip_unreachable(db, reactor, "CLOSE-IN-FLIGHT open");
+        return finish_failed_open(db, reactor, &open_res, "CLOSE-IN-FLIGHT open", failures);
     }
 
     CHECK(kith_db_session_exec(
-              open_res.session, "SELECT pg_sleep(0.5)", nullptr, 0, op_callback, &slow) == 0);
+              open_res.session, "SELECT pg_sleep(0.5)", nullptr, 0, counting_callback, &slow) == 0);
     CHECK(kith_db_session_close(open_res.session, close_callback, &close_busy) == 0);
     run_until_replies(reactor, 2, 3000);
     CHECK(close_busy.received);
@@ -537,16 +631,17 @@ static int test_session_conn_death(void)
     kith_db_t *db = nullptr;
 
     CHECK(setup_pool(&reactor, &db, 1u, 1u) == 0);
-    CHECK(reset_pin_table(reactor, db) == 0);
 
     struct op_result pid = {0};
-    CHECK(kith_db_exec_sql(db, "SELECT pg_backend_pid()", nullptr, 0, op_callback, &pid) == 0);
+    CHECK(kith_db_exec_sql(db, "SELECT pg_backend_pid()", nullptr, 0, counting_callback, &pid) ==
+          0);
     run_until_replies(reactor, 1, 3000);
     if (result_unreachable(&pid))
     {
-        return skip_unreachable(db, reactor, "CONN-DEATH pid probe");
+        return skip_unreachable(db, reactor, "CONN-DEATH pid probe", failures);
     }
     CHECK(pid.status == 0);
+    CHECK(reset_pin_table(reactor, db) == 0);
 
     struct session_result open_res = {0};
     struct op_result begin = {0};
@@ -568,7 +663,8 @@ static int test_session_conn_death(void)
     char kill_sql[64];
     (void)snprintf(kill_sql, sizeof(kill_sql), "SELECT pg_terminate_backend(%s)", pid.value);
     struct op_result kill = {0};
-    CHECK(kith_db_session_exec(open_res.session, kill_sql, nullptr, 0, op_callback, &kill) == 0);
+    CHECK(kith_db_session_exec(open_res.session, kill_sql, nullptr, 0, counting_callback, &kill) ==
+          0);
     // The backend dies before answering; the connection loss surfaces as the
     // statement's reply status.
     run_until_replies(reactor, 1, 3000);
@@ -578,7 +674,8 @@ static int test_session_conn_death(void)
 
     // The bracket cannot land on a reconnected slot: the session's connection
     // is gone, and the commit must answer the loss, not succeed.
-    CHECK(kith_db_session_exec(open_res.session, "COMMIT", nullptr, 0, op_callback, &commit) == 0);
+    CHECK(kith_db_session_exec(
+              open_res.session, "COMMIT", nullptr, 0, counting_callback, &commit) == 0);
     run_until_replies(reactor, 1, 3000);
     CHECK(commit.status == -(int)KITH_ECONNRESET);
 
@@ -587,7 +684,7 @@ static int test_session_conn_death(void)
     CHECK(close_res.status == 0);
 
     // The pool's connection reestablishes lazily and serves again.
-    CHECK(kith_db_exec_sql(db, "SELECT 1", nullptr, 0, op_callback, &after) == 0);
+    CHECK(kith_db_exec_sql(db, "SELECT 1", nullptr, 0, counting_callback, &after) == 0);
     run_until_replies(reactor, 1, 5000);
     CHECK(after.status == 0);
 
@@ -612,7 +709,7 @@ static int test_session_destroy_with_open_session(void)
     run_until_replies(reactor, 1, 3000);
     if (open_res.session == nullptr)
     {
-        return skip_unreachable(db, reactor, "DESTROY-OPEN open");
+        return finish_failed_open(db, reactor, &open_res, "DESTROY-OPEN open", failures);
     }
     CHECK(open_res.status == 0);
 
@@ -629,18 +726,17 @@ struct db_leg
 {
     int (*run)(void);
     bool env_gated;
-    bool needs_service;
 };
 
 static const struct db_leg k_legs[] = {
-    {test_session_invalid_args, false, false},
-    {test_session_open_dead_endpoint, true, false},
-    {test_session_txn_commit_rollback, true, true},
-    {test_session_exclusion, true, true},
-    {test_session_open_saturation, true, true},
-    {test_session_close_while_in_flight, true, true},
-    {test_session_conn_death, true, true},
-    {test_session_destroy_with_open_session, true, true},
+    {test_session_invalid_args, false},
+    {test_session_open_dead_endpoint, true},
+    {test_session_txn_commit_rollback, true},
+    {test_session_exclusion, true},
+    {test_session_open_saturation, true},
+    {test_session_close_while_in_flight, true},
+    {test_session_conn_death, true},
+    {test_session_destroy_with_open_session, true},
 };
 
 int main(void)
@@ -651,16 +747,14 @@ int main(void)
     {
         (void)fprintf(stderr, "db session: KITH_SKIP_POSTGRES=1, skipping integration tests\n");
     }
-    const bool service_up = postgres_available();
-    if (!service_up)
-    {
-        (void)fprintf(stderr, "db session: Postgres not reachable, skipping integration tests\n");
-    }
+    g_postgres_required = getenv("KITH_PG_HOST") != nullptr || getenv("KITH_PG_PORT") != nullptr ||
+                          getenv("KITH_PG_DB") != nullptr || getenv("KITH_PG_USER") != nullptr ||
+                          getenv("KITH_PG_PASSWORD") != nullptr;
 
     int failures = 0;
     for (size_t i = 0; i < sizeof(k_legs) / sizeof(k_legs[0]); i++)
     {
-        if ((k_legs[i].env_gated && env_skip) || (k_legs[i].needs_service && !service_up))
+        if (k_legs[i].env_gated && env_skip)
         {
             g_skipped_tests++;
             continue;
