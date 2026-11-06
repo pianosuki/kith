@@ -23,6 +23,6 @@ absolute build paths and writable external search directories remain forbidden.
 
 ## Consequences
 
-Positive — every release is hardened by construction and a regression is caught
-by CI rather than by a downstream incident. Negative — build-time overhead and
+Positive: every release is hardened by construction and a regression is caught
+by CI rather than by a downstream incident. Negative: build-time overhead and
 marginally larger binaries, acceptable for the security posture.

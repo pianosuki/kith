@@ -5,7 +5,7 @@ wire types, no handlers, no simulation model, no zone, no store, no control
 routes. The composition root wires every plane with its defaults; the gateway
 listener comes up on an OS-assigned ephemeral port and accepts connections, but
 a peer that connects sees no decoded frames (the handler table is empty and the
-replication type id is 0). This is a shipped example, not throwaway scaffolding.
+replication type id is 0). This example ships with the framework.
 
 ## What it proves
 

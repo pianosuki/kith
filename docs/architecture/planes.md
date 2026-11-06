@@ -2,12 +2,12 @@
 
 The runtime is organized into five planes. Each plane owns a specific category
 of data and is forbidden from owning other categories. The plane contracts are
-the framework's most important invariants: they are what let the runtime scale
-horizontally instead of hitting the per-connection N² ceiling that a
-reactor-and-connection-centric area-of-interest model runs into. One stage
-vocabulary spans the planes: frames **publish** into a plane's stream (ingress),
-the gateway **delivers** the composed view per session (per-session egress), and
-a **dispatch** is the worker-pool handoff of one decoded frame to its handler.
+the invariants that let the runtime scale horizontally instead of hitting the
+per-connection N² ceiling that a reactor-and-connection-centric area-of-interest
+model runs into. One stage vocabulary spans the planes: frames **publish** into
+a plane's stream (ingress), the gateway **delivers** the composed view per
+session (per-session egress), and a **dispatch** is the worker-pool handoff of
+one decoded frame to its handler.
 
 The contracts are enforced by `tools/check_runtime_planes.py` (include-based
 rules in `tools/plane_rules.yaml`) and by review. A change that violates a plane
@@ -39,11 +39,13 @@ included by any plane. A plane module is bound to exactly one plane.
 
 The wire codec (`proto`), reactor, state, db, and foundation modules are shared:
 they serve the planes and own no plane-specific data. The spatial query library
-(`aoi`) is shared the same way — a pure query tool any plane borrows. The
-transport (`net`) abstracts the client sockets the Gateway plane owns, so it
-belongs to the Gateway plane (see Plane 3).
+(`aoi`) is also shared: a pure query tool any plane borrows. The transport
+(`net`) abstracts the client sockets the Gateway plane owns, so it belongs to
+the Gateway plane (see Plane 3).
 
-### Plane 1 — Simulation (`sim`)
+<a name="plane-1--simulation-sim"></a>
+
+### Plane 1: Simulation (`sim`)
 
 **Owns:** actor authority by microcell; movement, combat, world rules; emission
 of immutable per-cell publish artifacts each tick.
@@ -60,7 +62,9 @@ learn about gateways.
   project onto it by setting `cell_z = 0`. The `lod` field is a subcell
   level-of-detail refinement index, not a vertical axis.
 
-### Plane 2 — World Stream Fabric (`fabric`)
+<a name="plane-2--world-stream-fabric-fabric"></a>
+
+### Plane 2: World Stream Fabric (`fabric`)
 
 **Owns:** append-only cell stream storage; tiered cell products (full / reduced
 / crowd); supersession of stale cell products; subscription-indexed fanout to
@@ -75,7 +79,9 @@ gateways.
 - The fabric fans out only to subscribed gateways, never to all gateways.
 - Supersession happens here, not in per-connection queues.
 
-### Plane 3 — Gateway (`gateway`)
+<a name="plane-3--gateway-gateway"></a>
+
+### Plane 3: Gateway (`gateway`)
 
 **Owns:** client sockets; auth/session lifecycle; the per-gateway **shared cell
 cache** (one subscription per cell for all local players, refcounted); the
@@ -87,15 +93,15 @@ recompute AOI from scratch per connection.
 
 **Subsystems:**
 
-- `gateway/session` — auth, session, actor bind, keepalive, bootstrap. Bootstrap
+- `gateway/session`: auth, session, actor bind, keepalive, bootstrap. Bootstrap
   runs on an isolated path separate from world replication bulk so it does not
   contend with live publish.
-- `gateway/cache` — `cell_store` (shared, refcounted per-cell snapshots) and
+- `gateway/cache`: `cell_store` (shared, refcounted per-cell snapshots) and
   `subscription_union` (the union of all local players' cell subscriptions).
-- `gateway/view` — `relevance_composer`: per-player scored stable view set, ring
+- `gateway/view`: `relevance_composer`: per-player scored stable view set, ring
   budgets by entity type, representation-tier selection, sticky
   continuity-preserving membership.
-- `gateway/delivery` — replication framing and enqueue: serialization of the
+- `gateway/delivery`: replication framing and enqueue: serialization of the
   composed view set onto session connections. Delivery semantics are pluggable
   presets by contract (ADR-0021).
 
@@ -108,7 +114,9 @@ recompute AOI from scratch per connection.
 1. Full-fidelity replication is a privilege of relevance, not the default right
    of every visible actor.
 
-### Plane 4 — Coordination (`coord`)
+<a name="plane-4--coordination-coord"></a>
+
+### Plane 4: Coordination (`coord`)
 
 **Owns:** the cell ownership map; split/merge that moves **simulation authority
 AND fabric publish authority together** as one coordinated ownership update
@@ -129,8 +137,8 @@ bus.
 
 **Subsystems:**
 
-- `coord/ownership` — cell table, authority epochs, split/merge.
-- `coord/bus` — inter-node pub/sub fabric (zone subscribe/publish, partition,
+- `coord/ownership`: cell table, authority epochs, split/merge.
+- `coord/bus`: inter-node pub/sub fabric (zone subscribe/publish, partition,
   snapshot, input relay).
 
 The coordination plane's ownership map, split/merge coordinator, and inter-node
@@ -138,10 +146,12 @@ bus are designed to be shardable and leader-electable for very large clusters
 (100+ instances, 10k+ concurrent players). The initial implementation may use a
 single backing store and a single coordinator; the contract (coord owns the cell
 ownership map) does not change when the backing store is sharded or the
-coordinator is leader-elected. That is a deployment concern, not an
-architectural one.
+coordinator is leader-elected. Sharding and leader election are deployment
+concerns; the architectural contract stays the same.
 
-### Plane 5 — Control (`control`, optional, zero-cost when off)
+<a name="plane-5--control-control-optional-zero-cost-when-off"></a>
+
+### Plane 5: Control (`control`, optional, zero-cost when off)
 
 **Owns:** the HTTP/WebSocket introspection/control API for agentic testing and
 operations (zone/actor/cluster queries, command injection, event/log streaming).
@@ -162,8 +172,7 @@ Within a topology, individual planes have pluggable implementations via the
 registry pattern. Every pluggable implementation must respect its plane's
 invariants. An implementation that violates its plane's invariants (for example,
 a "publish" implementation that pushes per-connection) is not a valid
-implementation — the plane checker rejects it. This guardrail is what makes
-pluggability safe. See ADR-0013.
+implementation; the plane checker rejects it. See ADR-0013.
 
 | Plane                        | Default implementation                                       | Alternatives                                                                                                                                                                                                                                                                                            |
 | ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -188,21 +197,21 @@ The include-based rules in `tools/plane_rules.yaml` are the first guardrail:
 - `fabric` must not include `gateway/*` or `net/*` (fabric must not mutate
   authoritative state or talk directly to sockets).
 
-The data-flow (writes) rules — `gateway/view` must not mutate authoritative
-actor state; `coord` must not emit per-actor state frames; `control` must not be
-on the reactor's world-replication critical path — are documented in
+The data-flow (writes) rules forbid `gateway/view` from mutating authoritative
+actor state, `coord` from emitting per-actor state frames, and `control` from
+joining the reactor's world-replication critical path. They are documented in
 `tools/plane_rules.yaml` under `forbidden_writes` and enforced by the plane
 checker's libclang AST walk over `src/` translation units.
 
 ## References
 
-- ADR-0001 — five-plane world stream fabric architecture.
-- ADR-0002 — publish products are immutable and cell-scoped.
-- ADR-0003 — split/merge with overlapping cell-stream handoff.
-- ADR-0005 — bounded relevance budgets and representation tiers are first-class.
-- ADR-0013 — pluggability is within planes, not across invariant-breaking
+- ADR-0001: five-plane world stream fabric architecture.
+- ADR-0002: publish products are immutable and cell-scoped.
+- ADR-0003: split/merge with overlapping cell-stream handoff.
+- ADR-0005: bounded relevance budgets and representation tiers are first-class.
+- ADR-0013: pluggability is within planes, not across invariant-breaking
   topologies.
-- ADR-0016 — cell identity is 3D-native from inception.
-- `docs/architecture/layers.md` — the orthogonal dependency-layer axis.
-- `docs/architecture/topologies.md` — embedded versus distributed wiring.
-- `AGENTS.md` §1.6 — plane invariants are non-negotiable.
+- ADR-0016: cell identity is 3D-native from inception.
+- `docs/architecture/layers.md`: the orthogonal dependency-layer axis.
+- `docs/architecture/topologies.md`: embedded versus distributed wiring.
+- `AGENTS.md` §1.6: plane invariants are non-negotiable.

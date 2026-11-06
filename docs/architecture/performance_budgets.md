@@ -1,16 +1,14 @@
 # Performance Budgets and Capacity Model
 
-This is the definitive budget and capacity model for the framework. The
-per-operation budgets below are the per-unit microsecond targets; this document
-reconciles them with the §4.4 scaling gates by aggregating them into the
-per-tick totals that actually gate the fidelity metrics, and records the
-per-instance fidelity ceiling those totals imply. Every scaling-gate run and
-every ADR performance claim cites this model and reports the remaining headroom
-against it. No automated per-operation regression lane exists: the budgets bind
-through the gates' fidelity metrics (the aggregate lines below are what the gate
-measures), and the apply-capacity bench (`tools/perf/`) records the apply-path
-measurements the capacity model cites — its every-commit test guards the
-harness, not the numbers.
+The framework's per-operation budgets are per-unit microsecond targets. This
+capacity model reconciles them with the §4.4 scaling gates through the per-tick
+totals that gate fidelity metrics and the per-instance fidelity ceiling those
+totals imply. Every scaling-gate run and every ADR performance claim cites this
+model and reports the remaining headroom against it. No automated per-operation
+regression lane exists: the budgets bind through the gates' fidelity metrics
+(the aggregate lines below are what the gate measures), and the apply-capacity
+bench (`tools/perf/`) records the apply-path measurements cited here. Its
+every-commit test guards the harness, not the numbers.
 
 ## 1. Per-operation budgets
 
@@ -34,8 +32,8 @@ metrics.
 
 ## 2. The capacity model
 
-The per-operation budgets compose into a per-tick cost chain. Reading it end to
-end turns a gate failure from a mystery into a prediction:
+The per-operation budgets compose into a per-tick cost chain that predicts gate
+failures:
 
 ```
 inputs/sec -> dispatches/sec -> publishes/sec -> lock acquisitions/sec
@@ -75,9 +73,9 @@ Each arrow is a multiplication by a quantity the architecture fixes:
   counted (`kith_net_write_deferrals_total`). One call costs at most about the
   cap's worth of memcpy; per tick the drained bytes still sum to N_clients x
   bytes/tick.
-- reactor thread total/cycle = refresh + compose + serialize/frame/enqueue
-  - socket drain, all on the one reactor thread. Workers do not help this path;
-    they only add contention to the locks it reads.
+- reactor thread total/cycle is the sum of refresh, compose,
+  serialize/frame/enqueue, and socket drain, all on the one reactor thread.
+  Workers do not help this path; they only add contention to the locks it reads.
 
 ### The per-instance fidelity ceiling
 
@@ -126,14 +124,14 @@ Every run: session_ok 100%, bootstrap p95 141-529 ms, publish-rate skew \<=
 1.02x, zero write deferrals, zero locate failures, all six points from the same
 profile and cadence with only the client count re-baselined. The 2026-08-21
 calibration ran 16 handler workers, this ladder the 8-worker profile default;
-the worker count is not load-bearing for the comparison — workers serve the
-Python dispatch boundary, not the tick-thread compose/deliver path that sets the
+the worker count does not determine the comparison: workers serve the Python
+dispatch boundary, not the tick-thread compose/deliver path that sets the
 ceiling (they add contention to the locks it reads, never capacity to it). The
 compose-budget deferral knee sits between 300 and 400 clients/instance: at or
 below 300 the pass admits every due recomposition (zero deferrals); at 400 about
 21% of recompositions per tick defer, about 56% at 500, and about 73-80% at 1000
-(the window-tick count T is bounded below by deferrals divided by sessions — 71
-at 1000/instance — and estimated at 88-97 from the movement-window span; the
+(the window-tick count T is bounded below by deferrals divided by sessions (71
+at 1000/instance) and estimated at 88-97 from the movement-window span; the
 fraction reads deferrals/(sessions x T) across that range). The deferred session
 repeats its retained view, so past the knee the missing ratio grows faster than
 the one-parameter model predicts, and the per-session compose+deliver cost
@@ -141,8 +139,8 @@ itself rises with density (view occupancy grows with the corridor population
 until the 512 budget caps it), which pulls the knee below any fixed-per-session
 extrapolation. Below the knee the residual missing ratio (0.74% at 200; 5.89%
 and 10.98% across two runs at 300) is not budget loss: with zero deferrals every
-due composition ran, and the residual is observational — its shape matches the
-one-tick flush observation floor, an input applied after a compose has read its
+due composition ran. The residual is observational: its shape matches the
+one-tick flush observation floor. An input applied after a compose has read its
 cell is observed one tick later, and a second application in between supersedes
 it whole. That floor is timing-phase dependent and run-noisy; it straddled the
 10% bar at 300/instance across the two runs.
@@ -158,8 +156,8 @@ certified gate configuration) the apply runs as a C pool job (~75 us) and the
 Python pool holds headroom: applies equal dispatches with zero dispatch-dropped
 at 1000 clients/instance. Under the native-apply regime the certified
 counter-delta rule (ADR-0023) reads 0.00% certified move-missing at 1000
-clients/instance with no continuity flicker — the fidelity gate's certified
-envelope — while compose-budget deferrals still occur (12-15k per window per
+clients/instance with no continuity flicker (the fidelity gate's certified
+envelope), while compose-budget deferrals still occur (12-15k per window per
 instance): deferral re-delivers a session's retained view, and the certified
 rule attributes none of that as input loss where the event-count reading counts
 every re-delivered pass. The ladder therefore states the Python-apply
@@ -168,8 +166,8 @@ Both regimes are real; each number names its regime and its collector.
 
 The dense single-cell case (all 1000 actors in one cell, K=512) is a different,
 worse regime: the compose term becomes O(N^2) and the egress line hits ~696 MB/s
-into one process. That is the adversarial case the embedded topology is not the
-fidelity claim for (ADR-0020); the relevance budget (ADR-0005) bounds it by
+into one process. That adversarial case lies outside the embedded topology's
+fidelity claim (ADR-0020); the relevance budget (ADR-0005) bounds it by
 degrading density, not by guaranteeing full-fidelity pileup replication on one
 gateway.
 
@@ -188,21 +186,21 @@ drains that finished within their pass and from kernel-backpressure stops.
 
 Measured at 500 clients/instance (the faithful distributed-2000 replica: two
 instances, free-threaded Python 3.14.7, Release/LTO, AMD Ryzen 7 3700X,
-`powersave`, 2026-08-22): the drain is the single largest reactor-path term —
-648–681 ms per 5 s movement window per instance, about twice the compose term
-(332–391 ms) and about twice the deliver term (319–341 ms). Counted reactor work
-rises from ~0.84 s to ~1.36 s of the 5 s window (~17% → ~27%). The drain paces
-only when per-call backlog exceeds the 64 KiB cap, and
+`powersave`, 2026-08-22): the drain is the single largest reactor-path term: 648
+to 681 ms per 5 s movement window per instance, about twice the compose term
+(332 to 391 ms) and about twice the deliver term (319 to 341 ms). Counted
+reactor work rises from ~0.84 s to ~1.36 s of the 5 s window (~17% → ~27%). The
+drain paces only when per-call backlog exceeds the 64 KiB cap, and
 `kith_net_write_deferrals_total` reads 0 in every instance-window measured at
-this scale: steady-state backlog is one batch frame, so the cap ships as forward
-insurance rather than an active bound.
+this scale: steady-state backlog is one batch frame, so the cap protects against
+larger backlogs without engaging at this load.
 
 Kernel accounting during the continuity-flicker cluster windows (per-process
 `/proc` sampling at 100 ms, servers and driver sampled separately) bounds the
 mechanism from both sides: inside every window the gapping instance's reactor
-thread runs at 30–43% duty against a 20% baseline — elevated but never
-saturated, never blocked — while the instance's sixteen handler workers surge to
-2–3 cores under thousands of nonvoluntary context switches, and the
+thread runs at 30 to 43% duty against a 20% baseline (elevated but never
+saturated or blocked), while the instance's sixteen handler workers surge to 2
+to 3 cores under thousands of nonvoluntary context switches, and the
 single-threaded load driver sits at 100% duty through the whole run. No thread
 freezes in any window (ruling out a stop-the-world pause), core frequency never
 leaves maximum boost (ruling out governor downclock), and the reactor never goes
@@ -220,32 +218,32 @@ reactor-thread-total line:
   sits at the one-tick flush observation floor; above the knee the deferral
   fraction owns it. Cutting compose ~45% (the unchanged-view skip) and
   suppressing already-sent records (ADR-0021) does not move the knee: the
-  per-client delivery cost that dominates the chain — serialize + enqueue +
-  drain for fresh views — and the compose pass itself both still spend the same
-  25 ms budget clock. With suppression the deliver phase spends 7-11% less per
-  window than without it, and the compose phase ~25% more (886/970 to 1105/1200
-  ms per window at 1000 clients/instance), the freed budget re-spent on more
+  per-client delivery cost that dominates the chain (serialize + enqueue + drain
+  for fresh views) and the compose pass itself both still spend the same 25 ms
+  budget clock. With suppression the deliver phase spends 7-11% less per window
+  than without it, and the compose phase ~25% more (886/970 to 1105/1200 ms per
+  window at 1000 clients/instance), the freed budget re-spent on more
   compositions.
 - `continuity_flicker` is gated by sustained multi-tick delivery holes. The
-  measured clusters are instance-wide synchronized 200–250 ms holes at aligned
-  input-tick ranges with zero frame loss at 500 clients/instance, where the
-  average per-tick sum still fits one tick. The counted reactor-path terms do
-  not explain them: the drain pacing never engages at this scale and the reactor
-  thread is not saturated inside the windows. The hole body lives outside the
-  reactor-path chain, in the region the driver/server cpuset-isolation run
-  bounds. At 1000 clients/instance the clusters are saturation symptoms instead:
-  the tick thread runs at ~99% duty inside every gap window and every sampled
-  client shows the same four gaps.
+  measured clusters are instance-wide synchronized 200 to 250 ms holes at
+  aligned input-tick ranges with zero frame loss at 500 clients/instance, where
+  the average per-tick sum still fits one tick. The counted reactor-path terms
+  do not explain them: the drain pacing never engages at this scale and the
+  reactor thread is not saturated inside the windows. The hole body lives
+  outside the reactor-path chain, in the region the driver/server
+  cpuset-isolation run bounds. At 1000 clients/instance the clusters are
+  saturation symptoms instead: the tick thread runs at ~99% duty inside every
+  gap window and every sampled client shows the same four gaps.
 
 The bounded composition pass bounds the worst-tick compose cost at
 `compose_budget_us` regardless of storm magnitude: past the budget a session
-with a composed view delivers its retained set — frame cadence is preserved,
+with a composed view delivers its retained set. Frame cadence is preserved,
 staleness is bounded by the head-of-pass guarantee (one pass per remaining stale
 session), and `kith_gateway_compose_deferrals_total` distinguishes budget
 exhaustion from no-change skips. Engagement is count-dependent: under the
 deferral knee it is zero (every due composition runs), while at the 1000
 clients/instance gate point roughly three quarters of recompositions defer per
-tick — at that population the budget, not the compose path's internals, is the
+tick. At that population the budget, not the compose path's internals, is the
 binding constraint.
 
 ### Validation depth
@@ -262,19 +260,19 @@ the hole body, which the driver/server isolation run localizes.
 
 ## 3. Budget-to-gate reconciliation
 
-| Gate metric (AGENTS.md §4.4)                   | Budget line that gates it                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| session_ok, selected_clients, bootstrap_ms_p95 | Connection-accept and handshake path; not on the hot tick path. The reactor-tick-per-message budget bounds handshake dispatch.                                                                                                                                                                                                                                                                                            |
-| move_missing_ratio_certified                   | Reactor thread total. Miss begins when the per-tick sum exceeds one core.                                                                                                                                                                                                                                                                                                                                                 |
-| continuity_flicker                             | Sustained multi-tick delivery holes. Measured clusters are instance-wide synchronized 200–250 ms holes at aligned tick ranges with zero loss; the counted reactor-path terms bound but do not explain them (drain pacing inert at default, reactor duty 30–43% inside windows vs 20% baseline). The driver/server cpuset-isolation run localizes the hole body between driver ingest and server-side dispatch contention. |
-| publish_rate_skew_max                          | Per-instance reactor thread total; skew is the ratio of the slowest instance's delivery rate to the fastest.                                                                                                                                                                                                                                                                                                              |
+| Gate metric (AGENTS.md §4.4)                   | Budget line that gates it                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| session_ok, selected_clients, bootstrap_ms_p95 | Connection-accept and handshake path; not on the hot tick path. The reactor-tick-per-message budget bounds handshake dispatch.                                                                                                                                                                                                                                                                                                  |
+| move_missing_ratio_certified                   | Reactor thread total. Miss begins when the per-tick sum exceeds one core.                                                                                                                                                                                                                                                                                                                                                       |
+| continuity_flicker                             | Sustained multi-tick delivery holes. Measured clusters are instance-wide synchronized 200 to 250 ms holes at aligned tick ranges with zero loss; the counted reactor-path terms bound but do not explain them (drain pacing inert at default, reactor duty 30 to 43% inside windows vs 20% baseline). The driver/server cpuset-isolation run localizes the hole body between driver ingest and server-side dispatch contention. |
+| publish_rate_skew_max                          | Per-instance reactor thread total; skew is the ratio of the slowest instance's delivery rate to the fastest.                                                                                                                                                                                                                                                                                                                    |
 
 The dense-1000 gate (embedded, stress) reports `move_missing_ratio` and
 `continuity_flicker` but does not threshold them (ADR-0020): the embedded
-single-cell pileup is the adversarial case the backend's fidelity guarantees are
-not the answer to, and demanding full-fidelity pileup replication on one laptop
-process fights the egress and reactor-thread-total lines rather than the
-architecture. The distributed-2000 gate (fidelity) thresholds them per instance.
+single-cell pileup lies outside the backend's fidelity guarantees. Demanding
+full-fidelity pileup replication in one laptop process exceeds the egress and
+reactor-thread-total budgets rather than testing the architecture's claim. The
+distributed-2000 gate (fidelity) thresholds them per instance.
 
 ### Machine capacity envelope
 
@@ -292,15 +290,15 @@ ceiling on the tiered ladder above: the compose-budget deferral knee sits
 between 300 and 400 clients/instance; on the Python-apply event-count ladder,
 the 10% bar is met at 200/instance, straddled at 300/instance with zero
 deferrals, and breached by the deferral regime from 400/instance up. The
-per-tick demand at 1000/instance is real work — fresh-view frames of up to 512
+per-tick demand at 1000/instance consists of fresh-view frames of up to 512
 records each, the compose scan and sort over the same population, and the socket
-drain — all on the one reactor thread. Suppression removes the wasted
+drain, all on the one reactor thread. Suppression removes the wasted
 serializations: the tiered suppression compares the serializer's input scalars
 against the ledger, which eliminates roughly ten million discarded record
 serializations per second at this operating point and runs the deliver phase
-7-11% shorter than without suppression. What raises the ceiling is therefore
-structural: taking compose or deliver work off the tick thread, cutting the
-per-session compose+deliver cost below its measured shares, or spreading the
+7-11% shorter than without suppression. Raising the ceiling therefore requires
+structural changes: taking compose or deliver work off the tick thread, cutting
+the per-session compose+deliver cost below its measured shares, or spreading the
 same clients across more instances. The gate stays at 1000/instance as the
 production fidelity target; the capacity model records the measured ceiling, the
 budget line that sets it, and what raises it.
@@ -341,17 +339,16 @@ against the per-instance ceiling (N\* and the measured miss at the gate's
 per-instance load). Every ADR that makes a performance or scaling claim cites
 the budget line the claim depends on. A fix to a hot path updates the model's
 cost terms and shows the new headroom; a claim that the N^2 ceiling is broken
-cites the distributed-2000 result and the N\* it implies. The capacity model is
-the instrument that turns gate work from ceiling discovery at 20+ minutes per
-run into ceiling prediction.
+cites the distributed-2000 result and the N\* it implies. The capacity model
+predicts the ceiling before gate runs spend 20+ minutes measuring it.
 
 ## References
 
-- `AGENTS.md` §4.4 — the numeric gate definitions.
-- ADR-0001 — five-plane world-stream fabric architecture.
-- ADR-0004 — the C/Python threading boundary; the worker pool and the
+- `AGENTS.md` §4.4: the numeric gate definitions.
+- ADR-0001: five-plane world-stream fabric architecture.
+- ADR-0004: the C/Python threading boundary; the worker pool and the
   no-inline-fallback conformance rule.
-- ADR-0005 — bounded relevance budgets; the 512-subject default.
-- ADR-0014 — the deterministic-simulation contract (the tick-batched step).
-- ADR-0020 — the scaling-claim gates (stress and fidelity classes) and the
+- ADR-0005: bounded relevance budgets; the 512-subject default.
+- ADR-0014: the deterministic-simulation contract (the tick-batched step).
+- ADR-0020: the scaling-claim gates (stress and fidelity classes) and the
   certified configuration.

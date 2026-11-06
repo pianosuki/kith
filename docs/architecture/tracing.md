@@ -2,18 +2,17 @@
 
 The framework's tracing is correlation-first (ADR-0007, ADR-0019): a 64-bit
 correlation ID rides an optional wire-frame trailer upstream, and the surfaces
-that carry it into observability do so explicitly — a log entry's
+that carry it into observability do so explicitly: a log entry's
 `correlation_id` caller field, a metric series keyed by a caller-supplied label,
 a control event bus record published with the ID. The correlation ID is the
 single join key that ties a client observation to the server-side work it caused
 on the surfaces that carry it.
 
-The contract is defined here as a mapping. The framework ships the pieces the
-mapping is built from — the wire trailer, the event records of its three
-carriers, the in-process correlator, and the OTLP/JSON metrics exporter — and an
-operator wires them into an OpenTelemetry pipeline by following the mapping
-below. The framework does not ship an OpenTelemetry span exporter; the mapping
-is the contract an exporter follows.
+The tracing contract is a mapping from the shipped wire trailer, the event
+records of its three carriers, the in-process correlator, and the OTLP/JSON
+metrics exporter to an operator-configured OpenTelemetry pipeline. The framework
+does not ship an OpenTelemetry span exporter; the mapping is the contract an
+exporter follows.
 
 ## The correlation ID
 
@@ -39,10 +38,10 @@ correlation in scope.
 
 ## The event records
 
-The tracing mapping consumes the framework's event records — the three carriers
-defined in `docs/event_schema.md`: the log side-channel, the control event bus,
-and the headless client IPC bus. Each carrier has its own record shape; the
-fields the mapping relies on:
+The tracing mapping consumes the framework's event records from the three
+carriers defined in `docs/event_schema.md`: the log side-channel, the control
+event bus, and the headless client IPC bus. Each carrier has its own record
+shape; the mapping relies on these fields:
 
 | Field              | Carrier                                                                                            | Role in the mapping                                                                                                      |
 | ------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -61,12 +60,12 @@ additively extensible without breaking the mapping.
 
 Three surfaces carry the records (`docs/event_schema.md`):
 
-- The **log side-channel** — the structured logger's JSONL file sink
+- The **log side-channel**: the structured logger's JSONL file sink
   (`include/kith/logger/logger.h`). One record per log entry.
-- The **control event bus** — `kith_control_publish_event` feeds the ring; the
+- The **control event bus**: `kith_control_publish_event` feeds the ring; the
   control plane's stream routes render its records as server-sent events. The
   framework publishes no events itself today.
-- The **agentic headless client IPC bus** — a Unix-socket JSON channel
+- The **agentic headless client IPC bus**: a Unix-socket JSON channel
   `tools/agent/` drains per-client events through during closed-loop testing
   (`docs/guides/agentic_headless_client.md`).
 
@@ -178,21 +177,20 @@ The framework does not ship:
 
 The split keeps the wire format compact (8 bytes per flagged frame, no
 trace-state header) and the framework free of an OTel SDK dependency, while
-preserving the single join key — the correlation ID — that ties a client
-observation to the records and metrics that carry its ID and answer to one
-trace.
+preserving the correlation ID as the single join key between a client
+observation and the records and metrics that carry its ID within one trace.
 
 ## References
 
-- `docs/event_schema.md` — the carrier records, the `type` namespace, and the
+- `docs/event_schema.md`: the carrier records, the `type` namespace, and the
   cross-referencing contract.
-- `docs/guides/agentic_headless_client.md` — the IPC bus that consumes the
+- `docs/guides/agentic_headless_client.md`: the IPC bus that consumes the
   headless client record in closed-loop testing.
-- `include/kith/metrics/metrics.h` — the metrics registry and the Prometheus /
+- `include/kith/metrics/metrics.h`: the metrics registry and the Prometheus /
   OTLP/JSON serializers.
-- `include/kith/logger/logger.h` — the structured logger and the JSONL
+- `include/kith/logger/logger.h`: the structured logger and the JSONL
   side-channel.
-- `tools/agent/event_correlator.py` — the in-process correlator.
-- ADR-0007 — the optional 8-byte wire-protocol correlation trailer.
-- ADR-0019 — the single observability contract (logs, metrics, tracing) the
+- `tools/agent/event_correlator.py`: the in-process correlator.
+- ADR-0007: the optional 8-byte wire-protocol correlation trailer.
+- ADR-0019: the single observability contract (logs, metrics, tracing) the
   mapping follows.

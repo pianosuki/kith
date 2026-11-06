@@ -5,7 +5,7 @@
 ## Context
 
 The framework must be generic enough to support different architectures.
-Fully-pluggable "any architecture" would reintroduce the N² ceiling by allowing
+Allowing "any architecture" would reintroduce the N² ceiling by allowing
 invariant violations.
 
 ## Decision
@@ -18,8 +18,8 @@ invariant-violating implementations.
 
 ## Consequences
 
-Real flexibility (embedded for small games, distributed for MMO) without the
-risk of silently reintroducing the reactor-centric AOI model. Negative — each
+Positive: flexibility (embedded for small games, distributed for MMO) without
+the risk of silently reintroducing the reactor-centric AOI model. Negative: each
 pluggable plane carries a registry surface and a plugin contract that must track
 the plane's invariants as they evolve. Registries shipped: sim models, database
 queries, protocol message types, and control-plane routes; the

@@ -1,9 +1,9 @@
 # Dependency Layers
 
-Every module has both a **runtime plane** (who owns what data — see
-`docs/architecture/planes.md`) and a **dependency layer** (which way `#include`
-may point). The two are independent axes: a module's layer says nothing about
-its plane, and its plane says nothing about its layer.
+Every module has both a runtime plane (who owns what data; see
+`docs/architecture/planes.md`) and a dependency layer (which way `#include` may
+point). The two are independent axes: a module's layer says nothing about its
+plane, and its plane says nothing about its layer.
 
 The dependency layer governs `#include` direction. A module may only include
 headers from the same or a lower dependency layer, regardless of plane. This
@@ -31,9 +31,9 @@ A module at layer N may include headers from modules at layer N or lower. An
 edge that points upward (layer N → layer > N) is a violation.
 
 Foundation modules are shared: they serve the planes and may be included by any
-higher layer, and the same holds for the shared modules at the higher layers —
-the plane column above records each module's binding. Service-layer modules may
-include shared modules and same-or-lower services within the plane contract (see
+higher layer. The same holds for shared modules at higher layers; the plane
+column records each module's binding. Service-layer modules may include shared
+modules and same-or-lower services within the plane contract (see
 `docs/architecture/planes.md` and `tools/plane_rules.yaml` for the cross-plane
 include restrictions that layer on top of this rule).
 
@@ -51,9 +51,8 @@ imply passing the other.
 
 ## Why a separate axis
 
-A runtime plane is a statement about *data* — which plane owns authoritative
-state. A dependency layer is a statement about *code* — which module may depend
-on which. Folding them into one axis conflates the two: a foundation module
-would need a plane, and a plane module would need a layer it does not naturally
-have. Keeping them separate lets the framework reason about scaling (planes) and
-buildability (layers) independently.
+A runtime plane defines which plane owns authoritative data. A dependency layer
+defines which modules may depend on others. Folding them into one axis conflates
+the two: a foundation module would need a plane, and a plane module would need a
+layer it does not naturally have. Keeping them separate lets the framework
+reason about scaling (planes) and buildability (layers) independently.

@@ -2,9 +2,8 @@
 
 A non-spatial kith server: presence, rooms, and chat on Gateway + Control + DB
 only. No simulation model, no fabric cell product, no AOI subscription. This
-proves the planes are a pickable toolkit, not a monolithic spatial engine: a
-lobby, turn-based game, or any non-spatial multiplayer game uses the planes it
-needs and leaves the spatial planes out.
+shows how a lobby, turn-based game, or other non-spatial multiplayer game can
+select the planes it needs and leave the spatial planes out.
 
 ## What it proves
 
@@ -16,12 +15,12 @@ needs and leaves the spatial planes out.
   \>= `KITH_PROTO_TYPE_USER_BASE`, registered on the borrowed proto. Message
   types are game-owned, not framework-owned.
 - The single S2C type (`presence`) carries join/leave/chat/status notifications
-  in its payload, not as separate wire types — the same one-replication-type
+  in its payload, not as separate wire types: the same one-replication-type
   principle as the spatial game's `actor_state`.
 - The `GameStateStore` interface (from `examples/_common/store.py`) is injected
   into `LobbyState` as an extension point; this wiring reads and writes nothing
-  through it — display names are in-memory only — and a Postgres-backed store is
-  the durable opt-in a game wires itself.
+  through it. Display names are in-memory only; a game can wire a
+  Postgres-backed store for durability.
 - The control plane is the harness surface: presence, rooms, chat, and the
   composed `presence` outbox are introspected over HTTP.
 
@@ -29,16 +28,16 @@ needs and leaves the spatial planes out.
 
 A spatial game (see `free_movement/` and `spatial/`) adds:
 
-- **Sim** — a movement model (`free2d`, `tile2d`) that steps actor positions
-  each tick.
-- **Fabric** — the cell-stream append-only log that fans cell products out to
+- **Sim**: a movement model (`free2d`, `tile2d`) that steps actor positions each
+  tick.
+- **Fabric**: the cell-stream append-only log that fans cell products out to
   subscribers.
-- **AOI** — the area-of-interest index that selects which cells a subscriber
+- **AOI**: the area-of-interest index that selects which cells a subscriber
   sees.
 
-The lobby needs none of these. It runs on the three planes every multiplayer
-game uses — Gateway (wire framing + session table), Control (HTTP harness
-surface), and DB (member persistence) — and nothing else.
+The lobby needs none of these. It uses only Gateway (wire framing + session
+table), Control (HTTP harness surface), and DB (member persistence), the three
+planes every multiplayer game uses.
 
 ## Run
 
@@ -59,10 +58,10 @@ the control port.
 | POST   | `/leave`              | `{"member_id": 1, "room": "town"}`               | `{"left": true, "room": "town", "members": []}`              |
 | POST   | `/chat`               | `{"member_id": 1, "room": "town", "text": "hi"}` | `{"sent": true, "room": "town"}`                             |
 | POST   | `/status`             | `{"member_id": 1, "status": 1}`                  | `{"updated": true}`                                          |
-| GET    | `/members`            | —                                                | `{"members": [...]}`                                         |
-| GET    | `/rooms`              | —                                                | `{"rooms": {"town": [1, 2]}}`                                |
-| GET    | `/presence?room=town` | —                                                | `{"room": "town", "presence": [...]}`                        |
-| GET    | `/chat_log?room=town` | —                                                | `{"log": [{"room": "town", "member_id": 1, "text": "hi"}]}`  |
-| GET    | `/outbox`             | —                                                | `{"outbox": [{"session_ids": [...], "payload_hex": "..."}]}` |
+| GET    | `/members`            | None                                             | `{"members": [...]}`                                         |
+| GET    | `/rooms`              | None                                             | `{"rooms": {"town": [1, 2]}}`                                |
+| GET    | `/presence?room=town` | None                                             | `{"room": "town", "presence": [...]}`                        |
+| GET    | `/chat_log?room=town` | None                                             | `{"log": [{"room": "town", "member_id": 1, "text": "hi"}]}`  |
+| GET    | `/outbox`             | None                                             | `{"outbox": [{"session_ids": [...], "payload_hex": "..."}]}` |
 
 Status flags: 0 = online, 1 = away, 2 = do-not-disturb.

@@ -7,23 +7,23 @@
 The gateway delivers replication by serializing a subscriber's entire bounded
 view set every deliver pass: fixed-size big-endian records (ADR-0007), one frame
 per subject or one batch frame, enqueued on the session's TCP connection. This
-is correct and self-healing — a lost pass is repaired by the next one — but its
+is correct and self-healing (a lost pass is repaired by the next one), but its
 cost scales with budget × tick rate regardless of how much actually changed, and
 it dominates the measured per-instance delivery ceiling. The pluggability rule
 (ADR-0013) sanctions the alternative: a delivery strategy is an implementation
 choice inside the gateway plane, bounded by the plane's invariants and by the
-founding contracts — products stay immutable and cell-scoped with supersession
-in the fabric (ADR-0002), and the send set stays budgeted (ADR-0005).
+founding contracts: products stay immutable and cell-scoped with supersession in
+the fabric (ADR-0002), and the send set stays budgeted (ADR-0005).
 
 ## Decision
 
-Delivery semantics decompose into two orthogonal policy axes — **encoding**
+Delivery semantics decompose into two orthogonal policy axes: **encoding**
 (full-record or delta: the delta encoder diffs the composed view against a
 per-session, per-subject send ledger of last-enqueued records and emits
 membership add/remove events plus field diffs) and **scheduling** (every-tick or
 rate-limited: the rate-limited scheduler derives per-subject due times from
 representation tier and subject class). The presets are `full` (full encoding,
-every-tick scheduling — the shipped behavior, byte-identical), `delta` (delta
+every-tick scheduling, byte-identical to the shipped behavior), `delta` (delta
 encoding, every-tick scheduling), and `tiered` (full encoding, rate-limited
 scheduling). The fourth combination (delta + rate-limited) is a configuration of
 the same two policies, not a fourth strategy; both axes share one per-subject
@@ -54,8 +54,8 @@ Correctness rules, binding on every strategy:
    supersession queue, which ADR-0002 forbids; supersession stays in the fabric,
    and a strategy never requests product history from it.
 1. **Delta grammar.** Subjects entering or leaving the view, and
-   crowd↔individual transitions, are membership events — the crowd aggregate is
-   a synthetic subject whose id exists only while overflow persists, so a
+   crowd↔individual transitions, are membership events. The crowd aggregate is a
+   synthetic subject whose id exists only while overflow persists, so a
    transition replaces records rather than diffing them. Tier transitions within
    one actor id are field diffs while the record interpretation is
    tier-invariant. An empty composed tick emits nothing; an empty ledger makes
@@ -72,8 +72,8 @@ The `tiered` preset ships in the gateway library: full-record encoding with
 rate-limited scheduling, record-granular change suppression against the
 per-subject send ledger, membership-event emission for departures and crowd
 transitions, and cadence intervals exposed as a size-versioned config blob.
-Suppression compares the record's content fields against the ledger — exactly
-"would the client's bytes change" — so tier transitions self-heal (a
+Suppression compares the record's content fields against the ledger, asking
+"would the client's bytes change", so tier transitions self-heal (a
 reduced-to-full upgrade re-widens the input-tick field, differing the record
 even when the source artifact did not) and dense-cell granularity is exact;
 serialization happens only for subjects actually sent, an optimization that must
@@ -86,10 +86,10 @@ encoding axis shares the ledger substrate the tiered preset exercises.
 
 ## Consequences
 
-Positive — replication traffic scales with the change rate instead of with
-budget × tick rate; adopters choose semantics per game without leaving the
-gateway plane; the dense-topology ceiling gains a lever that does not touch the
-plane contracts. Negative — the delta preset adds per-session ledger memory
+Positive: replication traffic scales with the change rate instead of with budget
+× tick rate; adopters choose semantics per game without leaving the gateway
+plane; dense deployments can raise the delivery ceiling without changing the
+plane contracts. Negative: the delta preset adds per-session ledger memory
 proportional to the budget plus a per-subject diff pass; the tiered preset adds
 far-ring staleness a client interpolates within the max-gap floor. The factory
 default stays `full`, byte-identical on its state records; dense-topology

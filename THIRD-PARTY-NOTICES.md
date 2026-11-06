@@ -13,9 +13,9 @@ uses the MIT text below; the release-only PostgreSQL client retains the
 `COPYRIGHT` file from its verified upstream source archive. The release-only
 hiredis 1.5.0 client retains its verified upstream `COPYING` file. Missing
 dependency ownership or redistribution notices fail the release build. These
-artifact-specific notices cover transitive libraries; the table below describes
-the framework's direct dependencies. Verbatim direct-dependency license texts
-also live in [docs/third-party/](docs/third-party/).
+artifact-specific notices cover transitive libraries; the table lists the
+framework's direct dependencies. Verbatim direct-dependency license texts also
+live in [docs/third-party/](docs/third-party/).
 
 | Library                                                                    | License                                                                                                                                                                                                                                                        | Verdict against Apache-2.0                                              |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -32,8 +32,8 @@ describes composition and does not replace those notices.
 The portable wheel's PostgreSQL client supports TLS through OpenSSL and the
 password/SCRAM and certificate authentication available in that build. Its
 release-only configuration excludes LDAP lookup and GSSAPI authentication, which
-prevents grafting unrelated authentication-library dependency trees. The
-reviewed native closure is limited to libpq, OpenSSL's libssl/libcrypto, hiredis
-and liburing; an additional SONAME fails notice collection until its license and
+avoids adding unrelated authentication-library dependency trees. The reviewed
+native closure is limited to libpq, OpenSSL's libssl/libcrypto, hiredis and
+liburing; an additional SONAME fails notice collection until its license and
 redistribution requirements are reviewed. Source builds use the host libpq and
 retain that host build's authentication capabilities.

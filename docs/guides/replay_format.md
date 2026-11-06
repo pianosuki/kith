@@ -1,24 +1,24 @@
 # Replay Record Format
 
-The binary replay-record format is the container the deterministic-simulation
-contract (ADR-0014) uses to capture a live session and replay it later to the
-same outcome: a versioned header, per-tick records carrying the tick's input
-events, pinned world-state hash expectations, and pseudo-random generator
-checkpoints. Producers are the recording call sites wired into an example
-composition root (`examples/_common/replay_recorder.py`, enabled by the embedded
-server's `--record PATH` flag); consumers are the modes of `tools/replay.py`
-(`play`, `verify`, `diff`, `transcode`). Artifacts use the `.krpl` extension.
+The binary replay-record format captures a live session for deterministic replay
+under ADR-0014. It contains a versioned header, per-tick records carrying the
+tick's input events, pinned world-state hash expectations, and pseudo-random
+generator checkpoints. Producers are the recording call sites wired into an
+example composition root (`examples/_common/replay_recorder.py`, enabled by the
+embedded server's `--record PATH` flag); consumers are the modes of
+`tools/replay.py` (`play`, `verify`, `diff`, `transcode`). Artifacts use the
+`.krpl` extension.
 
-Design goals, in order: byte-exact regeneration (no timestamps, no ambient state
-— two recordings of the same input set are logically identical); forward
-compatibility within a version (unknown record types skipped whole); loud
-refusal of anything misparseable (wrong version, truncated payloads, ordering
+Design goals, in order: byte-exact regeneration (no timestamps, no ambient
+state; two recordings of the same input set are logically identical); forward
+compatibility within a version (unknown record types skipped whole); explicit
+rejection of anything misparseable (wrong version, truncated payloads, ordering
 violations) instead of silent corruption.
 
 ## Conventions
 
 All multi-byte fields are **big-endian** (network order), matching the
-framework's existing serialization idiom — the golden-hash packing and the wire
+framework's existing serialization idiom: the golden-hash packing and the wire
 codecs already serialize big-endian. This is a convention of this format, not an
 appeal to ADR-0007: that decision governs delivery-payload encoding, not this
 artifact container. Signed fields are two's complement. Offsets below are
@@ -37,7 +37,7 @@ relative to the start of the enclosing structure.
 `tick_hz` is authoritative for playback cadence; the replay tool's `--tick-hz`
 overrides it only when passed explicitly. `header_size` decouples record parsing
 from the header layout: readers parse records from `header_size` onward and
-reject versions above the one they support loudly (rule R1).
+explicitly reject versions above the one they support (rule R1).
 
 ## Record framing (8 bytes)
 
@@ -50,10 +50,10 @@ Every record after the header begins with:
 |      2 |    2 | u16  | reserved    | 0                              |
 |      4 |    4 | u32  | payload_len | payload byte count             |
 
-A reader that meets an unknown `type` skips the whole record using `payload_len`
-— this is the within-version evolution mechanism (rule R2). Unknown flag bits on
-a known type are a parse error. Payload lengths are exact: trailing or missing
-bytes in a known payload are corruption (rule R3).
+A reader that meets an unknown `type` skips the whole record using
+`payload_len`; this is the within-version evolution mechanism (rule R2). Unknown
+flag bits on a known type are a parse error. Payload lengths are exact: trailing
+or missing bytes in a known payload are corruption (rule R3).
 
 ## Record types
 
@@ -70,7 +70,7 @@ bytes in a known payload are corruption (rule R3).
 | -----: | -------- | ---- | ----------- | ---------------------------- |
 |      0 | 8        | u64  | tick        | server tick index (1-based)  |
 |      8 | 2        | u16  | event_count | number of events that follow |
-|     10 | variable | —    | events      | exactly `event_count` events |
+|     10 | variable | none | events      | exactly `event_count` events |
 
 Events are encoded back-to-back with no padding. Each event begins with a
 one-byte code; the v1 event set is **closed** (see versioning rules):
@@ -112,7 +112,7 @@ guessing (this is why the event set is closed rather than open).
 
 ### META (0x02)
 
-One UTF-8 JSON object. Informational only — readers never derive behavior from
+One UTF-8 JSON object. Informational only: readers never derive behavior from
 it; writers use it for provenance such as the model name and root seed. Legal
 exactly once, before the first TICK.
 
@@ -125,11 +125,11 @@ exactly once, before the first TICK.
 
 The hash folds the actor count followed by each actor's
 `(id, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, input_tick, flags)` in ascending
-actor-id order, big-endian two's-complement encodings — the same function
+actor-id order, big-endian two's-complement encodings, the same function
 `tools/replay.py` prints as `tick=N hash=HEX` during `play`. Expectations make
 an artifact self-verifying: `verify` re-simulates the record and compares,
 running with a positive `--hash-every` cadence whose emitted ticks cover every
-pinned tick — an expectation whose tick the replay never emits fails the
+pinned tick; an expectation whose tick the replay never emits fails the
 verification rather than passing unchecked. Under the determinism contract
 (ADR-0014) the replayed hash is a pure function of the recorded inputs and
 initial state, so an artifact embedding expectations is self-verifying against
@@ -146,7 +146,7 @@ reference data. At most one expectation per tick.
 |     20 |   40 | bytes | state      | `kith_rng_state_t`, big-endian              |
 
 The state payload is the derivation seed (`u64`) followed by the four algorithm
-words (`u64` × 4) — the complete snapshot (`kith_rng_state_save`) of one
+words (`u64` × 4), the complete snapshot (`kith_rng_state_save`) of one
 generator stream. A checkpoint must immediately follow its own TICK record, and
 stream keys must ascend strictly within a tick.
 
@@ -165,39 +165,40 @@ Records appear in this order, and readers enforce every clause:
 
 ## Versioning rules
 
-- **R1** — `version` changes only when the header or framing changes
-  structurally. Readers refuse newer versions loudly instead of misparsing.
-- **R2** — layouts of known types are frozen within a version. Additive
-  evolution adds a new *record* type code, which old readers skip whole. The v1
-  *event* set is closed because events cannot be skipped: a new event kind
-  requires a `version` bump.
-- **R3** — payloads of known types must match their declared length exactly;
-  only unknown record types may be skipped via `payload_len`.
+- **R1**: `version` changes only when the header or framing changes
+  structurally. Readers explicitly reject newer versions instead of misparsing
+  them.
+- **R2**: layouts of known types are frozen within a version. Additive evolution
+  adds a new *record* type code, which old readers skip whole. The v1 *event*
+  set is closed because events cannot be skipped: a new event kind requires a
+  `version` bump.
+- **R3**: payloads of known types must match their declared length exactly; only
+  unknown record types may be skipped via `payload_len`.
 
 ## Recording semantics
 
 What producers write, and what readers should expect:
 
-- **Idle-tick elision** — a tick whose input buffer was empty produces no
-  records at all; its checkpoint is omitted with it. Replay fills the gaps by
-  stepping the simulation once per tick from zero to the highest recorded tick
-  and applying events at their recorded tick, so elided ticks cost nothing, and
+- **Idle-tick elision**: a tick whose input buffer was empty produces no records
+  at all; its checkpoint is omitted with it. Replay fills the gaps by stepping
+  the simulation once per tick from zero to the highest recorded tick and
+  applying events at their recorded tick, so elided ticks cost nothing, and
   generator continuity survives the gap because generator advancement is a pure
   function of the step count. Elision keeps an idle session's artifact bounded
   instead of growing one empty record set per tick.
-- **Tail discard** — events buffered when the recording ends belong to a tick
+- **Tail discard**: events buffered when the recording ends belong to a tick
   that never completed, so the producer drops them instead of writing a partial
   TICK. A recording ends on a tick boundary.
-- **Durability** — the producer flushes the artifact stream at every drained
+- **Durability**: the producer flushes the artifact stream at every drained
   boundary, so an unclean process exit preserves the recording up to the last
   completed tick.
-- **Teleport divergence** — the v1 event set has no encoding for absolute
+- **Teleport divergence**: the v1 event set has no encoding for absolute
   repositioning. A recorded session that teleports an actor diverges permanently
   from the teleport tick onward when replayed (every later move applies to a
   wrong base position); the artifact carries no marker of this, so games that
   teleport should not rely on replay fidelity across the teleport until the
   format gains an encoding (a `version` bump per R2).
-- **Wiring today** — recording call sites exist in the embedded-topology example
+- **Wiring today**: recording call sites exist in the embedded-topology example
   composition root (`--record`, optional `--record-seed` for per-tick
   checkpoints of a root-seeded generator under stream key 0); other topologies
   have no recorder wiring yet.

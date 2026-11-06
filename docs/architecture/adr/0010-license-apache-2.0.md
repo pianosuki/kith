@@ -13,6 +13,6 @@ Apache-2.0.
 
 ## Consequences
 
-Positive — commercial adoption-friendly, with a patent grant, and CLA-ready if a
-foundation forms. Negative — attribution and NOTICE obligations ride licensed
-derivatives; accepted as the cost of the grant.
+Positive: permits commercial adoption, includes a patent grant, and supports a
+CLA if a foundation forms. Negative: attribution and NOTICE obligations apply to
+licensed derivatives; accepted as the cost of the grant.

@@ -16,7 +16,7 @@ measured the opposite regime for a full game-logic handler: applying one
 movement input end to end (decode, resolve, model apply/step, artifact publish,
 cell bookkeeping) costs a few microseconds per apply in C, while driving the
 same sequence through a Python handler costs milliseconds of interpreter,
-collector, and allocator-churn thread time per apply — against a per-apply
+collector, and allocator-churn thread time per apply, compared with a per-apply
 thread budget of a few hundred microseconds at that point. The C path is orders
 of magnitude under the budget; the per-input Python crossing is the binding
 constraint. Running such a handler inline on the reactor thread is not an
@@ -33,27 +33,27 @@ set, including the additive-components rule (ADR-0032).
 Pool-bound dispatch is identical for both pool-bound modes: the payload is
 copied across the reactor→worker handoff, the session is referenced for the
 dispatch duration, and a submit beyond the pool's task capacity drops the
-dispatch and counts it rather than running anything inline — the ADR-0004
-conformance rule, unchanged. A handler is a Python-bound trampoline or a
-pool-dispatched C function, never both: registering with both values is
-rejected. With no pool attached the dispatch drops and counts exactly as queue
-exhaustion does; a pool-bound handler never runs inline.
+dispatch and counts it without running anything inline, preserving the ADR-0004
+conformance rule. A handler is a Python-bound trampoline or a pool-dispatched C
+function, never both: registering with both values is rejected. With no pool
+attached the dispatch drops and counts exactly as queue exhaustion does; a
+pool-bound handler never runs inline.
 
 ## Consequences
 
-Positive — a hot-path C handler leaves the reactor thread without entering
+Positive: a hot-path C handler leaves the reactor thread without entering
 Python, and the per-input interpreter, collector, and allocator-churn cost
 disappears from the apply path; the pool's existing task machinery (payload
 copy, session lifetime, drop accounting) carries C work with no new dispatch
 surface.
 
-Negative — a pool-bound C handler removes the interpreter lock as an incidental
+Negative: a pool-bound C handler removes the interpreter lock as an incidental
 serialization backstop on standard builds: where the interpreter once serialized
-Python handlers, the handler's own lock discipline is now load-bearing under
-both interpreter builds, so pool-dispatched C handlers must be thread-safe by
-construction, not by interpreter accident. The pool's capacity now bounds C
-handler work too; exhaustion drops and counts C dispatches exactly as it drops
-Python ones. The empirical basis for the value is a decision-time measurement:
-at the gate point of the day the C-native apply path measured orders of
-magnitude under its per-apply thread budget, and the value makes that measured
-path reachable from a registered handler.
+Python handlers, the handler must now synchronize its own state under both
+interpreter builds. Pool-dispatched C handlers must be thread-safe without
+relying on the interpreter. The pool's capacity now bounds C handler work too;
+exhaustion drops and counts C dispatches exactly as it drops Python ones. The
+empirical basis for the value is a decision-time measurement: at the operating
+point measured then the C-native apply path measured orders of magnitude under
+its per-apply thread budget, and the value makes that measured path reachable
+from a registered handler.

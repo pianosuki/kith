@@ -1,13 +1,13 @@
 # Writing Extensions
 
-This guide adds a new wire message type and a Python handler for it, with no C
-code and no rebuild. The gateway's handler table is populated at runtime through
-the `Server` facade, so registering a new game-owned type is a pure-Python
-change to the game's catalog and handler modules.
+Add a wire message type and its Python handler without C code or a rebuild. The
+gateway's handler table is populated at runtime through the `Server` facade, so
+registering a new game-owned type is a pure-Python change to the game's catalog
+and handler modules.
 
 The walkthrough mirrors the spatial library's catalog
-(`examples/spatial/messages.py` and `examples/spatial/handlers.py`), which is
-the canonical shape a game-owned extension copies.
+(`examples/spatial/messages.py` and `examples/spatial/handlers.py`), which
+provides the pattern for game-owned extensions.
 
 ## What "no C" means
 
@@ -28,18 +28,18 @@ know about at compile time dispatches at runtime.
 
 ## The example: an `emote` type
 
-Add a C2S `emote` type. An actor emits a short text emote into its cell; the
-handler decodes the frame, looks the actor up, and re-broadcasts the sender's
-cell product through the fabric so the subscription fan-out carries the update
-to nearby subscribers. This is the same shape as the spatial library's `chat`
-handler: decode, look up, re-publish.
+Add a C2S `emote` type with an actor id and short text payload. The handler
+decodes the frame, looks up the actor, and advances the sender cell's
+publication epoch through the fabric. The sample discards the decoded text; it
+neither sends that text to subscribers nor publishes an emote state field. The
+spatial library's `chat` handler is a related reference for cell-local traffic.
 
 ### 1. Pick a type id
 
 Game types live at or above `KITH_PROTO_TYPE_USER_BASE` (1000). Both peers
 register the same name at the same id before exchanging frames; there is no
-central enum. The spatial library's catalog occupies 1000–1004, so the next free
-id is 1005.
+central enum. The spatial library's catalog occupies 1000 to 1004, so the next
+free id is 1005.
 
 ```python
 from kith._generated import proto as gen_proto
@@ -117,7 +117,7 @@ The handler shares the per-server game state (the actor table, the cell locator,
 the publish surface). The spatial library's handler set types its dependencies
 as `typing.Protocol` interfaces so the logic is testable with lightweight fakes
 and the real facade satisfies them structurally. The `emote` handler depends on
-the same publish surface the `chat` handler uses:
+the same cell-product publish surface used by the `chat` handler:
 
 ```python
 import threading
@@ -197,12 +197,12 @@ class EmoteHandler:
 The handler does not send a reply frame. The gateway composes the single
 replication stream as the bounded view set each tick; a discrete S2C frame (such
 as the spatial library's `login_reply`) is game-composed on the session's
-connection, not an inbound dispatch — a handler that wants one sends it through
+connection, not an inbound dispatch. A handler that wants one sends it through
 `session.send` (the getting-started guide's discrete S2C section carries the
-contract). The `emote`'s effect reaches subscribers through the same cell-stream
-fan-out replication rides on — the re-broadcast asks the fabric to re-deliver
-the sender's cell to every subscription tracking it, so nearby subscribers
-observe the emote's side effects through the stream they already subscribe to.
+contract). The `emote` sample's cell-product bump requests a refresh of the
+sender's cell for subscriptions tracking it. It does not carry the decoded text
+or create emote state, so the example demonstrates registration, decoding, actor
+lookup, and a cell-product bump rather than text delivery.
 
 ### 5. Register the handler
 
@@ -245,8 +245,7 @@ server.register_message_handler(EMOTE_TYPE, emotes.on_emote)
 server.run()
 ```
 
-No C file is added, no header changes, and no shared library is rebuilt. The
-`emote` type dispatches the next time the server boots.
+The `emote` type dispatches the next time the server boots.
 
 ## Catalog principles to keep
 
@@ -291,18 +290,18 @@ A new wire type and Python handler never need C. A change that touches the
 framework's own contracts does: a new sim model (registered through the sim
 vtable, `docs/guides/writing_c_sim_models.md`), a new fabric storage backing, or
 a new plane. Those land through the pluggability-within-planes pattern
-(ADR-0013) and follow the founding ADR process (ADR-0032). The common case — a
-game adding its own messages and handlers — stays in Python.
+(ADR-0013) and follow the founding ADR process (ADR-0032). The common case (a
+game adding its own messages and handlers) stays in Python.
 
 ## References
 
-- `examples/spatial/messages.py` — the spatial library's wire catalog.
-- `examples/spatial/handlers.py` — the spatial library's inbound handlers.
-- `examples/lobby/` — a non-spatial catalog on Gateway + Control + DB.
-- `docs/guides/getting_started.md` — the example skeleton (four servers and the
-  spatial game library) and the planes-to-genres map.
-- `docs/architecture/planes.md` — the plane contracts a handler honors.
-- ADR-0004 — the C/Python threading boundary the worker pool enforces.
-- ADR-0007 — the optional wire-protocol correlation trailer.
-- ADR-0013 — pluggability is within planes, not across invariant-breaking
+- `examples/spatial/messages.py`: the spatial library's wire catalog.
+- `examples/spatial/handlers.py`: the spatial library's inbound handlers.
+- `examples/lobby/`: a non-spatial catalog on Gateway + Control + DB.
+- `docs/guides/getting_started.md`: the example servers, spatial game library,
+  and planes-to-genres map.
+- `docs/architecture/planes.md`: the plane contracts a handler honors.
+- ADR-0004: the C/Python threading boundary the worker pool enforces.
+- ADR-0007: the optional wire-protocol correlation trailer.
+- ADR-0013: pluggability is within planes, not across invariant-breaking
   topologies.

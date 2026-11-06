@@ -1,9 +1,9 @@
 # Contributing to kith
 
-This document covers the practical mechanics of getting a change landed. The
-full coding standards, philosophy, and review checklist live in
-[`AGENTS.md`](AGENTS.md) — that file is the single source of truth for how code
-is written and reviewed in this repository. Read it before opening a change.
+Follow this workflow to submit a change. The full coding standards, philosophy,
+and review checklist live in [`AGENTS.md`](AGENTS.md), the single source of
+truth for writing and reviewing code in this repository. Read it before opening
+a change.
 
 kith has a single maintainer: changes are reviewed and merged by that one
 person, and issue triage follows the same capacity.
@@ -57,8 +57,8 @@ different set of analysis or formatting rules.
 `scripts/verify.sh` is the single gate: it runs exactly what CI runs and is the
 same script CI invokes. Shared commands reduce drift; the exact candidate still
 needs hosted verification because its environment and services can differ. The
-gate is **verify-only** — it never rewrites files. Run it before every commit
-and before every push:
+gate only verifies files; it never rewrites them. Run it before every commit and
+before every push:
 
 ```sh
 # Run every gate: lint (pre-commit verify + mypy), commits (conventional +
@@ -104,16 +104,16 @@ ctest --test-dir build/debug --output-on-failure
 pre-commit run --all-files
 ```
 
-The build carries a small set of CMake knobs, settable as cache variables at
-configure time and preset-driven in practice: `CONTROL_PLANE_ENABLED` (default
-`ON`; `OFF` leaves the control-plane library out of the build entirely),
+The build has CMake options that can be set as cache variables at configure
+time. Presets set them in normal use: `CONTROL_PLANE_ENABLED` (default `ON`;
+`OFF` leaves the control-plane library out of the build entirely),
 `KITH_USE_MOLD` (default `OFF`; links with the mold linker when it is
 installed), `KITH_ENABLE_FORTIFY` (on in optimized presets, off in the debug,
 coverage, and sanitizer presets where unoptimized code cannot use it), and the
 `KITH_ENABLE_ASAN` / `KITH_ENABLE_UBSAN` / `KITH_ENABLE_TSAN` /
 `KITH_ENABLE_COVERAGE` / `KITH_ENABLE_FUZZ` family (all `OFF`; the `asan`,
 `asan-ubsan`, `tsan`, `coverage`, and `fuzz` presets each turn on their own).
-Knobs combine freely with a preset:
+These options combine freely with a preset:
 
 ```sh
 cmake --preset release -DKITH_USE_MOLD=ON
@@ -130,9 +130,9 @@ like the CI service container: role `kith`, password `kith`, database
 `kith_example`. Without a usable one the tests skip cleanly locally; in CI they
 never skip. Two supported ways to get the service:
 
-- **Dev Containers / Codespaces:** reopen the repository in the dev container —
-  its compose stack starts Postgres reachable as host `db` and sets the
-  `KITH_PG_*` variables automatically. Nothing else to do.
+- **Dev Containers / Codespaces:** reopen the repository in the dev container.
+  Its compose stack starts Postgres reachable as host `db` and sets the
+  `KITH_PG_*` variables automatically.
 - **Plain Docker:** run `./scripts/dev-postgres.sh`, then paste the `KITH_PG_*`
   exports it prints into the shell before invoking pytest. The exports are
   required: without them the client defaults to an empty password and
@@ -189,7 +189,7 @@ Signed-off-by: Example Name <email@example.com>
   `AGENTS.md` §5.2.3, or `framework` for cross-cutting changes, or `tools` for
   `tools/` changes, or `examples` for the example programs under `examples/`.
 - **Body** is mandatory for every type except `docs` and `chore`, and must
-  contain substantive prose — a file manifest is not a body (AGENTS.md §5.2.5).
+  contain substantive prose; a file manifest is not a body (AGENTS.md §5.2.5).
 - **DCO sign-off** is mandatory on every commit. The sign-off certifies the
   [Developer Certificate of Origin](https://developercertificate.org), including
   the right to submit the work under the project's Apache-2.0 license. Use
@@ -211,7 +211,7 @@ with required review.
 
 Generated artifacts (ctypes bindings in `python/kith/_generated/`, ABI snapshots
 in `tests/abi/`, `.map` version scripts) are committed in the same commit as the
-source change that produced them — never in a follow-up "regenerate" commit.
+source change that produced them, never in a follow-up "regenerate" commit.
 `tools/check_ctypes_drift.py` fails the commit if the committed bindings diverge
 from a fresh generation.
 
@@ -226,7 +226,7 @@ dependencies and §7.2 for the ADR format.
 
 Public issues are for bugs and feature requests, not security vulnerabilities.
 For security-sensitive reports, follow [`SECURITY.md`](SECURITY.md) and report
-privately — do not open a public issue.
+privately. Do not open a public issue.
 
 ## 10. Code of conduct
 

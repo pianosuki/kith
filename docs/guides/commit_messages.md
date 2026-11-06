@@ -1,10 +1,9 @@
 # Commit message canon and examples
 
-`AGENTS.md` §5.2 carries the law: the enforced structure, the type and scope
-allowlists, and the mandatory rules for summaries, bodies, and footers. This
-guide carries the material the law file does not need to repeat: the full
-annotated examples, the formatting canon this repository follows, and the
-mechanics of reverts and breaking changes.
+`AGENTS.md` §5.2 defines the enforced structure, type and scope allowlists, and
+rules for summaries, bodies, and footers. This guide provides annotated
+examples, formatting conventions, and instructions for reverts and breaking
+changes.
 
 ## Sources
 
@@ -14,10 +13,10 @@ mechanics of reverts and breaking changes.
 - Tim Pope, "A Note About Git Commit Messages":
   <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>
 
-The enforcement layer maps to the law: `conventional-pre-commit` validates the
-header on the `commit-msg` stage; `tools/check_commit_messages.py` enforces body
-presence and rejects file-manifest bodies; the `dco-signoff` hook appends the
-sign-off when the message lacks one.
+The hooks enforce those rules: `conventional-pre-commit` validates the header on
+the `commit-msg` stage; `tools/check_commit_messages.py` enforces body presence
+and rejects file-manifest bodies; the `dco-signoff` hook appends the sign-off
+when the message lacks one.
 
 ## Why the 72-column body
 
@@ -36,7 +35,7 @@ this commit will add a circle query". The convention matches the messages
 
 ## Annotated examples
 
-Good — a feature whose body carries the motivation and the measured difference:
+Good, a feature whose body carries the motivation and the measured difference:
 
 ```
 feat(aoi): add circle query with grid bucketing
@@ -50,7 +49,7 @@ Benchmark on the 1000-actor fixture: p50 12us -> p50 8us.
 Signed-off-by: Example Name <email@example.com>
 ```
 
-Good — a breaking change with the migration path:
+Good, a breaking change with the migration path:
 
 ```
 feat(sim)!: redesign model registration ABI
@@ -78,13 +77,13 @@ timeout.
 Signed-off-by: Example Name <email@example.com>
 ```
 
-Bad — capitalized, period, past tense, no type or scope:
+Bad, capitalized, period, past tense, no type or scope:
 
 ```
 Added AOI circle query.
 ```
 
-Bad — a file manifest in the body (the diff already shows the paths; AGENTS.md
+Bad, a file manifest in the body (the diff already shows the paths; AGENTS.md
 §5.2.5):
 
 ```
@@ -93,7 +92,7 @@ feat(sim): add circle query with grid bucketing
 Add include/kith/sim/sim.h, src/sim/query.c, and tests/c/test_sim_query.c.
 ```
 
-Bad — aspirational (AGENTS.md §1.2):
+Bad, aspirational (AGENTS.md §1.2):
 
 ```
 feat(aoi): add circle query
@@ -101,7 +100,7 @@ feat(aoi): add circle query
 Will eventually support ellipses too.
 ```
 
-Bad — several concerns in one commit:
+Bad, several concerns in one commit:
 
 ```
 feat(framework): add aoi circle query and fix reactor leak and update README
@@ -109,7 +108,7 @@ feat(framework): add aoi circle query and fix reactor leak and update README
 
 Split into `feat(aoi): ...`, `fix(reactor): ...`, `docs(framework): ...`.
 
-Bad — a plan reference in place of the technical change (AGENTS.md §5.2.13):
+Bad, a plan reference in place of the technical change (AGENTS.md §5.2.13):
 
 ```
 feat(aoi): implement phase 3 task 2

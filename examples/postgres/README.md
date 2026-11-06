@@ -7,13 +7,13 @@ server. Named queries are registered on the pool through
 handle via `_BorrowedDbPlane`. Control routes demonstrate save/load: an actor's
 state is persisted to Postgres and restored on demand within a running server
 (the load path teleports a live actor; see the key caveat under the persistence
-cycle below). The relational tier — transaction contexts and row results over a
-pool the game owns — is the `kith.db` module; this example demonstrates the
-byte-key store path.
+cycle below). The `kith.db` module provides the relational tier: transaction
+contexts and row results over a pool the game owns. This example demonstrates
+the byte-key store path.
 
 ## The relational tier
 
-This example's save/load path rides the borrowed db handle and the byte-key
+This example's save/load path uses the borrowed db handle and the byte-key
 store; the package-tier relational surface is the `kith.db` module. A `Database`
 owns its pool and its reactor thread, raw SQL and named queries return `Reply`
 row snapshots, and `transaction()` pins one session for the block: the commit
@@ -50,13 +50,13 @@ asyncio.run(main())
 
 - A real `kith_db_t` pool is created via `kith_db_create` borrowing a standalone
   reactor, and named queries (`state_get`, `state_put`, `state_delete`) are
-  registered on it through `register_queries_on_db` — the out-of-band path the
+  registered on it through `register_queries_on_db`: the out-of-band path the
   `kith_server_db` header documents.
 - A `PostgresStore` issues the registered queries through `_BorrowedDbPlane`
   over `kith_db_exec`, and the reply callback fires on the pool's reactor
   thread, correlating by `user_data` id and resolving the caller's future on the
-  asyncio loop via `call_soon_threadsafe`. This is the real libpq async path,
-  not the fake `_DbPlane` from tests.
+  asyncio loop via `call_soon_threadsafe`. This uses the real libpq async path;
+  tests use a fake `_DbPlane`.
 - The `/save` route serializes an actor through `encode_actor_blob`, hex-encodes
   the blob for text-safe transport (the db module's parameter values are
   NUL-terminated text strings), and puts it under the actor id as key. The
@@ -65,18 +65,18 @@ asyncio.run(main())
   drivable over HTTP.
 - The same spatial game library (`messages.py`, `handlers.py`, `db.py`) and
   tile2d physics (`tile_rpg/physics.py`) the embedded example loads run
-  unchanged here — the persistence layer is a composition-root concern, not a
-  game-code change.
+  unchanged here. The composition root adds persistence without changing game
+  code.
 
 ## What it does not wire
 
-- **Pool injection into the server** — the `Server` facade does not expose its
+- **Pool injection into the server**: the `Server` facade does not expose its
   reactor for an external pool to borrow, and the server's `kith_server_db`
   accessor returns NULL (the server's wiring never creates a db pool, so
   `register_query` on the facade has no pool to reach). The pool here owns a
   standalone reactor on a background thread; the server's wire surface and the
   persistence pool run side by side.
-- **Binary-safe parameter transport** — the db module's parameter values are
+- **Binary-safe parameter transport**: the db module's parameter values are
   NUL-terminated text strings (`const char *const *params` in `kith_db_exec`).
   Binary actor blobs that contain NUL bytes would be truncated, so the example
   hex-encodes them. Binary-safe parameter transport (length-prefixed values)
@@ -149,8 +149,8 @@ until interrupted.
 | POST   | `/login`           | `{"principal_id": 1}`          | `{"actor_id": 1, ...}`           |
 | POST   | `/move`            | `{"actor_id": 1, "move_x": 1}` | `{"actor_id": 1, ...}`           |
 | POST   | `/save`            | `{"actor_id": 1}`              | `{"actor_id": 1, "saved": true}` |
-| GET    | `/load?actor_id=1` | —                              | `{"actor_id": 1, ...}`           |
-| GET    | `/query_state`     | —                              | `{"actors": [...]}`              |
+| GET    | `/load?actor_id=1` | None                           | `{"actor_id": 1, ...}`           |
+| GET    | `/query_state`     | None                           | `{"actors": [...]}`              |
 
 A full persistence cycle: `/login` spawns an actor, `/move` changes its
 position, `/save` persists the state to Postgres, `/load` restores it on demand
@@ -166,5 +166,5 @@ survives across restarts with different actor-id assignments.
 `examples/embedded` is the single-process topology with no persistence: the
 in-memory actor table is the whole game state. This example is the persistence
 layer on top: it reuses `EmbeddedServer`'s game library and adds a Postgres pool
-\+ `PostgresStore` alongside it. The same game code runs in both wirings —
-persistence is a composition-root concern, not a property of the game.
+\+ `PostgresStore` alongside it. Both wirings run the same game code; the
+composition root adds persistence.

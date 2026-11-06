@@ -14,9 +14,9 @@
 A C23 core owns the performance-critical systems: transport, the reactor,
 spatial indexing, the world stream fabric, and the simulation. Game logic
 extends the core in Python. Simulation models that need more than Python speed
-ship as C shared libraries against the same ABI. The core also stands alone: it
-installs headers and CMake targets, and examples/minimal boots a server with no
-Python at all.
+ship as C shared libraries against the same ABI. The core also runs
+independently: it installs headers and CMake targets, and examples/minimal boots
+a server with no Python.
 
 The world is divided into cells that publish state once; gateways subscribe to
 cells and compose a per-player view. The fabric carries that stream. The same
@@ -78,9 +78,8 @@ with Server(topology="embedded") as server:
 The [getting started guide](docs/guides/getting_started.md) continues from that
 boot: handlers, control routes, persistence, the two-instance cluster.
 
-Prefer to see it move first? The released wheel ships an out-of-box visual
-example — a living world with ambient actors, a graphical client, and one
-command to play:
+The released wheel also ships a visual example with ambient actors and a
+graphical client. Start it with one command:
 
 ```sh
 pip install "kith-fw[visual]"
@@ -117,14 +116,17 @@ cmake --install build/release --prefix /opt/kith
 ```
 
 A downstream CMake project configures with the prefix on its search path
-(`-DCMAKE_PREFIX_PATH=/opt/kith`) and links the imported targets —
-`kith::server` is the composition root a game links against, and every plane
-library is an imported target beside it:
+(`-DCMAKE_PREFIX_PATH=/opt/kith`) and links the imported targets. `kith::server`
+is the composition root a game links against; every plane library also has an
+imported target:
 
 ```cmake
 find_package(kith 1.0.0 REQUIRED)
 target_link_libraries(my_game PRIVATE kith::server)
 ```
+
+This accepts compatible 1.x releases from 1.0.0 onward. Projects using APIs
+introduced in 1.1 should request `1.1.0` instead, and so on.
 
 Hand-written Makefiles and autotools consume the pkg-config entry point:
 
@@ -145,7 +147,7 @@ in CI.
   with the framework. Local wheels and source installs use the build host's
   `liburing`, `libpq` and `libhiredis` ABI; install their development packages
   before building. See the [release guide](docs/guides/releases.md).
-- Source path: Clang 22+ (or GCC 14+), clang-format-23 (the pinned formatter —
+- Source path: Clang 22+ (or GCC 14+), clang-format-23 (the pinned formatter:
   `uv tool install clang-format==23.1.5`, then symlink
   `~/.local/bin/clang-format` as `clang-format-23`), CMake 4.4+, Ninja 1.13+,
   `uv`, `pre-commit`.
@@ -159,7 +161,7 @@ header change
 ([ADR-0008](docs/architecture/adr/0008-opaque-types-stable-abi.md)). The Python
 API is the ctypes binding of that ABI, generated from the same headers, with no
 separate version line: a change that breaks the C ABI breaks Python with it, and
-both ride the project version.
+both use the project version.
 
 Deprecations preserve the existing interface; removals require a major release.
 

@@ -1,13 +1,13 @@
 # Wire Protocol
 
-This page is the v1 wire contract for a peer implementing a client or a server
-by hand: the frame header every kith frame carries, the optional correlation
-trailer, the message-type registry, the S2C replication record, the
-multi-subject batch variant, and the delivery cadence that shapes when records
-arrive. The codec that produces and consumes these frames lives in the proto
-plane (`include/kith/proto/proto.h`); it frames opaque payloads and enforces
-nothing about their field layout. C2S payload layouts are game-owned: both peers
-agree on them out of band and serialize their own fields. The one payload the
+The v1 wire contract for a client or server implemented by hand includes the
+frame header every kith frame carries, the optional correlation trailer, the
+message-type registry, the S2C replication record, the multi-subject batch
+variant, and the delivery cadence that shapes when records arrive. The codec
+that produces and consumes these frames lives in the proto plane
+(`include/kith/proto/proto.h`); it frames opaque payloads and enforces nothing
+about their field layout. C2S payload layouts are game-owned: both peers agree
+on them out of band and serialize their own fields. The one payload the
 framework pins is the S2C replication record documented here.
 
 ## The frame header
@@ -24,7 +24,7 @@ Every frame starts with a 10-byte header followed by the payload region:
 | 10     | payload     | N     | `payload_len` bytes        |
 
 The total wire size of a frame is `10 + payload_len`. A non-kith stream fails at
-the magic bytes, which act as a first-line reject.
+the magic bytes, which reject the stream before payload decoding.
 
 - The **version byte is the dialect boundary**: a version the decoder does not
   implement is rejected with `KITH_EPROTO`. A future framing change is a new
@@ -59,7 +59,7 @@ renders it in the lowercase hex form the event schema names.
 ## Message types
 
 The registry maps message-type names to numeric ids, and both peers register the
-same name at the same id before exchanging frames of that type — there is no
+same name at the same id before exchanging frames of that type; there is no
 central enum. Game-owned types use ids at or above `KITH_PROTO_TYPE_USER_BASE`
 (1000); ids below it are reserved for framework types. Decode enforces the
 registry, so a frame of an unregistered type never reaches a handler. The
@@ -69,7 +69,7 @@ guide's "Wire type ids").
 
 Broadcasts are ordinary message frames on this wire. The gateway's cell-scoped
 broadcast (`Server.broadcast_cell`) fans one frame carrying the game's type id
-and bytes — no correlation trailer — to every session whose subscription window
+and bytes (no correlation trailer) to every session whose subscription window
 covers the broadcast's cell. No new wire layout exists for them; a client
 decodes a broadcast like any registered message type, and the replication record
 stays the one framework-pinned payload.
@@ -99,14 +99,14 @@ representation); a client rendering in world units divides by `2**16`.
 The `product_level` word discriminates the record. For state records it is the
 representation tier:
 
-- `0` — full: complete position, velocity, and input tick.
-- `1` — reduced: position and velocity; `input_tick` and `update_seq` are zero.
-- `2` — crowd: the aggregate for a dense cell — `actor_id` is 0, the position is
+- `0` (full): complete position, velocity, and input tick.
+- `1` (reduced): position and velocity; `input_tick` and `update_seq` are zero.
+- `2` (crowd): the aggregate for a dense cell: `actor_id` is 0, the position is
   the mean of the overflow candidates it represents, and the velocity, input
   tick, and update sequence are zero.
 
 A state record for the subscriber's own actor carries the actor's
-publisher-minted `update_seq` — the movement-application counter the sim model
+publisher-minted `update_seq`, the movement-application counter the sim model
 advances once per applied input (0 when the publisher never minted it, or when
 self-echo stamping is disabled by `self_echo_disabled`). A full-tier record for
 another actor carries that actor's minted counter; reduced-tier and crowd
@@ -115,12 +115,12 @@ records carry zero.
 For membership events the marker bit `0x80000000` is set and the low bits carry
 the kind:
 
-- `0` — enter: the subject entered the delivered view set.
-- `1` — exit: the subject left the delivered set but remains in the subscription
+- `0` (enter): the subject entered the delivered view set.
+- `1` (exit): the subject left the delivered set but remains in the subscription
   window (budget eviction or crowd absorption).
-- `2` — crowd enter: the crowd aggregate engaged for this subscriber.
-- `3` — crowd exit: the aggregate dissolved.
-- `4` — vanish: the subject is gone from every cached window cell.
+- `2` (crowd enter): the crowd aggregate engaged for this subscriber.
+- `3` (crowd exit): the aggregate dissolved.
+- `4` (vanish): the subject is gone from every cached window cell.
 
 An event record names its subject in `actor_id` (0 for the crowd aggregate) and
 zeroes the remaining fields. Events ride ahead of the same pass's state records
@@ -130,7 +130,7 @@ output queue cannot take yet is retried on a later pass, in order.
 ## The batch variant
 
 When the composition root sets `replication_batch_type_id`, delivery packs the
-session's full composed view-subject set into one frame per refresh — a 4-byte
+session's full composed view-subject set into one frame per refresh, a 4-byte
 big-endian count header followed by the records:
 
 | offset | field         | width | encoding            |
@@ -144,8 +144,8 @@ record is its own frame carrying `replication_type_id`.
 ## Delivery cadence
 
 The gateway's run loop refreshes every bound session's composed view. Compose
-and deliver run at most once per `view_refresh_interval_ms` (100 ms by default)
-— a pass between refresh points leaves the session's delivered view untouched. A
+and deliver run at most once per `view_refresh_interval_ms` (100 ms by default);
+a pass between refresh points leaves the session's delivered view untouched. A
 session that has not bound an actor composes nothing, and a session whose bound
 actor's cell is not tracked composes nothing for that pass.
 
@@ -156,14 +156,14 @@ unchanged. Rates above 1000 retain the gateway's zero-value fallback behavior.
 The gateway shape accepts the intervals and capacity directly. These thresholds
 do not define logical model-step duration; see the
 [server timing guide](server_timing.md). A refresh interval wider than the tick
-leaves inputs published inside the gap undelivered until the next refresh — an
+leaves inputs published inside the gap undelivered until the next refresh; an
 explicit value owns that trade.
 
 The full preset enqueues every record of the composed set on every refresh. The
 tiered preset sends a record only when it differs from what the subscriber was
-last sent and the subject's tier cadence allows the send — full-tier subjects
+last sent and the subject's tier cadence allows the send: full-tier subjects
 every pass by default, reduced-tier at least 200 ms apart, crowd at least 500 ms
-apart — with the subscriber's own actor exempt (it updates every pass) and a 1 s
+apart, with the subscriber's own actor exempt (it updates every pass) and a 1 s
 max-gap backstop that refreshes any silent subject regardless of change.
 
 ## Implementing a client
@@ -171,11 +171,12 @@ max-gap backstop that refreshes any silent subject regardless of change.
 A client framer mirrors the decoder's incremental contract against a TCP stream,
 which may coalesce or split frames arbitrarily: read until at least the 10-byte
 header is present, compute the total from `payload_len`, keep reading until the
-frame is complete, then decode and advance. The record layout decodes as six
-8-byte fields, three 8-byte pairs, and three 4-byte words — in Python's `struct`
-spelling, `">QqqqqqqIII"`. Track the last seen `update_seq` per actor to measure
-freshness and loss; a record whose sequence does not advance over several passes
-signals a stalled publisher rather than a missed frame. Handle the
-membership-event kinds as state transitions rather than display records: enter
-and exit bracket a subject's presence in the view set, the crowd pair brackets
-the aggregate, and vanish means the subject is gone from every tracked cell.
+frame is complete, then decode and advance. The record layout has seven 8-byte
+fields (one actor id and six coordinates) and three 4-byte words, totaling 68
+bytes. In Python's `struct` spelling, it is `">QqqqqqqIII"`. Track the last seen
+`update_seq` per actor to measure freshness and loss; a record whose sequence
+does not advance over several passes signals a stalled publisher rather than a
+missed frame. Handle the membership-event kinds as state transitions rather than
+display records: enter and exit bracket a subject's presence in the view set,
+the crowd pair brackets the aggregate, and vanish means the subject is gone from
+every tracked cell.

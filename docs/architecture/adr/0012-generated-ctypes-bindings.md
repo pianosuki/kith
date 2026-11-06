@@ -16,5 +16,5 @@ those headers. The runtime stays pure ctypes with no C++ toolchain.
 
 ## Consequences
 
-Positive — no drift; a CI check guarantees binding/header consistency. Negative
-— the generator and its drift check are framework tooling to maintain.
+Positive: no drift; a CI check guarantees binding/header consistency. Negative:
+the generator and its drift check are framework tooling to maintain.

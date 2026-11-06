@@ -20,11 +20,11 @@ decision, not an implementation detail.
 ## Consequences
 
 Per-player delivery scales with the capped budget rather than the zone
-population; extreme density degrades by design. Positive — delivery cost is a
+population; extreme density degrades by design. Positive: delivery cost is a
 function of the budget, the fixed-size delivery record, and the 20 Hz tick rate,
-never of the zone population. Negative — at full density the budget is a
-delivery cost, not a fidelity cap: games that expect dense pileups tune the
-budget down or lean on representation tiers rather than carrying the default.
+never of the zone population. Negative: at full density the budget is a delivery
+cost, not a fidelity cap: games that expect dense pileups tune the budget down
+or lean on representation tiers rather than carrying the default.
 
 The budget also feeds the per-tick reactor-thread total (the compose cost scales
 with the budget); the performance-budget documentation owns the budget-to-gate

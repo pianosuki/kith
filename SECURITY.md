@@ -5,13 +5,13 @@
 kith 1.0.0 is the first stable release. Security fixes apply to the latest minor
 release line; there are no backport branches.
 
-| Version                                   | Supported      |
-| ----------------------------------------- | -------------- |
-| latest minor release (currently `v1.0.0`) | security fixes |
+| Version                    | Supported      |
+| -------------------------- | -------------- |
+| Latest released minor line | security fixes |
 
 ## Reporting a vulnerability
 
-**Report security vulnerabilities privately — do not open a public issue.**
+Report security vulnerabilities privately. Do not open a public issue.
 
 Email: <pianosuki@protonmail.com>
 
@@ -45,16 +45,16 @@ Out of scope:
   types and carries sessions; it verifies no credentials. Identity binding and
   permission checks are the game's layer (the example wire catalog's principal
   exchange is the shape).
-- Vulnerabilities in dependencies (report upstream) — a heads-up is still
+- Vulnerabilities in dependencies (report upstream). A heads-up is also
   appreciated so the pin can be bumped promptly.
 - Issues that require an attacker to already control the host running the server
   (trusted-host threat model).
 - Theoretical timing side-channels without a demonstrated remote exploit.
 
 The control plane serves unauthenticated HTTP on loopback by default and passes
-route parameters through to game handlers; rebinding it away from loopback opens
-a second ingress whose consequences `docs/architecture/threat_model.md`
-documents rather than hardens.
+route parameters through to game handlers. Rebinding it away from loopback opens
+a second ingress. `docs/architecture/threat_model.md` documents the
+consequences; the framework does not harden that ingress.
 
 The human-readable log sink renders caller-supplied message and field values
 verbatim (no newline or ANSI-escape handling; lines truncate silently at 4096

@@ -34,8 +34,8 @@ explicit size and an ABI version so the runtime can reject an undersized or
 incompatible-generation struct. The size is checked first (it catches a caller
 compiled against a smaller struct), then the ABI version (it catches a
 generation mismatch). Reserved slots absorb new additive fields without breaking
-layout. The exact layout convention — field order, the width of the size and
-version fields, the reserved-slot shape — is owned by the framework's shared
+layout. The exact layout convention (field order, the width of the size and
+version fields, the reserved-slot shape) is owned by the framework's shared
 public header.
 
 ### Value-type DTOs
@@ -63,9 +63,9 @@ criteria:
 The category is chosen per type by the module that owns it, and the same
 conceptual role may land in different categories in different modules: one
 module's status snapshot can be size-versioned while another's is a frozen
-value-type DTO. The type itself states the evolution contract — the size and
-version fields, or the value-type designation and the frozen field set — and
-that statement is what a consumer reads.
+value-type DTO. Consumers read the evolution contract from the type itself:
+either the size and version fields or the value-type designation and frozen
+field set.
 
 Value-type DTOs are passed by pointer (never by value) and are stack- or
 caller-owned; the framework never retains them past the call. They exist for the
@@ -84,10 +84,10 @@ diff against the prior baseline.
 
 ## Consequences
 
-Callers keep zero-copy, stack-owned DTOs where they earn their keep; the ABI
-stays evolvable for everything else; and the rule is mechanically checkable — a
-checker reads the three categories and the four value-type criteria from this
-ADR. Costs are accessor verbosity for opaque types and an extra judgment call
-when introducing a public type (which category?). Both are accepted in exchange
-for a stable, auditable ABI. A regression that adds, removes, or renames an
-exported symbol fails CI, protecting every downstream consumer.
+Callers keep zero-copy, stack-owned DTOs where useful; the ABI can evolve for
+everything else. The rule is mechanically checkable: a checker reads the three
+categories and the four value-type criteria from this ADR. Costs are accessor
+verbosity for opaque types and an extra judgment call when introducing a public
+type (which category?). Both are accepted in exchange for a stable, auditable
+ABI. A regression that adds, removes, or renames an exported symbol fails CI,
+protecting every downstream consumer.

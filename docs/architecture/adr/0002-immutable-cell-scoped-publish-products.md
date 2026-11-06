@@ -16,8 +16,7 @@ increasing publish sequence. The cell key is 3D-native from inception
 
 ## Consequences
 
-Positive — publish cost is per-cell rather than per-connection, supersession is
-a fabric concern, and consumers depend on stable products. Negative —
-immutability places revision discipline in the fabric, which must own
-supersession. Gateways subscribe to cell streams; they never rescan raw zone
-state.
+Positive: publish cost is per cell rather than per connection, supersession is a
+fabric concern, and consumers depend on stable products. Negative: immutability
+places revision discipline in the fabric, which must own supersession. Gateways
+subscribe to cell streams; they never rescan raw zone state.

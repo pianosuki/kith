@@ -1,15 +1,15 @@
 # Event Schema
 
 The framework's event surfaces are line-oriented UTF-8 JSON: one JSON object per
-record, compact (no pretty-printing), newline-terminated. The record shape is
-per carrier — three carriers, three distinct records:
+record, compact (no pretty-printing), newline-terminated. Each of the three
+carriers has its own record shape:
 
-- The **log side-channel** — the structured logger's optional JSONL file sink
+- The **log side-channel**: the structured logger's optional JSONL file sink
   (`include/kith/logger/logger.h`). One record per log entry.
-- The **control event bus** — an in-memory delivery ring on the control plane,
+- The **control event bus**: an in-memory delivery ring on the control plane,
   published through `kith_control_publish_event` and drained to stream
   subscribers as server-sent events.
-- The **agentic headless client IPC bus** — a Unix-socket JSON channel used by
+- The **agentic headless client IPC bus**: a Unix-socket JSON channel used by
   `tools/agent/` to drain per-client events during closed-loop testing (see
   `docs/guides/agentic_headless_client.md`).
 
@@ -25,8 +25,8 @@ frame, defined by ADR-0007:
   on decode.
 - Backward-compatible: a frame without the flag carries no trailer.
 - The trailer rides the upstream direction: client-submitted frames may carry
-  it; the gateway's own downstream frames — replication and the per-session
-  deliver path — are encoded without it. Downstream correlation exists on the
+  it; the gateway's own downstream frames (replication and the per-session
+  deliver path) are encoded without it. Downstream correlation exists on the
   surfaces that explicitly support it: the control event bus record carries an
   optional correlation ID, and the headless client preserves the correlation ID
   of every decoded frame in its event history.
@@ -46,7 +46,7 @@ Each entry the logger writes to its JSONL sink is one JSON object:
 | -------------- | ---------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
 | `ts`           | string (ISO 8601, UTC, `Z` suffix) | always                                     | Entry timestamp, taken from the calendar clock.              |
 | `level`        | string                             | always                                     | One of `trace`, `debug`, `info`, `warn`, `error`, lowercase. |
-| `module`       | string                             | always                                     | The logger's name — the emitting module.                     |
+| `module`       | string                             | always                                     | The logger's name, the emitting module.                      |
 | `file`, `line` | string, integer                    | together, when the call site passes a file | The call site location.                                      |
 | `message`      | string                             | when the call site passes one              | A short human-readable summary. ASCII, English.              |
 
@@ -71,7 +71,7 @@ extension point, and new reserved names or field conventions appear additively.
 The bus is a delivery ring, not a history log: a new stream subscriber receives
 the events published after it attached. The control plane serves two stream
 routes over the same bus, `GET /events/stream` and `GET /logs/stream`; both
-render each record as one SSE `data:` line carrying `type` and `ts` only — the
+render each record as one SSE `data:` line carrying `type` and `ts` only; the
 correlation ID and payload ride the ring record but are not rendered. Neither
 route streams the log side-channel: the logger's JSONL sink is a file, and an
 operator who wants log records on the control plane publishes them through the
@@ -91,8 +91,8 @@ The agentic headless client emits, per client event:
 ## The `type` namespace
 
 `kith_control_publish_event` takes a free-form `type` string. The framework
-reserves the module namespaces below so publishers — games, operations tooling,
-future framework code — share one vocabulary. The framework itself publishes no
+reserves the module namespaces below so publishers (games, operations tooling,
+future framework code) share one vocabulary. The framework itself publishes no
 events today; this registry is the naming contract for the publishers that do.
 Games register game-specific names (prefixed with the game's own namespace) at
 startup; game-specific names do not appear in this document, and core names
@@ -130,7 +130,7 @@ joins client-side and server-side events by correlation ID and time. The
 orchestrator feeds it from the headless clients' event histories, where each
 event carries the correlation ID decoded from its frame's trailer; a server-side
 feed can be added from a control-plane endpoint when a deployment publishes
-correlated events. The join fires on the surfaces that carry the ID — a
+correlated events. The join fires on the surfaces that carry the ID. A
 deployment that wants a server input traced to its server-side effects passes
 the ID through those surfaces explicitly. This is the same join that backs the
 agentic closed-loop assertions (see `docs/guides/agentic_headless_client.md`).
@@ -150,11 +150,10 @@ modules (see `AGENTS.md` §1.4).
 
 ## References
 
-- ADR-0006 — agentic testing is first-class.
-- ADR-0007 — correlation ID wire trailer.
-- ADR-0019 — observability contract (structured logging, the JSONL
-  side-channel).
-- `include/kith/control/control.h` — the event bus record and the publish API.
-- `docs/guides/agentic_headless_client.md` — the IPC bus that consumes the
+- ADR-0006: agentic testing is first-class.
+- ADR-0007: correlation ID wire trailer.
+- ADR-0019: observability contract (structured logging, the JSONL side-channel).
+- `include/kith/control/control.h`: the event bus record and the publish API.
+- `docs/guides/agentic_headless_client.md`: the IPC bus that consumes the
   headless client record.
-- `docs/architecture/tracing.md` — OpenTelemetry span mapping.
+- `docs/architecture/tracing.md`: OpenTelemetry span mapping.

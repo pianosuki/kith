@@ -1,7 +1,7 @@
 # AGENTS.md
 
 This file defines the development philosophy, coding standards, and workflow
-rules for this repository. All code — whether written by humans or AI agents —
+rules for this repository. All code, whether written by humans or AI agents,
 must conform to these rules. Automated tooling enforces most of them; manual
 review enforces the rest.
 
@@ -81,25 +81,25 @@ quoting make mechanical extraction unsound. Review enforces the rest.
 cannot: the invariant, the constraint, the reason. If a construct needs a
 comment to be understood, first rename or restructure (§1.1). The codebase reads
 as if written by one engineer: the same judgment about when a comment is worth
-its line, the same register everywhere, pacing that follows the material — terse
+its line and the same register everywhere. Pacing follows the material: terse
 where the code is self-evident, longer where the constraint is subtle.
 
 **Types.** Three types, each with a narrow job. Use the smallest that fits.
 
-**Inline** — a single line above or trailing the statement it clarifies. States
+**Inline**: a single line above or trailing the statement it clarifies. States
 the why: the invariant preserved, the constraint honored, the reason the
 non-obvious shape is correct. Never restates the operation. Implementation
 comments are declarative; `should`, `would`, and `could` belong to contract
 prose in doc comments, not to narration (the checker enforces that split).
 
-**Structural** — a section divider in a file large enough that sections aid
+**Structural**: a section divider in a file large enough that sections aid
 navigation. Sparing: a real boundary earns a divider, a short file earns none.
 Rule lines sandwich a title line; one divider form per file; fixed width within
-a file. The title is a lowercase noun phrase — a label, not a sentence, with no
-trailing period; embedded identifiers and initialisms keep their casing
-(`replay record FIFO`, `HTTP helpers`). A block may carry body prose between the
-title and the closing rule when a section's contract needs more than the title
-says.
+a file. The title is a lowercase noun phrase, used as a label rather than a
+sentence, with no trailing period; embedded identifiers and initialisms keep
+their casing (`replay record FIFO`, `HTTP helpers`). A block may carry body
+prose between the title and the closing rule when a section's contract needs
+more than the title says.
 
 C block form:
 
@@ -125,7 +125,7 @@ Python:
 # ---------------------------------------------------------------------------
 ```
 
-**Header (file-level)** — the top-of-file block stating what the file contains
+**Header (file-level)**: the top-of-file block stating what the file contains
 and the role it plays in its module. One to a few lines. Public headers carry
 the Doxygen module block (§2.9); private headers and `.c` files a `/* ... */`
 block naming contents and siblings; Python modules the module docstring (§3.5).
@@ -142,7 +142,7 @@ No license block: Apache-2.0 lives in `LICENSE`, not in every file.
   defense of the design against what it does not do. State the shipped contract.
   A comparison with an absent behavior earns its place only when a competent
   reader would otherwise assume that behavior and misread its absence as a
-  defect — and then it is one clause, not a narrative. A rejected design
+  defect, and then it is one clause, not a narrative. A rejected design
   alternative never meets that bar. The sign-off paragraph at the top of
   `scripts/setup-git-config.sh` is the shipped model of the one-clause form.
 - **Cite decision records.** No `ADR-NNNN` in code comments or docstrings: code
@@ -182,8 +182,8 @@ summary-within-the-summary, and empty openers and closers.
 
 **Test comments.** Tests may explain more: the scenario's intent, why a fixture
 is arranged as it is, the invariant under attack. Multiple sentences are normal.
-They obey every other rule above — impersonal, no history, no alternatives, no
-record citations — and stay consistent with each other: an intent statement sits
+They obey every other rule above (impersonal, no history, no alternatives, no
+record citations) and stay consistent with each other: an intent statement sits
 above the test it describes, not scattered through the body. This covers
 `tests/` and the agentic scenarios in `tools/agent/scenarios/`.
 `tools/fixtures/` sits outside the checker because fixture files exist to carry
@@ -199,14 +199,14 @@ comment-like payloads; real test code gets no such exemption.
   `<stdbool.h>`), `static_assert(expr, "msg")`, `[[nodiscard]]`,
   `[[maybe_unused]]`, `[[noreturn]]`, `[[fallthrough]]`, `[[unreachable]]`,
   `auto` (complex compound types only), `#elifdef`, digit separators
-  (`1'000'000`), and binary literals — with `alignas(64)` cache-line alignment
+  (`1'000'000`), and binary literals, with `alignas(64)` cache-line alignment
   for hot per-connection structs and lock-free queue nodes.
 - Use the standard facilities where they fit: `<stdckdint.h>` for checked
   integer arithmetic (overflow-safe length math in the protocol path),
   `<stdbit.h>` for bit/endianness/counting utilities, `memset_explicit` for
-  clearing secrets without compiler elision — only where the binary's install
+  clearing secrets without compiler elision (only where the binary's install
   floor is not pinned by the glibc that introduced the symbol; in wheel-bound
-  code the volatile-store loop keeps the floor host-independent —
+  code the volatile-store loop keeps the floor host-independent),
   `<stdatomic.h>` for portable atomics (reactor lock-free queues, refcounted
   gateway cache entries), and `thread_local` for per-thread reactor state.
 - Do not use `_BitInt` in public ABI (width is implementation-defined).
@@ -287,8 +287,8 @@ comment-like payloads; real test code gets no such exemption.
 - Public API functions that allocate take an optional `const kith_allocator_t *`
   parameter before the out-parameter. If NULL, the default allocator
   (malloc/free) is used. Each handle stores the allocator it was created with
-  and routes every allocation it performs over its lifetime — including teardown
-  — through that one instance.
+  and routes every allocation it performs over its lifetime, including teardown,
+  through that one instance.
 - Never use `alloca` or variable-length arrays in public API paths.
 - Pair every `create`/`init` with a `destroy`/`shutdown`. Names are consistent:
   `foo_create` / `foo_destroy`, never `foo_new` / `foo_free` or `foo_init` /
@@ -300,7 +300,7 @@ comment-like payloads; real test code gets no such exemption.
 - Error codes are small negative integers defined in the public error enum.
 - Constructor failures are reported through the `int` return and the `out_`
   handle: `0` stores the new handle, a negative code stores `NULL`. The negative
-  codes a function can return are enumerated in its `@return` doc — that
+  codes a function can return are enumerated in its `@return` doc; that
   enumeration is the error contract. The public API has no last-error query and
   no errno-based error reporting.
 - Never ignore a return value from a function marked `[[nodiscard]]`.
@@ -351,19 +351,19 @@ comment-like payloads; real test code gets no such exemption.
 
 ### 2.8 File Structure
 
-Every C source and header file follows the same top-to-bottom shape so a reader
-builds navigation intuition across modules.
+Every C source and header file follows the same top-to-bottom structure so a
+reader can navigate consistently across modules.
 
 **Headers (`.h`):**
 
-1. Include guard — traditional `#ifndef KITH_MODULE_H` / `#define` / `#endif`
-   for public headers; `#pragma once` is acceptable for private headers (§2.7).
+1. Include guard: traditional `#ifndef KITH_MODULE_H` / `#define` / `#endif` for
+   public headers; `#pragma once` is acceptable for private headers (§2.7).
 1. Includes, grouped per §2.7 (C standard → system/third-party → project);
    `clang-format` enforces the grouping.
 1. File-level header comment (§1.7) stating what the module exposes.
 1. Forward declarations and `typedef`s (opaque handle typedefs first, then
    ancillary public types).
-1. Struct/union/enum definitions — only value-type DTOs expose layout (§2.2);
+1. Struct/union/enum definitions: only value-type DTOs expose layout (§2.2);
    opaque types stay forward-declared.
 1. Function declarations, in the order they appear in the module's narrative
    (create/destroy/lifecycle first, then accessors, then operations).
@@ -415,21 +415,21 @@ block instead of defining a second group; exactly one header defines each group
 name. A nested group declares `@ingroup kith_<group>` inside its own `@defgroup`
 block.
 
-- **Summary** — the first line, one sentence, imperative or declarative, ending
+- **Summary**: the first line, one sentence, imperative or declarative, ending
   with a period. States what the symbol is or does at a glance.
-- **Body** (when needed) — the expanded contract: invariants, the lifecycle the
+- **Body** (when needed): the expanded contract: invariants, the lifecycle the
   function participates in, the relationship to borrowed handles. The body
   either continues on the summary line or follows a blank line.
-- **`@param name description`** — one per parameter, in declaration order.
+- **`@param name description`**: one per parameter, in declaration order.
   Continuation lines align under the description column. Reference a parameter
   inline with `@p name`.
-- **`@return`** — the return value and its meaning. For `int`-returning
+- **`@return`**: the return value and its meaning. For `int`-returning
   functions, enumerate the negative error codes.
-- **`@thread_safety`** — required on every public function (§2.5): `safe`,
+- **`@thread_safety`**: required on every public function (§2.5): `safe`,
   `unsafe`, or `safe-if (condition)`.
-- **`@ownership`** — required when the function returns or transfers a pointer:
+- **`@ownership`**: required when the function returns or transfers a pointer:
   `@ownership caller` or `@ownership callee` (§2.3).
-- **`@note` / `@warning`** — optional, for a non-obvious constraint or a hazard
+- **`@note` / `@warning`**: optional, for a non-obvious constraint or a hazard
   the caller must avoid.
 
 Tag order: summary → body → `@param` → `@return` → `@thread_safety` →
@@ -491,8 +491,8 @@ by review; `ruff` enforces import grouping and sorting within the import block.
 1. `__all__` when the module is part of the public API; private (`_`-prefixed)
    modules omit it.
 1. Module-level constants and type aliases.
-1. Classes — public first, then private/`_`-prefixed.
-1. Functions — public first, then private/`_`-prefixed.
+1. Classes: public first, then private/`_`-prefixed.
+1. Functions: public first, then private/`_`-prefixed.
 1. `if __name__ == "__main__":` block, entry-point modules only.
 
 A blank line separates each section; a section with no members is omitted.
@@ -504,19 +504,19 @@ The summary is the first line; sections follow, each introduced by its header
 word followed by a colon. Content and voice follow §1.7; this section fixes only
 the format.
 
-- **Summary** — one sentence, ending with a period.
-- **Body** (when needed) — a blank line after the summary, then the expanded
+- **Summary**: one sentence, ending with a period.
+- **Body** (when needed): a blank line after the summary, then the expanded
   contract.
-- **`Args:`** — one `name: description` line per parameter; a description
+- **`Args:`**: one `name: description` line per parameter; a description
   spanning lines indents under the name. Omit when the function takes no
   parameters.
-- **`Returns:`** — the return value and its meaning. Omit when the function
+- **`Returns:`**: the return value and its meaning. Omit when the function
   returns `None` and that is obvious from the signature.
-- **`Raises:`** — `ExcType: when...` per exception. Omit when the function
-  raises nothing beyond pass-through.
-- **`Thread safety:`** — present when the function has a non-obvious concurrency
+- **`Raises:`**: `ExcType: when...` per exception. Omit when the function raises
+  nothing beyond pass-through.
+- **`Thread safety:`**: present when the function has a non-obvious concurrency
   contract; the default (thread-safe, §3.4) needs no section.
-- **`Ownership:`** — present when the function returns a resource with an
+- **`Ownership:`**: present when the function returns a resource with an
   ownership contract: one the caller must close or release, or a borrowed view
   that must not be closed.
 
@@ -576,18 +576,18 @@ scaling gates (ADR-0020):
 - **1000 dense actors (embedded, stress gate)**: `session_ok >= 99%`,
   `selected_clients >= 95%`, `bootstrap_ms_p95 < 3000`, no crash or corruption.
   The delivery-fidelity metrics (`move_missing_ratio_certified`, `mm_event`,
-  `continuity_flicker`) are reported, not thresholded — the embedded single-cell
+  `continuity_flicker`) are reported, not thresholded: the embedded single-cell
   pileup is the adversarial case the embedded topology is not the fidelity claim
   for.
-- **2000 distributed actors (fidelity gate)**: the full thresholds per instance
-  — `session_ok >= 99%`, `selected_clients >= 95%`,
+- **2000 distributed actors (fidelity gate)**: the full thresholds per instance:
+  `session_ok >= 99%`, `selected_clients >= 95%`,
   `move_missing_ratio_certified < 10%`, `bootstrap_ms_p95 < 3000`, no continuity
-  flicker — plus no single instance the fixed publish bottleneck under normal
-  spread. The gate runs under free-threaded Python (`python3.14t`, GIL disabled)
-  on the native movement-apply path — the certified configuration, the only one
-  under which the `move_missing_ratio_certified < 10%` bar is reachable. A GIL
-  run (or a Python-apply run) is a regression baseline, not a gating
-  configuration.
+  flicker, plus no single instance acting as the fixed publish bottleneck under
+  normal spread. The gate runs under free-threaded Python (`python3.14t`, GIL
+  disabled) on the native movement-apply path: the certified configuration, the
+  only one under which the `move_missing_ratio_certified < 10%` bar is
+  reachable. A GIL run (or a Python-apply run) is a regression baseline, not a
+  gating configuration.
 
 Reaching 900 green actors is not sufficient, and a passing dense-1000 stress
 gate alone does not claim the N² ceiling is broken; the distributed-2000
@@ -604,8 +604,8 @@ regime ladder, and the certified invocation shape live in
 
 Automated tooling must never push to the remote without explicit human approval.
 Commits are staged, formatted, tested, and verified locally by tools (including
-AI agents), but `git push` is always executed by a human. No exceptions — not
-for trivial fixes, not for hotfixes, not for post-review cleanup.
+AI agents), but `git push` is always executed by a human. No exceptions,
+including trivial fixes, hotfixes, and post-review cleanup.
 
 This rule exists because pushes are irreversible and externally visible. A
 machine cannot judge whether the commit author is ready for the change to leave
@@ -684,10 +684,10 @@ allowlist:
 `state`, `db`, `aoi`, `sim`, `fabric`, `gateway`, `coord`, `control`, `client`,
 `server`, `examples`, `framework`, `tools`
 
-- `framework` — cross-cutting changes spanning multiple modules or repo-wide.
-- `worker` — the handler-dispatch worker pool (`src/worker/`).
-- `examples` — the example programs and shared helpers under `examples/`.
-- `tools` — the `tools/` checkers and generators.
+- `framework`: cross-cutting changes spanning multiple modules or repo-wide.
+- `worker`: the handler-dispatch worker pool (`src/worker/`).
+- `examples`: the example programs and shared helpers under `examples/`.
+- `tools`: the `tools/` checkers and generators.
 - Empty scope is not permitted. For subsystem-specific changes use the parent
   module scope, not a sub-scope (`refactor(gateway): ...`, not
   `refactor(gateway-view): ...`), so the allowlist stays stable as subsystems
@@ -707,11 +707,10 @@ Good: `feat(sim): register movement models via vtable` Bad:
 
 #### 5.2.5 Body
 
-The body explains WHY the change was made, not WHAT — the diff already shows
-WHAT. It must contain at least one paragraph of substantive prose stating the
-motivation and, when the impact is non-obvious, the behavioral difference for a
-caller or reader. `tools/check_commit_messages.py` rejects a body that is a file
-manifest.
+The body explains WHY the change was made; the diff already shows WHAT. It must
+contain at least one paragraph of substantive prose stating the motivation and,
+when the impact is non-obvious, the behavioral difference for a caller or
+reader. `tools/check_commit_messages.py` rejects a body that is a file manifest.
 
 - Imperative, present tense, wrapped at 72 characters, paragraphs separated by
   blank lines.
@@ -728,8 +727,8 @@ value; tokens use `-` for internal spaces.
   type/scope (`feat(sim)!: ...`).
 - `Fixes #<n>` / `Refs #<n>` for tracker references; `Refs ADR-NNNN` for records
   (ADRs are repo documentation).
-- `Signed-off-by: <name> <email>` — the DCO sign-off, always the last footer
-  line (§5.2.8).
+- `Signed-off-by: <name> <email>`: the DCO sign-off, always the last footer line
+  (§5.2.8).
 
 #### 5.2.7 Revert commits
 
@@ -768,7 +767,7 @@ buildable and passing tests.
 
 Generated artifacts (ctypes bindings in `python/kith/_generated/`, ABI snapshots
 in `tests/abi/`, `.map` version scripts) are committed in the same commit as the
-source change that generated them — never as a follow-up "regenerate" commit.
+source change that generated them, never as a follow-up "regenerate" commit.
 `check_ctypes_drift.py` fails the commit if they diverge.
 
 #### 5.2.11 Buildability
@@ -778,8 +777,8 @@ large to land as a series of buildable commits, it belongs on a feature branch.
 
 #### 5.2.12 Examples
 
-The full annotated example set — features, breaking changes, reverts, and the
-bad-pattern catalog — lives in `docs/guides/commit_messages.md`.
+The full annotated example set (features, breaking changes, reverts, and the
+bad-pattern catalog) lives in `docs/guides/commit_messages.md`.
 
 #### 5.2.13 No plan, phase, or roadmap references
 
@@ -787,7 +786,7 @@ Commit messages and code comments describe the change objectively and
 independently. They never reference plans, phases, roadmaps, sprints,
 workstreams, task numbers, or any external tracking document. If the body
 references a deliverable or architectural goal, that goal must be defined in the
-repository's own documentation (an ADR, an architecture doc, a guide) —
+repository's own documentation (an ADR, an architecture doc, a guide).
 `Refs ADR-NNNN` is acceptable; `Refs Phase 1 Task 3` is not. The git history
 reads as a coherent, linear development by someone who knew what to build and
 why, in order.
@@ -863,11 +862,11 @@ why, in order.
 - Cross-references between decisions cite the ADR number inline. Code comments
   and docstrings never cite records (§1.7); documentation, policy checkers and
   commit footers are the citation surfaces.
-- House style: the same skeleton in every record — `# ADR-NNNN: Title`,
-  `**Status:** Accepted`, `## Context`, `## Decision`, `## Consequences` —
+- House style: the same skeleton in every record: `# ADR-NNNN: Title`,
+  `**Status:** Accepted`, `## Context`, `## Decision`, `## Consequences`;
   impersonal voice, consequences stating positive and negative effects, no plan
   or workstream vocabulary. `tools/check_adr_style.py` enforces the mechanical
-  parts; comparable length across records is review-enforced — condense wording,
+  parts; comparable length across records is review-enforced. Condense wording,
   never binding content.
 
 ### 7.3 Guides
@@ -881,22 +880,22 @@ structural rules rather than forced prose wrapping. `scripts/format.sh` applies
 the style; the verification gate checks it without rewriting files. Formatting
 must preserve rendered meaning, and the formatter's validation stays enabled.
 
-- `docs/guides/getting_started.md` — quickstart.
-- `docs/guides/commit_messages.md` — commit message canon and examples.
-- `docs/guides/writing_extensions.md` — Python extension authoring.
-- `docs/guides/writing_c_sim_models.md` — C sim model authoring.
-- `docs/guides/scaling_checklist.md` — running and interpreting the scaling
+- `docs/guides/getting_started.md`: quickstart.
+- `docs/guides/commit_messages.md`: commit message canon and examples.
+- `docs/guides/writing_extensions.md`: Python extension authoring.
+- `docs/guides/writing_c_sim_models.md`: C sim model authoring.
+- `docs/guides/scaling_checklist.md`: running and interpreting the scaling
   gates.
-- `docs/guides/external_code_vetting.md` — the external code vetting protocol.
-- `docs/guides/agentic_headless_client.md` — agentic testing end-to-end.
-- `docs/guides/replay_format.md` — the replay record format reference.
-- `docs/guides/wire_protocol.md` — the v1 wire format for hand-written peers:
+- `docs/guides/external_code_vetting.md`: the external code vetting protocol.
+- `docs/guides/agentic_headless_client.md`: agentic testing end-to-end.
+- `docs/guides/replay_format.md`: the replay record format reference.
+- `docs/guides/wire_protocol.md`: the v1 wire format for hand-written peers:
   frame header, correlation trailer, the replication record, and the delivery
   cadence.
-- `docs/guides/publish_choreography.md` — the per-tick publish choreography: the
+- `docs/guides/publish_choreography.md`: the per-tick publish choreography: the
   artifact-to-fabric pipeline, the step/publish/bump contract, and the
   dirty-cell flush.
-- `docs/guides/operations.md` — the operator's runbook: first-boot delivery
+- `docs/guides/operations.md`: the operator's runbook: first-boot delivery
   checks, capacity and failure-class reading, and recovery recipes per plane.
 
 ## 8. Review Checklist
@@ -928,9 +927,9 @@ Before requesting review, verify:
 
 When a module has an equivalent in an external reference codebase (a library
 being replaced, a reference implementation), the code is studied before
-reimplementation, then written fresh against this framework's contracts — never
-copied, never translated line-by-line. Before the module is considered complete,
-it passes the five-dimension vetting protocol in
+reimplementation, then written fresh against this framework's contracts. It is
+never copied or translated line-by-line. Before the module is considered
+complete, it passes the five-dimension vetting protocol in
 `docs/guides/external_code_vetting.md`: naming consistency, architectural
 conformance, implementation quality, forbidden anti-patterns, and cross-module
 consistency. The dimensions go beyond what mechanical checkers catch; a module

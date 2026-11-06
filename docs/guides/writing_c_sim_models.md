@@ -1,13 +1,13 @@
 # Writing C Sim Models
 
-This guide adds a new simulation model in C: a struct that implements the sim
-model vtable, registered by name on a `kith_sim_t` handle before it is
-instantiated. The framework's pluggability boundary for the sim plane is the
-vtable and the composition root that registers it, not dynamic library loading.
-A model ships as a C source file compiled and linked into the binary that owns
-the sim handle (the framework library itself, or a game binary that links
-`libkith_sim`); the composition root calls `kith_sim_register_model` and
-`kith_sim_create_model` directly.
+A custom simulation model in C is a struct that implements the sim model vtable,
+registered by name on a `kith_sim_t` handle before it is instantiated. The
+framework's pluggability boundary for the sim plane is the vtable and the
+composition root that registers it, not dynamic library loading. A model ships
+as a C source file compiled and linked into the binary that owns the sim handle
+(the framework library itself, or a game binary that links `libkith_sim`); the
+composition root calls `kith_sim_register_model` and `kith_sim_create_model`
+directly.
 
 The built-in `tile2d` and `free2d` models (`src/sim/models/`) are registered
 automatically when a sim handle is created. This walkthrough uses the public
@@ -44,7 +44,7 @@ not join accepted work or release the application's lifetime obligations.
 ## The model: a 2D drift model
 
 Add a model that applies a constant drift to every actor each tick, with no
-collision grid and no behavior file. The shape copies `free2d` minus its physics
+collision grid and no behavior file. It follows `free2d` without its physics
 integration: a model is its own state struct, five callbacks, and a storage
 vtable.
 
@@ -168,13 +168,13 @@ only links the public headers implements its own buffering or reads inputs
 inline. The helpers are internally synchronized for concurrent use across
 different actor ids; same-actor ordering is the caller's (which input a step
 consumes is a semantic choice, not a mechanical one), and `get` returns a
-pointer into the map that stays valid only until that actor's next `put` — the
+pointer into the map that stays valid only until that actor's next `put`; the
 mutex does not extend to the pointer's later use.
 
 ### 4. Define the storage vtable
 
 A single const instance of the vtable is the model's registration payload. The
-`size` and `abi_version` fields are what the runtime checks first;
+`size` and `abi_version` fields are what the runtime checks first:
 
 ```c
 static const kith_sim_model_vtable_t drift_vtable_storage = {
@@ -271,9 +271,8 @@ model = server.register_sim_model("tile2d", SimModelConfig())
 
 A custom C model registered from C at startup is reachable from the Python
 facade by the same name. The facade does not expose `kith_sim_register_model` to
-Python: registering a vtable from Python is not meaningful, through this
-high-level method. A model is written in C and registered from C; the Python
-facade instantiates it by name.
+Python through this high-level method. A model is written in C and registered
+from C; the Python facade instantiates it by name.
 
 ## Determinism and replay
 
@@ -289,7 +288,7 @@ A model that introduces floating-point state, threading, or any
 non-deterministic ordering breaks replay. Keep the hot path integer-only.
 Concurrency is layered: the artifact store and the built-in pending-input map
 are internally synchronized, and the caller may drive a model's vtable
-concurrently for different actors — but per-actor state (the actor struct) and
+concurrently for different actors, but per-actor state (the actor struct) and
 any model state beyond the built-in helpers are the caller's and the model
 author's to serialize respectively: same-actor vtable calls must be externally
 ordered, and a custom model that keeps shared mutable state beyond the built-in
@@ -311,22 +310,22 @@ state and the fabric plane's authority over fanout separate.
 
 ## References
 
-- `include/kith/sim/sim.h` — the public vtable, config, actor, and artifact
+- `include/kith/sim/sim.h`: the public vtable, config, actor, and artifact
   contracts.
-- `src/sim/models/tile2d.c`, `src/sim/models/free2d.c` — the built-in models,
-  the canonical shape a custom model copies.
-- `src/sim/model_registry.c` — the registry's validation paths (`-KITH_EEXIST`,
+- `src/sim/models/tile2d.c`, `src/sim/models/free2d.c`: the built-in models, the
+  canonical shape a custom model copies.
+- `src/sim/model_registry.c`: the registry's validation paths (`-KITH_EEXIST`,
   `-KITH_ESIZE`, `-KITH_EABIVER`, `-KITH_ENOENT`).
-- `tools/replay.py` — deterministic replay and hash regression.
-- `docs/guides/writing_extensions.md` — the Python-side extension path (a new
+- `tools/replay.py`: deterministic replay and hash regression.
+- `docs/guides/writing_extensions.md`: the Python-side extension path (a new
   wire type and handler, no C).
-- `docs/architecture/planes.md` — the sim and fabric plane contracts a model
+- `docs/architecture/planes.md`: the sim and fabric plane contracts a model
   honors.
-- ADR-0008 — opaque handles, size-versioned structs, version scripts, and the
+- ADR-0008: opaque handles, size-versioned structs, version scripts, and the
   ABI-diff gate.
-- ADR-0013 — pluggability is within planes, not across invariant-breaking
+- ADR-0013: pluggability is within planes, not across invariant-breaking
   topologies.
-- ADR-0016 — 3D-native cell identity.
+- ADR-0016: 3D-native cell identity.
 
 ## Persistent native state with a Python composition root
 

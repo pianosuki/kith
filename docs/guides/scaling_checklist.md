@@ -1,8 +1,8 @@
 # Scaling Checklist
 
-The numeric scaling gates the framework must pass before the N² ceiling is
-claimed broken are enforced (`AGENTS.md` §4.4); the harness that drives them is
-`tools/agent/load_harness.py`.
+The framework must pass the numeric scaling gates in `AGENTS.md` §4.4 before
+claiming to have broken the N² ceiling. `tools/agent/load_harness.py` drives
+those gates.
 
 The harness is a dedicated headless-client load generator, separate from the
 closed-loop scenarios in `tools/agent/runner.py` (which drive two or three
@@ -10,14 +10,14 @@ clients). It registers N headless clients against a fresh server, walks them
 through the login bootstrap, drives a movement phase at a fixed cadence, samples
 the §4.4 metrics from the real replication stream the gateway delivers, and
 renders a pass/fail report. It reuses the production `AgenticHeadlessClient`
-over the real wire, so the gate exercises the full stack — TCP accept, wire
-dispatch, sim publish, fabric replication, gateway delivery — through the code
+over the real wire, so the gate exercises the full stack (TCP accept, wire
+dispatch, sim publish, fabric replication, gateway delivery) through the code
 path whose scaling is being gated.
 
 ## The two gates
 
 `AGENTS.md` §4.4 defines the scaling-gate contract (ADR-0020): gates come in two
-classes — stress and fidelity — and the embedded topology is the stress class
+classes (stress and fidelity) and the embedded topology is the stress class
 while the distributed topology is the fidelity class. Reaching an intermediate
 actor count (for example, 900 green actors) is not sufficient, and a passing
 dense-1000 stress gate alone does not claim the N² ceiling is broken; the
@@ -48,7 +48,7 @@ instances). The full gate runs against the multi-process
 embedded-server OS process per instance, so the harness's asyncio client-drive
 loop is decoupled from the servers' worker-pool GILs. Each instance runs the
 embedded topology with its own coordination bus (a real cross-process coord
-transport is a separate, additive capability the gate does not exercise — the
+transport is a separate, additive capability the gate does not exercise; the
 gate validates horizontal scaling, not bus-driven split/merge). The in-process
 `tools.agent.distributed_host.distributed_host_factory` (two embedded servers on
 a shared loopback coordination bus via `add_member`) remains for the smoke
@@ -75,7 +75,7 @@ python3.14t -m tools.agent.load_harness --profile distributed-2000 \
 ```
 
 The distributed-2000 fidelity gate runs under free-threaded Python
-(`python3.14t`, GIL disabled) on the native movement-apply path — the certified
+(`python3.14t`, GIL disabled) on the native movement-apply path, the certified
 configuration ADR-0020 defines: the profile's `python_workers=8` assumes the
 N-worker pool ADR-0004 reserves for free-threaded builds, and the
 `move_missing_ratio_certified < 10%` bar is met only under that configuration. A
@@ -92,8 +92,15 @@ the handler pool overflows under the certified load), `--delivery-workers 2`
 certified shape: a single driver process concentrates all 2000 clients on one
 asyncio loop whose inbound replication processing runs at full capacity, and one
 oversized loop iteration can delay the movement cadence past the
-continuity-flicker threshold — a driver-side measurement artifact, not a server
+continuity-flicker threshold, a driver-side measurement artifact, not a server
 delivery defect. Two cohorts halve each loop's inbound load.
+
+Give each driver its own physical core when restricting CPU affinity. On the
+reference host, CPUs 0 and 8 share one core; CPUs 1 and 9 share another. Use
+`--driver-child-cpus-a 0,8 --driver-child-cpus-b 1,9` with the parent mask
+`0-1,8-9`. A shared mask can let both hot loops run on sibling hardware threads
+while the other allocated core is idle. These assignments keep the existing
+four-thread CPU budget, workload and thresholds.
 
 The invocation also pins the library resolution: the servers take `KITH_LIB`
 (the library directory) and the driver-side `AgenticHeadlessClient`s take
@@ -179,10 +186,10 @@ host cannot reach.
 
 ### Pinned-reference runs at scale
 
-Comparative measurements (a worker-count sweep, a before/after lever check) are
-only as good as their invariances: one variable changes per comparison, and
-everything else is held constant and recorded. At the distributed gate's
-operating point this needs host preparation beyond the build:
+For comparative measurements (a worker-count sweep, a before/after lever check),
+one variable changes per comparison, and everything else is held constant and
+recorded. At the distributed gate's operating point this needs host preparation
+beyond the build:
 
 - **Release build, pinned loader path.** Configure with
   `cmake --preset release && cmake --build --preset release` and export
@@ -214,14 +221,14 @@ operating point this needs host preparation beyond the build:
   cpu0's siblings are `0,8`). A literal split like driver `0-7` / servers `8-15`
   therefore SMT-shares every physical core between driver and servers. Read
   `/sys/devices/system/cpu/cpu0/topology/thread_siblings_list` first and split
-  by physical core — driver `taskset -c 0-1,8-9`, servers
-  `--server-affinity 2-7,10-15` — so the pinned sets are truly core-disjoint.
-- **Frequency side-channel.** Governor behavior poisons tail metrics invisibly.
-  Sample per-cpu frequency alongside any comparative run (one epoch-stamped
-  `/proc/cpuinfo` line every ~100 ms into a side file); a clean run shows the
-  active-max at boost clock for effectively all samples with no sustained
-  sub-nominal stretch, which excludes downclock post-hoc without touching the
-  measured path.
+  by physical core (driver `taskset -c 0-1,8-9`, servers
+  `--server-affinity 2-7,10-15`) so the pinned sets are truly core-disjoint.
+- **Frequency side-channel.** Governor behavior can distort tail metrics without
+  appearing in the report. Sample per-cpu frequency alongside any comparative
+  run (one epoch-stamped `/proc/cpuinfo` line every ~100 ms into a side file); a
+  clean run shows the active-max at boost clock for effectively all samples with
+  no sustained sub-nominal stretch, which excludes downclock post-hoc without
+  touching the measured path.
 - **Raw traces over reruns.** Pass `--proc-trace-output` on every instrumented
   run: the persisted JSON keeps the `/proc` sampler trace and the arrival
   series, so scheduler-level questions (who ran, who was preempted, when frames
@@ -235,12 +242,12 @@ operating point this needs host preparation beyond the build:
 synchronized input waves the pool competes for the instance's CPU slice, and
 oversubscription turns into nonvoluntary-switch storms that stall delivery
 punctuality while leaving average throughput intact. The measured operating
-point on a 12-logical-CPU server slice (two instances): pools of 12–16 workers
-per instance flicker, 8 workers pass cleanly, with identical wave compute across
-the sweep — the switch volume, not the work, forms the gaps. Size the pool so
-workers plus reactors stay at or below roughly 1.5x the server slice's logical
-CPUs; treat larger pools as throughput experiments against the punctuality
-metrics, not defaults.
+point on a 12-logical-CPU server slice (two instances): pools of 12 to 16
+workers per instance flicker, 8 workers pass cleanly, with identical wave
+compute across the sweep; the switch volume, not the work, forms the gaps. Size
+the pool so workers plus reactors stay at or below roughly 1.5x the server
+slice's logical CPUs; treat larger pools as throughput experiments against the
+punctuality metrics, not defaults.
 
 ### Every-commit smoke profile
 
@@ -264,29 +271,29 @@ validate the machinery, not the ceiling.
 
 ### Dense-1000 stress thresholds (`DENSE_THRESHOLDS`)
 
-| Metric                         | Threshold | What it measures                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session_ok`                   | `>= 99%`  | The fraction of registered clients that stayed connected and reached the bootstrap `READY` state. A client that dropped or never finished bootstrap fails this.                                                                                                                                                                                                                                                           |
-| `selected_clients`             | `>= 95%`  | The fraction of clients that received an `actor_state` for a non-self actor through the replication stream. In the dense single-cell topology a connected subscriber receives a composed batch including other actors every tick, so a client that bootstrapped but saw no other actor indicates a view-composition or delivery failure.                                                                                  |
-| `bootstrap_ms_p95`             | `< 3000`  | The 95th-percentile bootstrap latency in milliseconds, from client start to bootstrap `READY`.                                                                                                                                                                                                                                                                                                                            |
-| `move_missing_ratio_certified` | reported  | The fraction of submitted movement inputs the source did not certify as applied (ADR-0023's counter-delta rule). **Reported, not thresholded** on the stress gate: a degradation is visible in the report without failing the gate. Measured on a deeply instrumented sample (16 clients) whose event history holds the full movement-window stream.                                                                      |
-| `mm_event`                     | reported  | The companion event-count reading (distinct echoed input ticks against submitted inputs). Reported, not thresholded, on the stress gate.                                                                                                                                                                                                                                                                                  |
-| `continuity_flicker`           | reported  | Whether any instrumented client's own-actor stream showed a gap longer than 200 ms (four sim ticks at 20 Hz) between consecutive `actor_state` frames while the client was continuously submitting input and the actor remained in the same cell. **Reported, not thresholded** on the stress gate. A flicker is the actor being visible, dropped from the stream, then resumed — a view-composition or subscription bug. |
+| Metric                         | Threshold | What it measures                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `session_ok`                   | `>= 99%`  | The fraction of registered clients that stayed connected and reached the bootstrap `READY` state. A client that dropped or never finished bootstrap fails this.                                                                                                                                                                                                                                                          |
+| `selected_clients`             | `>= 95%`  | The fraction of clients that received an `actor_state` for a non-self actor through the replication stream. In the dense single-cell topology a connected subscriber receives a composed batch including other actors every tick, so a client that bootstrapped but saw no other actor indicates a view-composition or delivery failure.                                                                                 |
+| `bootstrap_ms_p95`             | `< 3000`  | The 95th-percentile bootstrap latency in milliseconds, from client start to bootstrap `READY`.                                                                                                                                                                                                                                                                                                                           |
+| `move_missing_ratio_certified` | reported  | The fraction of submitted movement inputs the source did not certify as applied (ADR-0023's counter-delta rule). **Reported, not thresholded** on the stress gate: a degradation is visible in the report without failing the gate. Measured on a deeply instrumented sample (16 clients) whose event history holds the full movement-window stream.                                                                     |
+| `mm_event`                     | reported  | The companion event-count reading (distinct echoed input ticks against submitted inputs). Reported, not thresholded, on the stress gate.                                                                                                                                                                                                                                                                                 |
+| `continuity_flicker`           | reported  | Whether any instrumented client's own-actor stream showed a gap longer than 200 ms (four sim ticks at 20 Hz) between consecutive `actor_state` frames while the client was continuously submitting input and the actor remained in the same cell. **Reported, not thresholded** on the stress gate. A flicker is the actor being visible, dropped from the stream, then resumed, a view-composition or subscription bug. |
 
 ### Distributed-2000 fidelity thresholds (`DISTRIBUTED_THRESHOLDS`)
 
 The dense stress thresholds apply per instance, plus the two delivery-fidelity
 metrics become hard failures, plus the inter-instance spread constraint:
 
-| Metric                         | Threshold | What it measures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `session_ok`                   | `>= 99%`  | Per instance — the fraction of that instance's registered clients that stayed connected and reached bootstrap `READY`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `selected_clients`             | `>= 95%`  | Per instance — the fraction of clients that received a non-self `actor_state` through the replication stream.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `move_missing_ratio_certified` | `< 10%`   | Per instance — the fraction of submitted movement inputs the source did not certify as applied, measured by the publisher-minted `update_seq` counter delta between self echoes across the movement window plus the post-window drain (ADR-0023). The counter advances once per applied input, so the reading is immune to the rebuild cadence's echo-sampling floor and cannot over-credit dropped inputs: a dropped input never mints. Measured on the deeply instrumented sample (16 clients). A client whose echoes carry no minted counter (a non-minting publisher or stamping disabled) falls back to the event-counting reading for that client and is reported as a certified fallback. |
-| `mm_event`                     | companion | The historical event-count reading (distinct echoed input ticks over the full history against submitted inputs), retained under its own name so published gate history stays comparable across the ADR-0023 boundary. Reported, not gated: under saturation it floors at the rebuild-to-submit ratio (~32% at the gate operating point) even at zero real loss, which is why the certified rule carries the bar.                                                                                                                                                                                                                                                                                 |
-| `bootstrap_ms_p95`             | `< 3000`  | Per instance — the 95th-percentile bootstrap latency in milliseconds.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `continuity_flicker`           | forbidden | Per instance — no instrumented client's own-actor stream may show a gap longer than **200 ms** (four sim ticks at 20 Hz: three publish cycles plus one tick of delivery slack) between consecutive `actor_state` frames while continuously submitting input in the same cell. The threshold matches the harness constant `_FLICKER_GAP_MS`.                                                                                                                                                                                                                                                                                                                                                      |
-| `publish_rate_skew`            | `<= 3.0x` | The ratio of the highest to the lowest per-instance publish rate under normal spread; no single instance may be the fixed publish bottleneck.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Metric                         | Threshold | What it measures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_ok`                   | `>= 99%`  | Per instance: the fraction of that instance's registered clients that stayed connected and reached bootstrap `READY`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `selected_clients`             | `>= 95%`  | Per instance: the fraction of clients that received a non-self `actor_state` through the replication stream.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `move_missing_ratio_certified` | `< 10%`   | Per instance: the fraction of submitted movement inputs the source did not certify as applied, measured by the publisher-minted `update_seq` counter delta between self echoes across the movement window plus the post-window drain (ADR-0023). The counter advances once per applied input, so the reading is immune to the rebuild cadence's echo-sampling floor and cannot over-credit dropped inputs: a dropped input never mints. Measured on the deeply instrumented sample (16 clients). A client whose echoes carry no minted counter (a non-minting publisher or stamping disabled) falls back to the event-counting reading for that client and is reported as a certified fallback. |
+| `mm_event`                     | companion | The historical event-count reading (distinct echoed input ticks over the full history against submitted inputs), retained under its own name so published gate history stays comparable across the ADR-0023 boundary. Reported, not gated: under saturation it floors at the rebuild-to-submit ratio (~32% at the gate operating point) even at zero real loss, which is why the certified rule carries the bar.                                                                                                                                                                                                                                                                                |
+| `bootstrap_ms_p95`             | `< 3000`  | Per instance: the 95th-percentile bootstrap latency in milliseconds.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `continuity_flicker`           | forbidden | Per instance: no instrumented client's own-actor stream may show a gap longer than **200 ms** (four sim ticks at 20 Hz: three publish cycles plus one tick of delivery slack) between consecutive `actor_state` frames while continuously submitting input in the same cell. The threshold matches the harness constant `_FLICKER_GAP_MS`.                                                                                                                                                                                                                                                                                                                                                      |
+| `publish_rate_skew`            | `<= 3.0x` | The ratio of the highest to the lowest per-instance publish rate under normal spread; no single instance may be the fixed publish bottleneck.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 `session_ok` and `selected_clients` are breadth metrics measured across every
 registered client. `move_missing_ratio_certified` (with its `mm_event`
@@ -383,18 +390,18 @@ defect of the framework under test:
   one embedded topology per instance; each instance owns its whole cell space
   and its fabric storage is process-local, and each runs its own loopback
   coordination bus with one member. The gate does not drive split/merge, so the
-  bus membership is inert for the gate's workload — the gate validates
-  horizontal scaling (per-instance fidelity plus publish-rate skew), not
-  cross-instance fabric replication or bus-driven authority transfer. A real
-  cross-process coordination transport (the `KITH_COORD_BUS_TRANSPORT_*` enum's
-  additive extension point) is a separate, additive capability for real
-  distributed deployments and is not required by the gate's contract (ADR-0020).
+  bus membership is inert for the gate's workload; the gate validates horizontal
+  scaling (per-instance fidelity plus publish-rate skew), not cross-instance
+  fabric replication or bus-driven authority transfer. A real cross-process
+  coordination transport (the `KITH_COORD_BUS_TRANSPORT_*` enum's additive
+  extension point) is a separate, additive capability for real distributed
+  deployments and is not required by the gate's contract (ADR-0020).
 - **Interpreter configuration.** The distributed-2000 fidelity gate certifies
   under free-threaded Python (`python3.14t`, GIL disabled) per ADR-0020: the
   `python_workers=8` profile drives 8 worker threads, and only a free-threaded
   build lets them run in parallel (ADR-0004's "N workers under a free-threaded
   build" rule). Under the GIL the same profile collapses to one active worker
-  and `move_missing` rises to ~75% (~7.5x the 10% bar) — the GIL's structural
+  and `move_missing` rises to ~75% (~7.5x the 10% bar), the GIL's structural
   ceiling, not a framework regression. A GIL run is a regression baseline; it
   does not gate.
 - **Build type and machine state.** A Debug build multiplies every C hot path's
@@ -409,18 +416,18 @@ defect of the framework under test:
 - **Login-burst admission tail.** A slow admission straggler (a client stuck
   seconds in the login burst) is invisible to the bootstrap latency metric by
   construction: the p95 is computed over the stamped sample, and the worst few
-  percent never enter it. The known shape is admission serialization —
-  `on_login` takes the control lock for actor spawn and binding, so a
-  1000-client burst queues on one lock, a contention property rather than a
-  pool-size property. The integrity bars still bind such a client: an admission
-  straggler that never clears boot fails `session_ok`/`selected_clients`, so the
-  class cannot pass the gate silently. It did not trigger in any certified run
-  (the certified dense runs read `session_ok` 100% with bootstrap p95 488/487 ms
-  against the 3000 ms bar). A run whose census or integrity metrics trip on this
-  class calls for re-derivation of the admission path, not a threshold change.
+  percent never enter it. The known shape is admission serialization: `on_login`
+  takes the control lock for actor spawn and binding, so a 1000-client burst
+  queues on one lock, a contention property rather than a pool-size property.
+  The integrity bars still bind such a client: an admission straggler that never
+  clears boot fails `session_ok`/`selected_clients`, so the class cannot pass
+  the gate silently. It did not trigger in any certified run (the certified
+  dense runs read `session_ok` 100% with bootstrap p95 488/487 ms against the
+  3000 ms bar). A run whose census or integrity metrics trip on this class calls
+  for re-derivation of the admission path, not a threshold change.
 - **Tick pipeline latency and the continuity-flicker metric.** The per-tick
   publish cadence (ADR-0014) flushes a tick's dirty cells on the tick callback,
-  and the gateway observes the flush on the *next* tick's refresh — a deliberate
+  and the gateway observes the flush on the *next* tick's refresh, a deliberate
   one-tick (50 ms at 20 Hz) pipeline latency that collapses per-input fabric
   traffic to per-tick (the "intended coalescing tradeoff" ADR-0014 records).
   That single tick of latency cannot by itself produce a continuity-flicker gap:
@@ -430,12 +437,12 @@ defect of the framework under test:
   distributed-gate runs have produced flicker on instances measuring 0% missing,
   so the boolean tracks delivery punctuality, not miss clustering. The measured
   gap structure at the distributed operating point is instance-wide and
-  synchronized — every sampled client of one instance gaps within the same few
-  milliseconds, in quasi-periodic trains roughly 230–350 ms apart with 200–250
-  ms durations — a per-instance stall signature, not a per-session composition
-  failure. The two criteria therefore measure different failure modes; the
-  pipeline lag remains a constant 50 ms offset within the delivery budget, not a
-  flicker source.
+  synchronized: every sampled client of one instance gaps within the same few
+  milliseconds, in quasi-periodic trains roughly 230 to 350 ms apart with 200 to
+  250 ms durations, a per-instance stall signature, not a per-session
+  composition failure. The two criteria therefore measure different failure
+  modes; the pipeline lag remains a constant 50 ms offset within the delivery
+  budget, not a flicker source.
 - **Flicker-ledger leading edge.** The continuity-flicker ledger anchors each
   non-empty own-actor series at its movement-window start, so a late first frame
   registers as a gap.
@@ -460,20 +467,20 @@ extends the harness; a profile that needs a different topology supplies a
 
 ## References
 
-- `tools/agent/load_harness.py` — the harness, profiles, thresholds, and CLI.
-- `tools/agent/embedded_host.py` — the in-process embedded host factory.
-- `tools/agent/distributed_host.py` — the in-process distributed host factory
+- `tools/agent/load_harness.py`: the harness, profiles, thresholds, and CLI.
+- `tools/agent/embedded_host.py`: the in-process embedded host factory.
+- `tools/agent/distributed_host.py`: the in-process distributed host factory
   (multi-instance cluster on a shared coordination bus; smoke profile and
   split-merge validation).
-- `tools/agent/subprocess_cluster_host.py` — the multi-process distributed host
+- `tools/agent/subprocess_cluster_host.py`: the multi-process distributed host
   factory (one embedded-server OS process per instance; the full
   distributed-2000 gate).
-- `tests/integration/test_scaling_gates.py` — the every-commit smoke profile
+- `tests/integration/test_scaling_gates.py`: the every-commit smoke profile
   tests (dense + in-process distributed + subprocess cluster).
-- `AGENTS.md` §4.1 — the test tier table (weekly placement of the full gate).
-- `AGENTS.md` §4.4 — the numeric gate definitions and the intermediate-count
+- `AGENTS.md` §4.1: the test tier table (weekly placement of the full gate).
+- `AGENTS.md` §4.4: the numeric gate definitions and the intermediate-count
   insufficiency rule.
-- `docs/architecture/adr/0020-two-tier-scaling-gates.md` — the gate-class
+- `docs/architecture/adr/0020-two-tier-scaling-gates.md`: the gate-class
   decision (stress class vs fidelity class) and the certified configuration.
-- `docs/guides/agentic_headless_client.md` — the headless-client harness the
-  load harness reuses.
+- `docs/guides/agentic_headless_client.md`: the headless-client harness the load
+  harness reuses.

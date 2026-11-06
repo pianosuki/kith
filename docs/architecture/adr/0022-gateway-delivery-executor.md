@@ -6,20 +6,19 @@
 
 The gateway tick composes and delivers every session's view inline on the
 reactor thread. At the fidelity gate's operating point (ADR-0020) the measured
-per-session demand — compose plus deliver plus the cache refresh — exceeds the
+per-session demand (compose plus deliver plus the cache refresh) exceeds the
 compose budget, the budget defers recompositions wholesale, and the gate fails
-on delivery throughput: a measured capacity boundary, not a logic defect. Moving
-deliver work off the reactor thread is the structural lever the demand
-arithmetic points at: tick demand drops under the budget and delivery wall time
-divides across several threads.
+on delivery throughput. This is a measured capacity boundary rather than a logic
+defect. Moving deliver work off the reactor thread addresses that demand: tick
+demand drops under the budget and delivery wall time divides across several
+threads.
 
 Two contracts shape the answer. ADR-0021 binds delivery strategies to the
 gateway's delivery threading model and defers the executor case to this record.
 ADR-0004 is not breached: its pool contract is scoped to handler dispatch, and
 executor jobs never touch Python, the fabric, the sim plane, or the io_uring
 ring (the reactor-owned edge, ADR-0011). The worker-pool primitive is shared
-infrastructure; the executor is a second instance of it holding a disjoint
-contract.
+infrastructure; the executor is a second instance with a separate contract.
 
 ## Decision
 
@@ -54,23 +53,23 @@ deliver is in flight before composing, and the wait draws from one per-pass
 budget (a documented tunable, defaulting well below the tick period); once the
 budget is exhausted, subsequent in-flight sessions skip the wait immediately
 (counted). A per-wait bound was rejected: under multi-session saturation it
-amplifies to one full bound of reactor stall per session in a single pass —
-worse than inline delivery, and an ADR-0004-shaped violation. On timeout the
-reactor skips the composition (the session keeps its retained view) and proceeds
-to the delivery section, which re-checks the flag: a job that finished inside
-the deadline window still delivers the retained view this tick. The wait is the
-sole reactor-block point the executor introduces, and the reactor never
-force-overwrites a view while a deliver is in flight.
+amplifies to one full bound of reactor stall per session in a single pass, which
+is worse than inline delivery and violates the ADR-0004 threading contract. On
+timeout the reactor skips the composition (the session keeps its retained view)
+and proceeds to the delivery section, which re-checks the flag: a job that
+finished inside the deadline window still delivers the retained view this tick.
+The wait is the sole reactor-block point the executor introduces, and the
+reactor never force-overwrites a view while a deliver is in flight.
 
 **Counted skip, never inline.** A submit that returns the pool's busy failure
-clears the in-flight flag (uncontended — no job exists), releases the session
-reference, and increments a counter. The reactor never falls back to inline
-delivery, by the ADR-0004 rule: pool-bound work never runs inline. The
-executor's task capacity equals the session count — at most one in-flight job
-per session makes steady-state busy failures impossible. The one micro-window
-where a busy failure can appear is designed and self-healing: a worker returns
-its task node only after the callback's last write, so a resubmit can observe
-the flag clear against an exhausted free list for one tick, and the counted skip
+clears the in-flight flag (uncontended because no job exists), releases the
+session reference, and increments a counter. The reactor never falls back to
+inline delivery, by the ADR-0004 rule: pool-bound work never runs inline. The
+executor's task capacity equals the session count. At most one in-flight job per
+session makes steady-state busy failures impossible. The one micro-window where
+a busy failure can appear is designed and self-healing: a worker returns its
+task node only after the callback's last write, so a resubmit can observe the
+flag clear against an exhausted free list for one tick, and the counted skip
 degrades exactly that session for exactly that tick.
 
 **Memory-model licensing.** The worker's plain (non-atomic) reads of the
@@ -92,8 +91,8 @@ unattributed submit overhead.
 (the delivery header owns its layout): jobs submitted, in-flight skips, busy
 skips, wait-budget exhaustions, compose-wait timeouts, current in-flight, and
 the in-flight high-water mark. In-flight skips count the per-session delivery
-cadence gaps, and the two compose-wait counters — timeouts plus budget
-exhaustions — decompose the compose-wait causes of those gaps, which is why
+cadence gaps, and the two compose-wait counters (timeouts plus budget
+exhaustions) separate the compose-wait causes of those gaps, which is why
 exhaustion is counted separately from the timeout. A separate deferred-session
 counter was considered and collapsed: the fresh-compose path provably cannot
 skip, so every in-flight skip is already retained-view-shaped and a second
@@ -103,27 +102,27 @@ v1.0.0.
 **Teardown order.** Gateway destroy drains and joins the executor first, then
 frees the claimed per-thread scratches (workers may still be using them during
 the drain), then its own teardown proceeds. In-flight jobs hold session
-references, so a mid-drain session release may free a detached session — safe,
-since a non-owner release never touches the session table.
+references, so a mid-drain session release may free a detached session. This is
+safe because a non-owner release never touches the session table.
 
 **Error disposition.** Compose errors propagate as they do inline. The worker's
 deliver return code is discarded: deliver failures stay visible through the
 delivery counters (dropped frames), and an executor delivery failure is not a
 reactor-path error.
 
-**Cadence invariant (conditional).** The inline promise — frame cadence per
-session is untouched, the view converges once its turn comes around — holds when
-the executor keeps up. Under backpressure an in-flight session is skipped for a
+**Cadence invariant (conditional).** The inline promise holds when the executor
+keeps up: frame cadence per session is untouched and the view converges once its
+turn comes around. Under backpressure an in-flight session is skipped for a
 tick: bounded gaps, staleness bounded by the max-gap backstop, the gap rate
 observable through the counters above.
 
 ## Consequences
 
-Positive — the reactor thread's per-session demand drops below the compose
-budget at the gate operating point; delivery wall time divides across the
-executor; the default configuration is byte-identical to the inline path.
-Negative — one slow session can consume the whole pass wait budget (a fairness
-loss accepted deliberately: reactor latency outranks delivery fidelity);
-backpressure produces bounded cadence gaps instead of the inline guarantee; the
-capacity model carries the submit overhead and the one-tick accounting skew; the
-counter surface adds seven series.
+Positive: the reactor thread's per-session demand drops below the compose budget
+at the gate operating point; delivery wall time divides across the executor; the
+default configuration is byte-identical to the inline path. Negative: one slow
+session can consume the whole pass wait budget (a fairness loss accepted
+deliberately: reactor latency outranks delivery fidelity); backpressure produces
+bounded cadence gaps instead of the inline guarantee; the capacity model carries
+the submit overhead and the one-tick accounting skew; the counter surface adds
+seven series.

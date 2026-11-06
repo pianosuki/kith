@@ -36,8 +36,7 @@ tasks retain their existing ownership and processing contract.
 
 ## Consequences
 
-Positive — Linux is the shipping platform with best-in-class asynchronous I/O,
-and the backend abstraction keeps a second event backend swappable when macOS
-hardware exists. Negative — no non-Linux platform is supported until hardware
-for one exists; the abstraction is an indirection the reactor pays on every
-operation.
+Positive: Linux is the shipping platform with modern asynchronous I/O, and the
+backend abstraction keeps a second event backend swappable when macOS hardware
+exists. Negative: no non-Linux platform is supported until hardware for one
+exists; the abstraction is an indirection the reactor pays on every operation.

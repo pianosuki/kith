@@ -2,12 +2,11 @@
 
 When a module has an equivalent in an external reference codebase (a library
 being replaced, a reference implementation), the code is studied before
-reimplementation, then written fresh against this framework's contracts — never
+reimplementation, then written fresh against this framework's contracts, never
 copied, never translated line-by-line. `AGENTS.md` §9 carries the mandate; this
-guide carries the five-dimension checklist a module passes before it is
-considered complete. The dimensions go beyond what mechanical checkers catch:
-they are the qualitative judgment that guards against inheriting outdated
-choices, confusing naming, inconsistent idioms, and hidden conceptual coupling.
+guide defines the five review dimensions a module must pass before it is
+complete. Review covers outdated choices, confusing naming, inconsistent idioms,
+and hidden conceptual coupling that mechanical checkers may miss.
 
 ## 1. Naming consistency
 
@@ -30,7 +29,7 @@ choices, confusing naming, inconsistent idioms, and hidden conceptual coupling.
 - Plane invariants are respected (`docs/architecture/planes.md`); the plane
   checker passes.
 - The module uses the same patterns, idioms, and structure as the other modules.
-  A module that feels ported is not done.
+  A module that retains inconsistent patterns from the reference is incomplete.
 
 ## 3. Implementation quality
 
@@ -76,4 +75,4 @@ Checked by review and by the mechanical checkers:
 - Doc comment style matches (§2.9 tags; §3.6 sections).
 - Same C23 idiom choices: if module A uses `<stdatomic.h>` for a purpose, module
   B does not use pthreads for the same purpose.
-- If the module feels different from the others, identify why and align it.
+- If the module differs from the others, identify why and make it consistent.

@@ -19,11 +19,11 @@ facts make event counting dishonest at the operating point:
   way: a dropped input is passed over by the frontier, so a gateway dropping
   most of its inputs would still read ~0% missing. A tick-delta series genuinely
   cannot decompose an echo gap into applied-and-superseded inputs versus dropped
-  ones — applied-then- superseded and never-applied inputs leave identical tick
+  ones: applied-then-superseded and never-applied inputs leave identical tick
   deltas.
 
-The disambiguator is an apply count, and only the source of the applies can mint
-one.
+Only the source of the applies can mint the apply count needed to distinguish
+them.
 
 ## Decision
 
@@ -31,7 +31,7 @@ Every actor carries a publisher-minted **`update_seq`**: a monotone per-actor
 counter that models increment once per applied movement input. The counter is
 minted at publish time, alongside the per-cell publish sequence (ADR-0002), and
 travels as payload under the wire contract (ADR-0007). `0` is reserved for
-"never minted" — a publisher that does not participate, or an actor that has not
+"never minted": a publisher that does not participate, or an actor that has not
 applied movement yet. Spawn and teleport publishes carry the field unchanged:
 the counter certifies movement coverage, and inflating it with non-movement
 publishes would reintroduce over-credit through the harness denominator.
@@ -50,20 +50,20 @@ functional (trailing bytes ignored).
 inputs. Consecutive self echoes therefore certify coverage in bulk: the counter
 delta between two echoes counts the movement applications that happened between
 them, regardless of how many echoes the rebuild cadence produced. The harness
-rule derived from this — a submitted input is missing unless a self echo within
-the movement window plus the post-window drain certifies it — is the gate's
-move-missing reading going forward: immune to the sampling floor and unable to
-over-credit drops, since a dropped input never mints.
+derives the gate's move-missing rule from this: a submitted input is missing
+unless a self echo within the movement window plus the post-window drain
+certifies it. The rule is immune to the sampling floor and unable to over-credit
+drops, since a dropped input never mints.
 
 **Metric naming.** The certified rule takes the gate name
 `move_missing_ratio_certified`; the historical event-counting rule is retained
 unchanged as `move_missing_ratio`, a continuity companion. The certified rule
 binds the existing threshold through the gate documentation, which records the
-correction — renaming rather than redefining in place keeps the published gate
+correction. Renaming rather than redefining in place keeps the published gate
 history comparable across the boundary.
 
 **Suppression exclusion.** Tiered suppression's change test compares the
-record's content fields — position, velocity, the input tick, and the
+record's content fields: position, velocity, the input tick, and the
 representation level. `update_seq` stays out of it: it is certification
 metadata, not content, and it advances in lockstep with the input tick on every
 movement publish anyway. The self subject bypasses suppression regardless.
@@ -87,9 +87,9 @@ hash shifts once at introduction and stays stable.
 
 ## Consequences
 
-Positive — the move-missing metric measures real movement loss at any rebuild
+Positive: the move-missing metric measures real movement loss at any rebuild
 cadence; the sampling floor disappears without weakening any threshold; dropped
-inputs cannot hide behind frontier advancement. Negative — the replication
-record widens by four bytes per subject (~6% per record, shrinkage in
+inputs cannot hide behind frontier advancement. Negative: the replication record
+widens by four bytes per subject (~6% per record, shrinkage in
 records-per-batch); publishers that never mint leave their clients on the
 fallback path; the counter adds one deterministic field to replayed state.

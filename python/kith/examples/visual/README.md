@@ -1,10 +1,11 @@
-# Open Range — the visual example
+<a name="open-range--the-visual-example"></a>
 
-An out-of-box playable demonstration of the kith framework: one command boots a
-living world — a seamless 512×512-unit plain, ambient actors wandering under the
-same momentum model the players use, cell-scoped chat, and a live metrics route
-— and the graphical client renders it through the certified harness client
-engine.
+# Open Range: the visual example
+
+One command starts a playable kith world: a seamless 512×512-unit plain, ambient
+actors wandering under the same momentum model the players use, cell-scoped
+chat, and a live metrics route. The graphical client renders the world through
+the certified harness client engine.
 
 ## Install
 
@@ -17,7 +18,7 @@ pip install "kith-fw[visual]"  # + the graphical client's window renderer
 ```
 
 The visual extra pins the window renderer to the exact prerelease the example is
-verified against — the base install never pulls it.
+verified against. The base install never pulls it.
 
 From a source checkout, build first
 (`cmake --preset debug && cmake --build build/debug`) and install editable; the
@@ -32,7 +33,7 @@ One command (installs the visual extra):
 kith-visual play crowd-in
 ```
 
-Two terminals (window optional — every scenario runs headless):
+Two terminals (the window is optional; every scenario runs headless):
 
 ```
 kith-visual run density-pile          # t1: prints  playground ports: gw=… ctl=…
@@ -44,15 +45,15 @@ client whenever you like.
 
 ## Scenarios
 
-| scenario           | what you feel                                                     |
-| ------------------ | ----------------------------------------------------------------- |
-| `crowd-in`         | bots converge on your cell — view budget, tier styles, ghosts     |
-| `density-pile`     | bots pile into your cell — full vs tiered delivery budget         |
-| `churn-storm`      | sessions connect/disconnect around you                            |
-| `membership-churn` | bots patrol a cell edge — window churn, no reconnects             |
-| `kill-reconnect`   | the server dies on a cadence; the client and bots rebind          |
-| `tick-ladder`      | the server relaunches down 20/62/125/142 Hz — smoothness per rung |
-| `soak`             | sustained wander load — watch for drift over time                 |
+| scenario           | what you feel                                                    |
+| ------------------ | ---------------------------------------------------------------- |
+| `crowd-in`         | bots converge on your cell: view budget, tier styles, ghosts     |
+| `density-pile`     | bots pile into your cell: full vs tiered delivery budget         |
+| `churn-storm`      | sessions connect/disconnect around you                           |
+| `membership-churn` | bots patrol a cell edge: window churn, no reconnects             |
+| `kill-reconnect`   | the server dies on a cadence; the client and bots rebind         |
+| `tick-ladder`      | the server relaunches down 20/62/125/142 Hz: smoothness per rung |
+| `soak`             | sustained wander load: watch for drift over time                 |
 
 ## Controls and HUD
 
@@ -62,19 +63,19 @@ client whenever you like.
   `--interp-ms` overrides). Use RAW when hunting rubberbanding and slingshots,
   INTERP to judge smoothness.
 - HUD: fps, records/s, per-actor staleness coloring, arrival jitter, the
-  snap-event log (a rendered displacement jump above one tick of max run
-  velocity — the rubberband detector), product-tier styles, membership ghosts,
+  snap-event log (the rubberband detector: a rendered displacement jump above
+  one tick of max run velocity), product-tier styles, membership ghosts,
   input-echo lag, ping RTT, and the live `/playground/metrics` panel
   (suppressed, drops, delivery totals).
 
 ## Server knobs
 
-`kith-visual serve` and `run` pass the feel axes through to the composition
-root: `--tick-hz`, `--delivery-preset full|tiered`, `--view-max-subjects`,
-`--view-refresh-ms`, `--cache-refresh-ms`, `--npcs`,
-`--replication-batch-type-id`. Movement follows the publish-choreography law —
-inputs buffer, the tick steps and publishes — so movement speed is independent
-of the input rate and the tick rate.
+`kith-visual serve` and `run` pass these tuning options through to the
+composition root: `--tick-hz`, `--delivery-preset full|tiered`,
+`--view-max-subjects`, `--view-refresh-ms`, `--cache-refresh-ms`, `--npcs`,
+`--replication-batch-type-id`. Movement follows the publish choreography: inputs
+buffer, then the tick steps and publishes. Movement speed is independent of the
+input rate and the tick rate.
 
 ## Notes
 
@@ -84,6 +85,6 @@ of the input rate and the tick rate.
   and snap events (both default off).
 - The tick-ladder and kill-reconnect scenarios use the fixed port 7777 so the
   window rides server restarts; a stale server on that port fails the next spawn
-  loudly — stop it and retry:
+  with an error. Stop it and retry:
   `pkill -f 'kith(\.examples\.visual\.serve[r]|-visual serv[e])'`.
 - Linux only (the framework's reactor is io_uring-based).
