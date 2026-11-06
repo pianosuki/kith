@@ -36,7 +36,7 @@ _DEFAULT_TIMEOUT_S: Final[float] = 10.0
 _MAX_BODY_BYTES: Final[int] = 1 << 20
 _READ_CHUNK: Final[int] = 8192
 
-_HTTP_READ_ERRORS: Final[tuple[type[BaseException], ...]] = (
+HTTP_READ_ERRORS: Final[tuple[type[BaseException], ...]] = (
     asyncio.IncompleteReadError,
     ConnectionError,
     OSError,
@@ -140,13 +140,13 @@ class ServerControlClient:
                 await self._ensure_connected()
                 await self._send_request(method, path, accept, content_type, body)
                 return await self._read_response()
-            except _HTTP_READ_ERRORS:
+            except HTTP_READ_ERRORS:
                 await self._drop_connection()
                 await self._ensure_connected()
                 try:
                     await self._send_request(method, path, accept, content_type, body)
                     return await self._read_response()
-                except _HTTP_READ_ERRORS as exc2:
+                except HTTP_READ_ERRORS as exc2:
                     await self._drop_connection()
                     raise ServerControlError(f"{method} {path} failed: {exc2}") from exc2
             except ServerControlError:
@@ -174,7 +174,7 @@ class ServerControlClient:
         self._reader = None
         if writer is not None:
             writer.close()
-            with contextlib.suppress(*_HTTP_READ_ERRORS):
+            with contextlib.suppress(*HTTP_READ_ERRORS):
                 await writer.wait_closed()
 
     async def _send_request(

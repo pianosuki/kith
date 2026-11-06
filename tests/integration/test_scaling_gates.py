@@ -53,6 +53,7 @@ from examples.spatial.client import (
     iter_actor_state_ids,
 )
 from examples.spatial.handlers import CELL_SIZE_Q16
+from tools.agent._load_harness import driver as load_harness_driver
 from tools.agent.distributed_host import DistributedControl, distributed_host_factory
 from tools.agent.dual_driver import (
     _SCHEMA_VERSION,
@@ -1458,7 +1459,6 @@ class TestMovementPhaseInlineDrive:
         input_hz: float,
         duration_s: float,
     ) -> None:
-        from tools.agent import load_harness
 
         anchor_ns = 1_000_000_000
         clock_ns = anchor_ns + ready_offset_ns - scrape_work_ns
@@ -1482,9 +1482,9 @@ class TestMovementPhaseInlineDrive:
 
         monkeypatch.setattr(time, "monotonic_ns", lambda: clock_ns)
         monkeypatch.setattr(asyncio, "sleep", sleep)
-        monkeypatch.setattr(load_harness, "_scrape_phase_counters", scrape)
-        monkeypatch.setattr(load_harness, "_run_counter_sampler", sample)
-        monkeypatch.setattr(load_harness, "_SUBMIT_YIELD_EVERY", 1)
+        monkeypatch.setattr(load_harness_driver, "scrape_phase_counters", scrape)
+        monkeypatch.setattr(load_harness_driver, "run_counter_sampler", sample)
+        monkeypatch.setattr(load_harness_driver, "SUBMIT_YIELD_EVERY", 1)
         harness = LoadHarness(
             replace(DISTRIBUTED_2000, duration_s=duration_s, input_hz=input_hz),
             cast(LoadHostFactory, lambda: None),
@@ -1611,7 +1611,6 @@ class TestMovementPhaseInlineDrive:
     def test_sampler_finalized_before_phase_exit(
         self, monkeypatch: pytest.MonkeyPatch, cancel: bool
     ) -> None:
-        from tools.agent import load_harness
 
         async def drive() -> None:
             started = asyncio.Event()
@@ -1653,10 +1652,10 @@ class TestMovementPhaseInlineDrive:
 
             monkeypatch.setattr(time, "monotonic_ns", lambda: 1_000_000_000)
             monkeypatch.setattr(asyncio, "sleep", sleep)
-            monkeypatch.setattr(load_harness, "_scrape_phase_counters", scrape)
-            monkeypatch.setattr(load_harness, "_run_counter_sampler", sample)
-            monkeypatch.setattr(load_harness, "_submit_input", submit)
-            monkeypatch.setattr(load_harness, "_SUBMIT_YIELD_EVERY", 1)
+            monkeypatch.setattr(load_harness_driver, "scrape_phase_counters", scrape)
+            monkeypatch.setattr(load_harness_driver, "run_counter_sampler", sample)
+            monkeypatch.setattr(load_harness_driver, "submit_input", submit)
+            monkeypatch.setattr(load_harness_driver, "SUBMIT_YIELD_EVERY", 1)
             harness = LoadHarness(
                 replace(DISTRIBUTED_2000, duration_s=0.25, input_hz=20),
                 cast(LoadHostFactory, lambda: None),
@@ -2309,7 +2308,7 @@ class TestMetricCounts:
             )
 
         actual = asyncio.run(_collect_depth_metrics(_counting_orch(events), records, 1e-7))
-        monkeypatch.setattr("tools.agent.load_harness.iter_actor_states_for", full_decoder)
+        monkeypatch.setattr("tools.agent._load_harness.depth.iter_actor_states_for", full_decoder)
         expected = asyncio.run(_collect_depth_metrics(_counting_orch(events), records, 1e-7))
         assert actual == expected
         submitted, observed, series, rows = actual
@@ -6228,12 +6227,12 @@ def test_post_window_drain_waits_only_for_remaining_absolute_deadline(
     rec = _ClientRecord(name="drain", principal_id=1, instrumented=False)
     now = [1_000_000_000]
     sleeps: list[float] = []
-    monkeypatch.setattr("tools.agent.load_harness.time.monotonic_ns", lambda: now[0])
+    monkeypatch.setattr("tools.agent._load_harness.drive_support.time.monotonic_ns", lambda: now[0])
 
     async def sleep(delay: float) -> None:
         sleeps.append(delay)
 
-    monkeypatch.setattr("tools.agent.load_harness.asyncio.sleep", sleep)
+    monkeypatch.setattr("tools.agent._load_harness.driver.asyncio.sleep", sleep)
 
     async def exercise() -> None:
         await harness._post_window_echo_drain([rec])

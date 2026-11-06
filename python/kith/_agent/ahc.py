@@ -21,12 +21,10 @@ record) are preserved in the event history.
 
 from __future__ import annotations
 
-import argparse
 import asyncio
 import concurrent.futures
 import contextlib
 import ctypes
-import itertools
 import json
 import logging
 import os
@@ -34,83 +32,143 @@ import struct
 import threading
 import time
 from collections import deque
-from collections.abc import Callable, Coroutine, Iterable, Iterator, Mapping, Sequence
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Protocol
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from functools import partial
+from typing import Any
+
+from kith._agent._control import CONN_RESET_ERRORS as CONN_RESET_ERRORS
+from kith._agent._control import HTTP_MAX_BODY as HTTP_MAX_BODY
+from kith._agent._control import HTTP_READ_ERRORS as HTTP_READ_ERRORS
+from kith._agent._control import IPC_BUFFER_SIZE as IPC_BUFFER_SIZE
+from kith._agent._control import IPC_COMMANDS as IPC_COMMANDS
+from kith._agent._control import JSON_DECODE_ERRORS as JSON_DECODE_ERRORS
+from kith._agent._control import IpcHandler as IpcHandler
+from kith._agent._control import ack as ack
+from kith._agent._control import cmd_connect as cmd_connect
+from kith._agent._control import cmd_disconnect as cmd_disconnect
+from kith._agent._control import cmd_query_state as cmd_query_state
+from kith._agent._control import cmd_recent_events as cmd_recent_events
+from kith._agent._control import cmd_register_type as cmd_register_type
+from kith._agent._control import cmd_shutdown as cmd_shutdown
+from kith._agent._control import cmd_submit as cmd_submit
+from kith._agent._control import cmd_subscribe as cmd_subscribe
+from kith._agent._control import cmd_unsubscribe as cmd_unsubscribe
+from kith._agent._control import event_list as event_list
+from kith._agent._control import event_to_dict as event_to_dict
+from kith._agent._control import http_handle_peer as http_handle_peer
+from kith._agent._control import http_respond as http_respond
+from kith._agent._control import ipc_handle_peer as ipc_handle_peer
+from kith._agent._control import json_bytes as json_bytes
+from kith._agent._control import safe_write as safe_write
+from kith._agent._control import status_dict as status_dict
+from kith._agent._control import subscription_state as subscription_state
+from kith._agent._control import to_int as to_int
+from kith._agent._errors import ERROR_NAMES as ERROR_NAMES
+from kith._agent._errors import check as check
+from kith._agent._evidence import VIEW_WINDOW_ID_CAP as VIEW_WINDOW_ID_CAP
+from kith._agent._evidence import EvidenceFrames as EvidenceFrames
+from kith._agent._native import CLIENT_LIB_BASENAME as CLIENT_LIB_BASENAME
+from kith._agent._native import PROTO_LIB_BASENAME as PROTO_LIB_BASENAME
+from kith._agent._native import U8 as U8
+from kith._agent._native import EnterFn as EnterFn
+from kith._agent._native import FrameFn as FrameFn
+from kith._agent._native import FramePtr as FramePtr
+from kith._agent._native import ReplyFn as ReplyFn
+from kith._agent._native import U8Ptr as U8Ptr
+from kith._agent._native import U16Ptr as U16Ptr
+from kith._agent._native import U32Ptr as U32Ptr
+from kith._agent._native import find_lib as find_lib
+from kith._agent._native import load_client as load_client
+from kith._agent._native import load_proto as load_proto
+from kith._agent._native import make_enter as make_enter
+from kith._agent._native import make_reply as make_reply
+from kith._agent._scheduling import ENGINE_TICKER as ENGINE_TICKER
+from kith._agent._scheduling import OUTBOUND_IDLE_PROBE_S as OUTBOUND_IDLE_PROBE_S
+from kith._agent._scheduling import OUTBOUND_SWEEPER as OUTBOUND_SWEEPER
+from kith._agent._scheduling import ClientTicker as ClientTicker
+from kith._agent._scheduling import OutboundSweeper as OutboundSweeper
+from kith._agent._scheduling import ProbeClient as ProbeClient
+from kith._agent._scheduling import TickClient as TickClient
+
+from ._cli import run_client
+from ._errors import KithClientError as KithClientError
+from ._evidence import WindowEvidence as WindowEvidence
+from ._evidence import WindowSnapshot as WindowSnapshot
+from ._native import KITH_ABI_VERSION as KITH_ABI_VERSION
+from ._native import KITH_CLIENT_EVENT_PAYLOAD_MAX as KITH_CLIENT_EVENT_PAYLOAD_MAX
+from ._native import KITH_EAGAIN as KITH_EAGAIN
+from ._native import KITH_EOVERFLOW as KITH_EOVERFLOW
+from ._native import KITH_PROTO_FLAG_CORRELATION as KITH_PROTO_FLAG_CORRELATION
+from ._native import KITH_PROTO_HDR_SIZE as KITH_PROTO_HDR_SIZE
+from ._native import ClientBootstrapStatus as ClientBootstrapStatus
+from ._native import ClientBootstrapStep as ClientBootstrapStep
+from ._native import ClientCommand as ClientCommand
+from ._native import ClientParams as ClientParams
+from ._native import ClientRuntimeStatus as ClientRuntimeStatus
+from ._native import ProtoFrame as ProtoFrame
+from ._native import ProtoParams as ProtoParams
+from ._types import BootstrapStep as BootstrapStep
+from ._types import ClientEvent as ClientEvent
+from ._types import ClientStatus as ClientStatus
+from ._types import DecodedFrame as DecodedFrame
 
 
-KITH_ABI_VERSION: int = 1
+_CLIENT_LIB_BASENAME = CLIENT_LIB_BASENAME
+_CONN_RESET_ERRORS = CONN_RESET_ERRORS
+_ClientTicker = ClientTicker
+_ENGINE_TICKER = ENGINE_TICKER
+_ERROR_NAMES = ERROR_NAMES
+_EnterFn = EnterFn
+_EvidenceFrames = EvidenceFrames
+_FrameFn = FrameFn
+_FramePtr = FramePtr
+_HTTP_MAX_BODY = HTTP_MAX_BODY
+_HTTP_READ_ERRORS = HTTP_READ_ERRORS
+_IPC_BUFFER_SIZE = IPC_BUFFER_SIZE
+_IPC_COMMANDS = IPC_COMMANDS
+_IpcHandler = IpcHandler
+_JSON_DECODE_ERRORS = JSON_DECODE_ERRORS
+_OUTBOUND_IDLE_PROBE_S = OUTBOUND_IDLE_PROBE_S
+_OUTBOUND_SWEEPER = OUTBOUND_SWEEPER
+_OutboundSweeper = OutboundSweeper
+_PROTO_LIB_BASENAME = PROTO_LIB_BASENAME
+_ProbeClient = ProbeClient
+_ReplyFn = ReplyFn
+_TickClient = TickClient
+_U16Ptr = U16Ptr
+_U32Ptr = U32Ptr
+_U8 = U8
+_U8Ptr = U8Ptr
+_VIEW_WINDOW_ID_CAP = VIEW_WINDOW_ID_CAP
+_ack = ack
+_check = check
+_cmd_connect = cmd_connect
+_cmd_disconnect = cmd_disconnect
+_cmd_query_state = cmd_query_state
+_cmd_recent_events = cmd_recent_events
+_cmd_register_type = cmd_register_type
+_cmd_shutdown = cmd_shutdown
+_cmd_submit = cmd_submit
+_cmd_subscribe = cmd_subscribe
+_cmd_unsubscribe = cmd_unsubscribe
+_event_list = event_list
+_event_to_dict = event_to_dict
+_find_lib = find_lib
+_http_handle_peer = http_handle_peer
+_http_respond = http_respond
+_ipc_handle_peer = ipc_handle_peer
+_json_bytes = json_bytes
+_load_client = load_client
+_load_proto = load_proto
+_make_enter = make_enter
+_make_reply = make_reply
+_safe_write = safe_write
+_status_dict = status_dict
+_subscription_state = subscription_state
+_to_int = to_int
 
-KITH_PROTO_FLAG_CORRELATION: int = 0x02
-KITH_PROTO_HDR_SIZE: int = 10
-KITH_CLIENT_EVENT_PAYLOAD_MAX: int = 1024
-
-KITH_EAGAIN: int = 7
-KITH_EOVERFLOW: int = 10
-
-_PROTO_LIB_BASENAME = "libkith_proto.so.1"
-_CLIENT_LIB_BASENAME = "libkith_client.so.1"
-
-_ERROR_NAMES: Mapping[int, str] = {
-    1: "EINVAL",
-    2: "ENOMEM",
-    3: "ENOSYS",
-    4: "ENOENT",
-    5: "EEXIST",
-    6: "EBUSY",
-    7: "EAGAIN",
-    8: "EPERM",
-    9: "ERANGE",
-    10: "EOVERFLOW",
-    11: "EFAULT",
-    12: "EIO",
-    13: "ETIMEDOUT",
-    14: "ECONNRESET",
-    15: "ESHUTDOWN",
-    16: "ESTATE",
-    17: "EPROTO",
-    18: "ESIZE",
-    19: "EABIVER",
-}
 
 _log = logging.getLogger("kith.ahc")
-
-
-class KithClientError(Exception):
-    """Raised when a kith client or proto C call returns a negative code."""
-
-    def __init__(self, code: int, context: str = "") -> None:
-        self.code = code
-        self.context = context
-        name = _ERROR_NAMES.get(code, f"E{code}")
-        msg = f"kith {name} ({code})"
-        if context:
-            msg = f"{msg}: {context}"
-        super().__init__(msg)
-
-
-def _check(code: int, context: str = "") -> int:
-    """Translate a C return: success passes through, negative raises."""
-    if code < 0:
-        raise KithClientError(-code, context)
-    return code
-
-
-def _to_int(value: object) -> int:
-    """Coerce a JSON-decoded value to int (str/int/float all accepted)."""
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int | float):
-        return int(value)
-    return int(str(value))
-
-
-def _event_list(value: object) -> list[object]:
-    """Extract a list from a JSON-decoded events field, or empty."""
-    if isinstance(value, list):
-        return list(value)
-    return []
 
 
 def _now_ms() -> int:
@@ -123,351 +181,10 @@ def _now_ms() -> int:
 # ---------------------------------------------------------------------------
 
 
-class ProtoParams(ctypes.Structure):
-    """kith_proto_params_t."""
-
-    _fields_ = [
-        ("size", ctypes.c_uint32),
-        ("abi_version", ctypes.c_uint32),
-        ("max_payload", ctypes.c_uint32),
-        ("reserved", ctypes.c_void_p * 8),
-    ]
-
-
-class ProtoFrame(ctypes.Structure):
-    """kith_proto_frame_t (exposed-layout decoded view)."""
-
-    _fields_ = [
-        ("type_id", ctypes.c_uint16),
-        ("flags", ctypes.c_uint8),
-        ("has_correlation", ctypes.c_bool),
-        ("correlation_id", ctypes.c_uint64),
-        ("payload", ctypes.c_void_p),
-        ("payload_len", ctypes.c_uint32),
-    ]
-
-
-class ClientParams(ctypes.Structure):
-    """kith_client_params_t."""
-
-    _fields_ = [
-        ("size", ctypes.c_uint32),
-        ("abi_version", ctypes.c_uint32),
-        ("outbound_cap", ctypes.c_uint32),
-        ("event_cap", ctypes.c_uint32),
-        ("ping_type_id", ctypes.c_uint16),
-        ("pong_type_id", ctypes.c_uint16),
-        ("ping_interval_ms", ctypes.c_uint32),
-        ("reconnect_base_ms", ctypes.c_uint32),
-        ("reconnect_max_ms", ctypes.c_uint32),
-        ("reconnect_max_attempts", ctypes.c_uint32),
-        ("reserved", ctypes.c_void_p * 8),
-    ]
-
-
-class ClientCommand(ctypes.Structure):
-    """kith_client_command_t."""
-
-    _fields_ = [
-        ("type_id", ctypes.c_uint16),
-        ("flags", ctypes.c_uint8),
-        ("correlation_id", ctypes.c_uint64),
-        ("payload", ctypes.c_void_p),
-        ("payload_len", ctypes.c_uint32),
-    ]
-
-
-class ClientBootstrapStep(ctypes.Structure):
-    """kith_client_bootstrap_step_t."""
-
-    _fields_ = [
-        ("await_type_id", ctypes.c_uint16),
-        ("on_enter", ctypes.c_void_p),
-        ("on_reply", ctypes.c_void_p),
-        ("ctx", ctypes.c_void_p),
-    ]
-
-
-class ClientBootstrapStatus(ctypes.Structure):
-    """kith_client_bootstrap_status_t."""
-
-    _fields_ = [
-        ("size", ctypes.c_uint32),
-        ("abi_version", ctypes.c_uint32),
-        ("state", ctypes.c_uint32),
-        ("current_step", ctypes.c_uint32),
-        ("step_count", ctypes.c_uint32),
-        ("reserved", ctypes.c_void_p * 8),
-    ]
-
-
-class ClientRuntimeStatus(ctypes.Structure):
-    """kith_client_runtime_status_t."""
-
-    _fields_ = [
-        ("size", ctypes.c_uint32),
-        ("abi_version", ctypes.c_uint32),
-        ("connected", ctypes.c_uint8),
-        ("awaiting_pong", ctypes.c_uint8),
-        ("reconnect_due", ctypes.c_uint8),
-        ("reserved_u8", ctypes.c_uint8),
-        ("reconnect_attempts", ctypes.c_uint32),
-        ("rtt_last_ms", ctypes.c_uint32),
-        ("rtt_min_ms", ctypes.c_uint32),
-        ("rtt_max_ms", ctypes.c_uint32),
-        ("rtt_sum_ms", ctypes.c_uint64),
-        ("rtt_samples", ctypes.c_uint32),
-        ("reserved_u32", ctypes.c_uint32),
-        ("last_ping_sent_ms", ctypes.c_uint64),
-        ("next_ping_due_ms", ctypes.c_uint64),
-        ("next_reconnect_due_ms", ctypes.c_uint64),
-        ("reserved", ctypes.c_void_p * 8),
-    ]
-
-
 # Pointer type aliases used in callback annotations.
-_U8 = ctypes.c_uint8
-_U16Ptr = ctypes.POINTER(ctypes.c_uint16)
-_U8Ptr = ctypes.POINTER(ctypes.c_uint8)
-_U32Ptr = ctypes.POINTER(ctypes.c_uint32)
-_FramePtr = ctypes.POINTER(ProtoFrame)
 
 # C callback function-pointer types. Instances must be kept alive for the
 # client handle's lifetime (stored on the AgenticHeadlessClient instance).
-_EnterFn = ctypes.CFUNCTYPE(
-    ctypes.c_int,
-    ctypes.c_void_p,
-    ctypes.c_void_p,
-    _U16Ptr,
-    _U8Ptr,
-    ctypes.c_uint32,
-    _U32Ptr,
-)
-_ReplyFn = ctypes.CFUNCTYPE(
-    ctypes.c_int,
-    ctypes.c_void_p,
-    ctypes.c_void_p,
-    _FramePtr,
-    _U32Ptr,
-)
-_FrameFn = ctypes.CFUNCTYPE(
-    None,
-    ctypes.c_void_p,
-    ctypes.c_void_p,
-    _FramePtr,
-)
-
-
-# ---------------------------------------------------------------------------
-# public dataclasses
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class DecodedFrame:
-    """A decoded proto frame, copied for Python-side ownership."""
-
-    type_id: int
-    flags: int
-    has_correlation: bool
-    correlation_id: int
-    payload: bytes
-
-
-@dataclass(frozen=True, slots=True)
-class ClientEvent:
-    """An event derived from an inbound runtime frame."""
-
-    ts_mono_ns: int
-    type_id: int
-    correlation_id: int
-    payload: bytes
-
-
-@dataclass(frozen=True, slots=True)
-class BootstrapStep:
-    """A Python spec for one bootstrap FSM step.
-
-    on_enter returns (type_id, payload_bytes) for the outbound frame, or
-    None to wait passively. on_reply receives the decoded inbound frame and
-    returns the next step index (== step_count means READY, > step_count
-    means FAILED, == current step retries). A None callback auto-advances.
-    """
-
-    await_type_id: int
-    on_enter: Callable[[], tuple[int, bytes] | None] | None = None
-    on_reply: Callable[[DecodedFrame], int] | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ClientStatus:
-    """A snapshot of connection and bootstrap state."""
-
-    connected: bool
-    bootstrap_state: int
-    bootstrap_step: int
-    bootstrap_step_count: int
-    rtt_last_ms: int
-    reconnect_attempts: int
-
-
-# ---------------------------------------------------------------------------
-# library loading (mirrors tools/replay.py)
-# ---------------------------------------------------------------------------
-
-
-def _find_lib(basename: str, env_var: str, explicit: str | None) -> Path:
-    """Locate a kith shared library by explicit path, env var, wheel bundle,
-    or build walk."""
-    if explicit:
-        path = Path(explicit)
-        if not path.is_file():
-            raise KithClientError(1, f"library not found: {explicit}")
-        return path
-
-    env = os.environ.get(env_var)
-    if env:
-        path = Path(env)
-        if not path.is_file():
-            raise KithClientError(1, f"library not found: {env}")
-        return path
-
-    pkg_dir = Path(__file__).resolve().parent.parent
-    for cand in (
-        pkg_dir / basename,
-        pkg_dir / "lib" / basename,
-        pkg_dir / "_libs" / basename,
-    ):
-        if cand.is_file():
-            return cand
-
-    repo_root = pkg_dir.parents[1]
-    for cand in (
-        repo_root / "build" / "debug" / basename,
-        repo_root / "build" / "release" / basename,
-        repo_root / "cmake-build-debug" / basename,
-        repo_root / "cmake-build-release" / basename,
-    ):
-        if cand.is_file():
-            return cand
-
-    try:
-        ctypes.CDLL(basename)
-    except OSError as exc:
-        raise KithClientError(1, f"could not locate {basename}: {exc}") from exc
-    return Path(basename)
-
-
-def _load_proto(path: Path) -> ctypes.CDLL:
-    """Load libkith_proto and declare argtypes/restype for the called symbols."""
-    lib = ctypes.CDLL(str(path))
-
-    lib.kith_proto_create.argtypes = [
-        ctypes.POINTER(ProtoParams),
-        ctypes.c_void_p,
-        ctypes.POINTER(ctypes.c_void_p),
-    ]
-    lib.kith_proto_create.restype = ctypes.c_int
-
-    lib.kith_proto_destroy.argtypes = [ctypes.c_void_p]
-    lib.kith_proto_destroy.restype = None
-
-    lib.kith_proto_register_type_id.argtypes = [
-        ctypes.c_void_p,
-        ctypes.c_char_p,
-        ctypes.c_uint16,
-    ]
-    lib.kith_proto_register_type_id.restype = ctypes.c_int
-
-    lib.kith_proto_decode.argtypes = [
-        ctypes.c_void_p,
-        _U8Ptr,
-        ctypes.c_size_t,
-        ctypes.POINTER(ProtoFrame),
-        ctypes.POINTER(ctypes.c_size_t),
-    ]
-    lib.kith_proto_decode.restype = ctypes.c_int
-
-    return lib
-
-
-def _load_client(path: Path) -> ctypes.CDLL:
-    """Load libkith_client and declare argtypes/restype for the called symbols."""
-    lib = ctypes.CDLL(str(path))
-
-    lib.kith_client_create.argtypes = [
-        ctypes.POINTER(ClientParams),
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.POINTER(ctypes.c_void_p),
-    ]
-    lib.kith_client_create.restype = ctypes.c_int
-
-    lib.kith_client_destroy.argtypes = [ctypes.c_void_p]
-    lib.kith_client_destroy.restype = None
-
-    lib.kith_client_configure_bootstrap.argtypes = [
-        ctypes.c_void_p,
-        ctypes.POINTER(ClientBootstrapStep),
-        ctypes.c_uint32,
-    ]
-    lib.kith_client_configure_bootstrap.restype = ctypes.c_int
-
-    lib.kith_client_set_frame_handler.argtypes = [
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-    ]
-    lib.kith_client_set_frame_handler.restype = None
-
-    lib.kith_client_on_connected.argtypes = [ctypes.c_void_p, ctypes.c_uint64]
-    lib.kith_client_on_connected.restype = ctypes.c_int
-
-    lib.kith_client_on_disconnected.argtypes = [ctypes.c_void_p, ctypes.c_uint64]
-    lib.kith_client_on_disconnected.restype = ctypes.c_int
-
-    lib.kith_client_on_connect_failed.argtypes = [ctypes.c_void_p, ctypes.c_uint64]
-    lib.kith_client_on_connect_failed.restype = ctypes.c_int
-
-    lib.kith_client_feed_frame.argtypes = [
-        ctypes.c_void_p,
-        ctypes.POINTER(ProtoFrame),
-        ctypes.c_uint64,
-    ]
-    lib.kith_client_feed_frame.restype = ctypes.c_int
-
-    lib.kith_client_pop_outbound.argtypes = [
-        ctypes.c_void_p,
-        ctypes.c_void_p,
-        ctypes.c_uint32,
-        ctypes.POINTER(ctypes.c_uint32),
-    ]
-    lib.kith_client_pop_outbound.restype = ctypes.c_int
-
-    lib.kith_client_submit_interactive.argtypes = [
-        ctypes.c_void_p,
-        ctypes.POINTER(ClientCommand),
-        ctypes.POINTER(ctypes.c_uint64),
-    ]
-    lib.kith_client_submit_interactive.restype = ctypes.c_int
-
-    lib.kith_client_tick.argtypes = [ctypes.c_void_p, ctypes.c_uint64]
-    lib.kith_client_tick.restype = ctypes.c_int
-
-    lib.kith_client_bootstrap_status.argtypes = [
-        ctypes.c_void_p,
-        ctypes.POINTER(ClientBootstrapStatus),
-    ]
-    lib.kith_client_bootstrap_status.restype = ctypes.c_int
-
-    lib.kith_client_runtime_status.argtypes = [
-        ctypes.c_void_p,
-        ctypes.POINTER(ClientRuntimeStatus),
-    ]
-    lib.kith_client_runtime_status.restype = ctypes.c_int
-
-    return lib
 
 
 # ---------------------------------------------------------------------------
@@ -475,12 +192,9 @@ def _load_client(path: Path) -> ctypes.CDLL:
 # ---------------------------------------------------------------------------
 
 
-_IPC_BUFFER_SIZE = 65536
-_HTTP_MAX_BODY = 1 << 20
 _OUTBOUND_INITIAL_BUFFER_SIZE = 4096
 _UINT32_MAX = (1 << 32) - 1
 
-_OUTBOUND_IDLE_PROBE_S = 1.0
 
 # The inline drain stops popping once this many bytes sit unwritten in
 # the transport: further residue waits engine-side for the writable
@@ -515,88 +229,6 @@ _SUMMARY_MIN_INTERVAL_S = 1.0
 # answers every question the probe asks and the read skips extraction
 # for the remaining frames from there on. The frame timestamp list is
 # not capped — the stall guard scans every in-window arrival.
-_VIEW_WINDOW_ID_CAP = 256
-
-
-@dataclass(frozen=True, slots=True)
-class WindowEvidence:
-    """One client's frozen movement-window view evidence.
-
-    ``distinct_ids`` holds every non-membership actor id received while
-    the window was open (saturated at ``_VIEW_WINDOW_ID_CAP``);
-    ``frame_ts_ns`` holds each in-window frame's arrival timestamp in
-    ascending order for the breadth probe's stall scan. ``incomplete``
-    marks a basis that cannot prove completeness: the evidence deque
-    evicted frames while the window was open, or no byte budget was
-    configured, so the counts are a floor — the breadth probe reads
-    this and reports the client as unfounded rather than trusting the
-    counts. ``deque_distinct_ids`` runs the same saturation-capped
-    extraction over the whole retained deque with the window bounds
-    ignored, so a sparse window read splits into a window younger than
-    the retained roster versus a roster the retained stream never
-    carried; the self filter applies at read time exactly as it does
-    for ``distinct_ids``.
-    """
-
-    distinct_ids: frozenset[int]
-    frame_ts_ns: tuple[int, ...]
-    incomplete: bool = False
-    deque_distinct_ids: frozenset[int] = frozenset()
-
-
-@dataclass(frozen=True, slots=True)
-class WindowSnapshot:
-    """Immutable retained frames and counting bounds captured on the client loop.
-
-    Payload bytes are shared with retention. The extractor runs on the calling
-    thread; cooperative evaluation yields between bounded batches of frames.
-    """
-
-    frames: tuple[tuple[int, int, bytes], ...]
-    start_ns: int | None
-    deadline_ns: int | None
-    incomplete: bool
-    extractor: Callable[[int, bytes], Iterable[int]] | None
-
-    def evaluate(self) -> WindowEvidence:
-        """Reduce captured frames synchronously into frozen window evidence."""
-        for result in self._batches():
-            if result is not None:
-                return result
-        raise AssertionError("window reduction produced no evidence")
-
-    async def evaluate_async(self) -> WindowEvidence:
-        """Reduce captured frames while yielding between bounded frame batches."""
-        await asyncio.sleep(0)
-        for result in self._batches():
-            if result is not None:
-                return result
-            await asyncio.sleep(0)
-        raise AssertionError("window reduction produced no evidence")
-
-    def _batches(self) -> Iterator[WindowEvidence | None]:
-        ids: set[int] = set()
-        deque_ids: set[int] = set()
-        frame_ts: list[int] = []
-        for index, (ts_ns, type_id, payload) in enumerate(self.frames, 1):
-            in_window = (self.start_ns is None or ts_ns >= self.start_ns) and (
-                self.deadline_ns is None or ts_ns <= self.deadline_ns
-            )
-            if in_window:
-                frame_ts.append(ts_ns)
-            want_deque = len(deque_ids) < _VIEW_WINDOW_ID_CAP
-            want_window = in_window and len(ids) < _VIEW_WINDOW_ID_CAP
-            if self.extractor is not None and (want_deque or want_window):
-                extracted = list(self.extractor(type_id, payload))
-                if want_deque:
-                    deque_ids.update(
-                        itertools.islice(extracted, _VIEW_WINDOW_ID_CAP - len(deque_ids))
-                    )
-                if want_window:
-                    ids.update(itertools.islice(extracted, _VIEW_WINDOW_ID_CAP - len(ids)))
-            if index % 64 == 0:
-                yield None
-        yield WindowEvidence(frozenset(ids), tuple(frame_ts), self.incomplete, frozenset(deque_ids))
 
 
 # Exception groups caught in multiple sites. Defined once as tuples so
@@ -604,83 +236,19 @@ class WindowSnapshot:
 # `except (A, B):` because Python 3.14 accepts the bare-comma tuple form,
 # but mypy 2.3 flags that form as a syntax error; a single name avoids
 # the conflict).
-_JSON_DECODE_ERRORS = (json.JSONDecodeError, UnicodeDecodeError)
-_CONN_RESET_ERRORS = (ConnectionResetError, BrokenPipeError)
-_HTTP_READ_ERRORS = (asyncio.IncompleteReadError, ConnectionError, OSError)
 _INTERRUPT_ERRORS = (KeyboardInterrupt, asyncio.CancelledError)
 
 
-class _EvidenceFrames:
-    """Retain frame values in flat FIFOs without per-record wrappers."""
-
-    __slots__ = ("_metadata", "_payloads")
-
-    def __init__(self) -> None:
-        self._metadata: deque[int] = deque()
-        self._payloads: deque[bytes] = deque()
-
-    def __len__(self) -> int:
-        return len(self._payloads)
-
-    def append_values(self, ts_ns: int, type_id: int, payload: bytes) -> None:
-        """Append values while preserving both FIFO lengths on failure."""
-        metadata, payloads = self._metadata, self._payloads
-        metadata_length, payload_length = len(metadata), len(payloads)
-        try:
-            metadata.append(ts_ns)
-            metadata.append(type_id)
-            payloads.append(payload)
-        except BaseException:
-            while len(payloads) > payload_length:
-                payloads.pop()
-            while len(metadata) > metadata_length:
-                metadata.pop()
-            raise
-
-    def append(self, frame: tuple[int, int, bytes]) -> None:
-        """Append a cold compatibility record using the same value path."""
-        self.append_values(*frame)
-
-    def extend(self, frames: Iterable[tuple[int, int, bytes]]) -> None:
-        """Append ordered cold compatibility records."""
-        for frame in frames:
-            self.append_values(*frame)
-
-    def popleft(self) -> tuple[int, int, bytes]:
-        """Remove and return the oldest frame."""
-        if not self._payloads:
-            raise IndexError("pop from empty evidence")
-        result = (self._metadata[0], self._metadata[1], self._payloads[0])
-        self.discard_oldest()
-        return result
-
-    def oldest_timestamp(self) -> int:
-        """Read the oldest timestamp."""
-        return self._metadata[0]
-
-    def discard_oldest(self) -> bytes:
-        """Remove the oldest frame and return only its shared payload."""
-        if not self._payloads:
-            raise IndexError("pop from empty evidence")
-        self._metadata.popleft()
-        self._metadata.popleft()
-        return self._payloads.popleft()
-
-    def clear(self) -> None:
-        """Release live metadata and payload references."""
-        self._metadata.clear()
-        self._payloads.clear()
-
-    def span_ns(self) -> int | None:
-        """Return the oldest-to-newest timestamp span, or None when empty."""
-        if not self._payloads:
-            return None
-        return self._metadata[-2] - self._metadata[0]
-
-    def __iter__(self) -> Iterator[tuple[int, int, bytes]]:
-        metadata = iter(self._metadata)
-        for payload in self._payloads:
-            yield next(metadata), next(metadata), payload
+for _record_type in (
+    DecodedFrame,
+    ClientEvent,
+    BootstrapStep,
+    ClientStatus,
+    WindowEvidence,
+    WindowSnapshot,
+    KithClientError,
+):
+    _record_type.__module__ = __name__
 
 
 class _ClientProtocol(asyncio.Protocol):
@@ -1310,12 +878,12 @@ class AgenticHeadlessClient:
             if os.path.exists(self.ipc_socket_path):
                 os.unlink(self.ipc_socket_path)
             self._ipc_server = await asyncio.start_unix_server(
-                self._ipc_handle_peer, path=self.ipc_socket_path
+                partial(_ipc_handle_peer, self), path=self.ipc_socket_path
             )
 
         if self._http_enabled:
             self._http_server = await asyncio.start_server(
-                self._http_handle_peer, host=self.http_host, port=self.http_port
+                partial(_http_handle_peer, self), host=self.http_host, port=self.http_port
             )
             if self.http_port == 0:
                 sockets = self._http_server.sockets
@@ -1876,429 +1444,9 @@ class AgenticHeadlessClient:
     # IPC (NDJSON over Unix socket)
     # -----------------------------------------------------------------------
 
-    async def _ipc_handle_peer(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
-        self._ipc_peers.add((reader, writer))
-        buf = b""
-        try:
-            while self._running:
-                data = await reader.read(_IPC_BUFFER_SIZE)
-                if not data:
-                    break
-                buf += data
-                while b"\n" in buf:
-                    line, buf = buf.split(b"\n", 1)
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        req = json.loads(line.decode("utf-8"))
-                    except _JSON_DECODE_ERRORS:
-                        continue
-                    resp = await self._dispatch_ipc(req)
-                    if resp is not None:
-                        out = json.dumps(resp, separators=(",", ":")) + "\n"
-                        writer.write(out.encode("utf-8"))
-                        await writer.drain()
-        except _CONN_RESET_ERRORS:
-            pass
-        finally:
-            self._ipc_peers.discard((reader, writer))
-            writer.close()
-
-    async def _dispatch_ipc(self, req: Mapping[str, object]) -> dict[str, object] | None:
-        req_id = req.get("id")
-        cmd = str(req.get("cmd", ""))
-        try:
-            handler = _IPC_COMMANDS.get(cmd)
-            if handler is None:
-                return _ack(req_id, "error", error=f"unknown command: {cmd}")
-            return await handler(self, req_id, req)
-        except KithClientError as exc:
-            return _ack(req_id, "error", error=str(exc))
-        except (KeyError, ValueError, TypeError) as exc:
-            return _ack(req_id, "error", error=f"{type(exc).__name__}: {exc}")
-
     # -----------------------------------------------------------------------
     # HTTP/1.1 introspection
     # -----------------------------------------------------------------------
-
-    async def _http_handle_peer(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
-        try:
-            request_line = await reader.readline()
-            if not request_line:
-                return
-            parts = request_line.decode("iso-8859-1").split()
-            if len(parts) < 2:
-                _http_respond(writer, 400, b"bad request\n")
-                return
-            method, path = parts[0], parts[1]
-            headers: dict[str, str] = {}
-            while True:
-                hline = await reader.readline()
-                if hline in (b"\r\n", b"\n", b""):
-                    break
-                key, _, val = hline.decode("iso-8859-1").partition(":")
-                headers[key.strip().lower()] = val.strip()
-
-            body = b""
-            cl = headers.get("content-length")
-            if cl:
-                body = await reader.readexactly(min(int(cl), _HTTP_MAX_BODY))
-
-            await self._http_route(method, path, headers, body, writer)
-        except _HTTP_READ_ERRORS:
-            pass
-        finally:
-            if writer not in self._sse_writers:
-                writer.close()
-
-    async def _http_route(
-        self,
-        method: str,
-        path: str,
-        headers: dict[str, str],
-        body: bytes,
-        writer: asyncio.StreamWriter,
-    ) -> None:
-        del headers
-        if method == "GET" and path.startswith("/health"):
-            _http_respond(writer, 200, _json_bytes({"status": "ok", "id": self.instance_id}))
-            return
-        if method == "GET" and path.startswith("/state"):
-            _http_respond(writer, 200, _json_bytes(_status_dict(self.query_status())))
-            return
-        if method == "GET" and path.startswith("/events"):
-            qs = path.partition("?")[2]
-            count = 64
-            for pair in qs.split("&"):
-                if pair.startswith("count="):
-                    count = int(pair[7:])
-            _http_respond(
-                writer, 200, _json_bytes([_event_to_dict(e) for e in self.recent_events(count)])
-            )
-            return
-        if method == "GET" and path.startswith("/stream"):
-            self._start_sse(writer)
-            return
-        if method == "POST" and path.startswith("/cmd"):
-            try:
-                req = json.loads(body.decode("utf-8")) if body else {}
-            except _JSON_DECODE_ERRORS:
-                _http_respond(writer, 400, b"bad json\n")
-                return
-            resp = await self._dispatch_ipc(req)
-            _http_respond(writer, 200, _json_bytes(resp or {}))
-            return
-        _http_respond(writer, 404, b"not found\n")
-
-    def _start_sse(self, writer: asyncio.StreamWriter) -> None:
-        head = (
-            b"HTTP/1.1 200 OK\r\n"
-            b"Content-Type: text/event-stream\r\n"
-            b"Cache-Control: no-cache\r\n"
-            b"Connection: keep-alive\r\n"
-            b"\r\n"
-        )
-        writer.write(head)
-        self._sse_writers.add(writer)
-
-
-# ---------------------------------------------------------------------------
-# IPC command handlers
-# ---------------------------------------------------------------------------
-
-
-async def _cmd_connect(
-    ahc: AgenticHeadlessClient, req_id: object, _req: Mapping[str, object]
-) -> dict[str, object]:
-    if ahc._connected:
-        return _ack(req_id, "ok")
-    ahc.auto_connect = True
-    return _ack(req_id, "ok")
-
-
-async def _cmd_disconnect(
-    ahc: AgenticHeadlessClient, req_id: object, _req: Mapping[str, object]
-) -> dict[str, object]:
-    ahc.auto_connect = False
-    if ahc._transport is not None:
-        ahc._transport.close()
-    return _ack(req_id, "ok")
-
-
-async def _cmd_submit(
-    ahc: AgenticHeadlessClient, req_id: object, req: Mapping[str, object]
-) -> dict[str, object]:
-    type_id = _to_int(req["type_id"])
-    flags = _to_int(req.get("flags", 0))
-    corr = _to_int(req.get("correlation_id", 0))
-    payload_hex = req.get("payload_hex")
-    payload = bytes.fromhex(str(payload_hex)) if payload_hex else b""
-    cmd_id = ahc.submit(type_id, payload, flags=flags, correlation_id=corr)
-    return _ack(req_id, "ok", cmd_id=cmd_id)
-
-
-async def _cmd_register_type(
-    ahc: AgenticHeadlessClient, req_id: object, req: Mapping[str, object]
-) -> dict[str, object]:
-    name = str(req["name"])
-    type_id = _to_int(req["type_id"])
-    ahc.register_type(name, type_id)
-    return _ack(req_id, "ok")
-
-
-async def _cmd_query_state(
-    ahc: AgenticHeadlessClient, req_id: object, _req: Mapping[str, object]
-) -> dict[str, object]:
-    result = _status_dict(ahc.query_status())
-    result["id"] = req_id
-    result["type"] = "state"
-    return result
-
-
-async def _cmd_recent_events(
-    ahc: AgenticHeadlessClient, req_id: object, req: Mapping[str, object]
-) -> dict[str, object]:
-    count = _to_int(req.get("count", 64))
-    return {
-        "id": req_id,
-        "type": "events",
-        "events": [_event_to_dict(e) for e in ahc.recent_events(count)],
-    }
-
-
-async def _cmd_subscribe(
-    ahc: AgenticHeadlessClient, req_id: object, req: Mapping[str, object]
-) -> dict[str, object]:
-    events = _event_list(req.get("events", []))
-    if events == ["*"]:
-        ahc._subscribe_all = True
-    else:
-        for ev in events:
-            ahc._subscriptions.add(_to_int(ev))
-    return _ack(req_id, "ok", subscriptions=_subscription_state(ahc))
-
-
-async def _cmd_unsubscribe(
-    ahc: AgenticHeadlessClient, req_id: object, req: Mapping[str, object]
-) -> dict[str, object]:
-    events = _event_list(req.get("events", []))
-    if events == ["*"]:
-        ahc._subscribe_all = False
-    else:
-        for ev in events:
-            ahc._subscriptions.discard(_to_int(ev))
-    return _ack(req_id, "ok", subscriptions=_subscription_state(ahc))
-
-
-async def _cmd_shutdown(
-    ahc: AgenticHeadlessClient, req_id: object, _req: Mapping[str, object]
-) -> dict[str, object]:
-    ahc.auto_connect = False
-    ahc._running = False
-    return _ack(req_id, "ok")
-
-
-_IpcHandler = Callable[
-    [AgenticHeadlessClient, object, Mapping[str, object]],
-    Coroutine[None, None, dict[str, object] | None],
-]
-
-_IPC_COMMANDS: Mapping[str, _IpcHandler] = {
-    "connect": _cmd_connect,
-    "disconnect": _cmd_disconnect,
-    "submit": _cmd_submit,
-    "register_type": _cmd_register_type,
-    "query_state": _cmd_query_state,
-    "recent_events": _cmd_recent_events,
-    "subscribe": _cmd_subscribe,
-    "unsubscribe": _cmd_unsubscribe,
-    "shutdown": _cmd_shutdown,
-}
-
-
-# ---------------------------------------------------------------------------
-# shared engine ticker
-# ---------------------------------------------------------------------------
-
-
-class _TickClient(Protocol):
-    """The slice of ``AgenticHeadlessClient`` the shared ticker drives.
-
-    Defined as a protocol so tests substitute fakes without loading the
-    C shared libraries; the real client satisfies it structurally.
-    """
-
-    _tick_interval_s: float
-
-    def tick_engine(self) -> None: ...
-
-
-class _ClientTicker:
-    """Drive registered clients' engine ticks from one task per cadence.
-
-    Replaces one asyncio sleep loop per client with a single shared task
-    per distinct tick interval: each fire calls ``tick_engine`` on every
-    registered client, so N clients cost one timer wake per interval
-    instead of N. Registry mutations take a lock (set membership is not
-    atomic under free-threaded Python); each fire iterates a snapshot and
-    rotates its start index so no client holds a systematic first-in-batch
-    phase advantage. Cadence is relative-from-yield like the per-client
-    sleeps it replaces: sustained overload slips the nominal interval for
-    the whole bucket equally.
-    """
-
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._buckets: dict[float, list[_TickClient]] = {}
-        self._tasks: dict[float, asyncio.Task[None]] = {}
-        self._cursors: dict[float, int] = {}
-
-    def register(self, client: _TickClient) -> None:
-        """Add ``client`` to the bucket for its configured cadence."""
-        with self._lock:
-            bucket = self._buckets.setdefault(client._tick_interval_s, [])
-            bucket.append(client)
-            task = self._tasks.get(client._tick_interval_s)
-            if task is None or task.done():
-                loop = asyncio.get_running_loop()
-                self._tasks[client._tick_interval_s] = loop.create_task(
-                    self._run(client._tick_interval_s),
-                    name=f"ahc-ticker-{client._tick_interval_s}",
-                )
-
-    def unregister(self, client: _TickClient) -> None:
-        """Remove ``client`` from its bucket; the last removal keeps the
-        task alive so re-registration never pays a restart."""
-        with self._lock:
-            bucket = self._buckets.get(client._tick_interval_s)
-            if bucket is not None:
-                with contextlib.suppress(ValueError):
-                    bucket.remove(client)
-
-    async def _run(self, interval: float) -> None:
-        while True:
-            await asyncio.sleep(interval)
-            with self._lock:
-                bucket = list(self._buckets.get(interval, ()))
-                cursor = self._cursors.get(interval, 0)
-                self._cursors[interval] = cursor + 1
-            if not bucket:
-                continue
-            start = cursor % len(bucket)
-            for client in bucket[start:] + bucket[:start]:
-                client.tick_engine()
-
-
-_ENGINE_TICKER = _ClientTicker()
-
-
-class _ProbeClient(Protocol):
-    """The slice of ``AgenticHeadlessClient`` the outbound sweeper drives."""
-
-    def probe_stalled_outbound(self) -> None: ...
-
-
-class _OutboundSweeper:
-    """Probe pumping connections for outbound stranded without a trigger.
-
-    Inline draining runs synchronously at every enqueue point, so a
-    queued frame with no drain in progress can only come from an
-    enqueue site that skipped its flush request. One shared task sweeps
-    the registered connections each interval and lets each one detect —
-    and warn about — such a miss. Registry mutations take a lock; like
-    the engine ticker, the task persists after the last removal so
-    re-registration never pays a restart.
-    """
-
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._clients: set[_ProbeClient] = set()
-        self._task: asyncio.Task[None] | None = None
-
-    def register(self, client: _ProbeClient) -> None:
-        """Add ``client`` to the sweep set, starting the shared task once."""
-        with self._lock:
-            self._clients.add(client)
-            if self._task is None or self._task.done():
-                loop = asyncio.get_running_loop()
-                self._task = loop.create_task(self._run(), name="ahc-outbound-sweeper")
-
-    def unregister(self, client: _ProbeClient) -> None:
-        """Remove ``client`` from the sweep set."""
-        with self._lock:
-            self._clients.discard(client)
-
-    async def _run(self) -> None:
-        while True:
-            await asyncio.sleep(_OUTBOUND_IDLE_PROBE_S)
-            with self._lock:
-                clients = list(self._clients)
-            for client in clients:
-                client.probe_stalled_outbound()
-
-
-_OUTBOUND_SWEEPER = _OutboundSweeper()
-
-
-# ---------------------------------------------------------------------------
-# bootstrap trampoline factories
-# ---------------------------------------------------------------------------
-
-
-def _make_enter(step: BootstrapStep) -> Callable[..., int]:
-    # Pointer params are Any: ctypes passes opaque pointer objects whose
-    # only stub type is private; indexing and memmove accept them.
-    def enter(
-        _client: int,
-        _ctx: int,
-        out_type_id: Any,
-        out_payload: Any,
-        payload_cap: int,
-        out_payload_len: Any,
-    ) -> int:
-        assert step.on_enter is not None
-        result = step.on_enter()
-        if result is None:
-            out_payload_len[0] = 0
-            return 0
-        type_id, payload = result
-        out_type_id[0] = type_id & 0xFFFF
-        n = min(len(payload), int(payload_cap))
-        if n:
-            ctypes.memmove(out_payload, payload, n)
-        out_payload_len[0] = n
-        return 0
-
-    return enter
-
-
-def _make_reply(step: BootstrapStep) -> Callable[..., int]:
-    def reply(
-        _client: int,
-        _ctx: int,
-        frame_ptr: Any,
-        out_next_step: Any,
-    ) -> int:
-        assert step.on_reply is not None
-        frame = frame_ptr.contents
-        addr = frame.payload
-        payload = ctypes.string_at(addr, int(frame.payload_len)) if addr else b""
-        view = DecodedFrame(
-            type_id=int(frame.type_id),
-            flags=int(frame.flags),
-            has_correlation=bool(frame.has_correlation),
-            correlation_id=int(frame.correlation_id),
-            payload=payload,
-        )
-        out_next_step[0] = step.on_reply(view) & 0xFFFFFFFF
-        return 0
-
-    return reply
 
 
 # ---------------------------------------------------------------------------
@@ -2306,101 +1454,9 @@ def _make_reply(step: BootstrapStep) -> Callable[..., int]:
 # ---------------------------------------------------------------------------
 
 
-def _ack(req_id: object, status: str, **fields: object) -> dict[str, object]:
-    result: dict[str, object] = {"id": req_id, "type": "ack", "status": status}
-    result.update(fields)
-    return result
-
-
-def _subscription_state(ahc: AgenticHeadlessClient) -> dict[str, object]:
-    return {
-        "all": ahc._subscribe_all,
-        "type_ids": sorted(ahc._subscriptions),
-    }
-
-
-def _status_dict(status: ClientStatus) -> dict[str, object]:
-    return {
-        "connected": status.connected,
-        "bootstrap_state": status.bootstrap_state,
-        "bootstrap_step": status.bootstrap_step,
-        "bootstrap_step_count": status.bootstrap_step_count,
-        "rtt_last_ms": status.rtt_last_ms,
-        "reconnect_attempts": status.reconnect_attempts,
-    }
-
-
-def _event_to_dict(event: ClientEvent) -> dict[str, object]:
-    return {
-        "ts_mono_ns": event.ts_mono_ns,
-        "type_id": event.type_id,
-        "correlation_id": event.correlation_id,
-        "payload_hex": event.payload.hex(),
-    }
-
-
-def _json_bytes(obj: object) -> bytes:
-    return json.dumps(obj, separators=(",", ":")).encode("utf-8")
-
-
-def _http_respond(writer: asyncio.StreamWriter, code: int, body: bytes) -> None:
-    reason = {200: "OK", 400: "Bad Request", 404: "Not Found"}.get(code, "OK")
-    head = (
-        f"HTTP/1.1 {code} {reason}\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body)}\r\n"
-        f"Connection: close\r\n"
-        f"\r\n"
-    ).encode("iso-8859-1")
-    writer.write(head + body)
-
-
-def _safe_write(writer: asyncio.StreamWriter, data: bytes) -> None:
-    with contextlib.suppress(ConnectionError, OSError):
-        writer.write(data)
-
-
 async def main() -> int:
-    """CLI entry: run a single AHC until interrupted.
-
-    Connects to ``KITH_AHC_HOST``:``KITH_AHC_PORT`` (default 127.0.0.1:7777),
-    exposes IPC at ``KITH_AHC_IPC`` and HTTP at ``KITH_AHC_HTTP_PORT``.
-    """
-    parser = argparse.ArgumentParser(description="kith agentic headless client")
-    parser.add_argument("--id", default="ahc-0", help="instance id")
-    parser.add_argument("--host", default=os.environ.get("KITH_AHC_HOST", "127.0.0.1"))
-    parser.add_argument("--port", type=int, default=int(os.environ.get("KITH_AHC_PORT", "7777")))
-    parser.add_argument("--ipc", default=os.environ.get("KITH_AHC_IPC"))
-    parser.add_argument(
-        "--http-port", type=int, default=int(os.environ.get("KITH_AHC_HTTP_PORT", "0"))
-    )
-    parser.add_argument(
-        "--outbound-buffer-initial-bytes",
-        type=int,
-        default=_OUTBOUND_INITIAL_BUFFER_SIZE,
-        help="initial outbound scratch bytes (default: %(default)s); grows for larger frames",
-    )
-    args = parser.parse_args()
-    if not 0 < args.outbound_buffer_initial_bytes <= _UINT32_MAX:
-        parser.error("--outbound-buffer-initial-bytes must be a positive uint32_t")
-
-    ahc = AgenticHeadlessClient(
-        instance_id=args.id,
-        host=args.host,
-        port=args.port,
-        outbound_buffer_initial_bytes=args.outbound_buffer_initial_bytes,
-        ipc_socket_path=args.ipc,
-        http_port=args.http_port,
-    )
-    await ahc.start()
-    print(f"ahc {args.id}: ipc={ahc.ipc_socket_path} http=127.0.0.1:{ahc.http_port}", flush=True)
-    try:
-        while ahc._running:
-            await asyncio.sleep(3600)
-    except _INTERRUPT_ERRORS:
-        pass
-    await ahc.stop()
-    return 0
+    """Run one client with command-line configuration."""
+    return await run_client(AgenticHeadlessClient)
 
 
 if __name__ == "__main__":

@@ -1293,7 +1293,7 @@ def test_outbound_sweeper_probes_registered_clients(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The shared task sweeps every registered client each interval."""
-    monkeypatch.setattr(ahc, "_OUTBOUND_IDLE_PROBE_S", 0.02)
+    monkeypatch.setattr("kith._agent._scheduling.OUTBOUND_IDLE_PROBE_S", 0.02)
     sweeper = ahc._OutboundSweeper()
 
     class _Probe:

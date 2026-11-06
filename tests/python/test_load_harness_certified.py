@@ -19,7 +19,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from tools.agent import load_harness as harness_module
+from tools.agent._load_harness import runtime as harness_module
 from tools.agent.gap_ledger import SeriesFrame
 from tools.agent.load_harness import (
     DENSE_1000,
@@ -288,7 +288,7 @@ class TestRunShape:
         gil: str = "GIL disabled",
         native_apply_env: str | None = "1",
     ) -> RunShape:
-        monkeypatch.setattr(harness_module, "_gil_status", lambda: gil)
+        monkeypatch.setattr(harness_module, "read_gil_status", lambda: gil)
         if native_apply_env is None:
             monkeypatch.delenv("KITH_NATIVE_APPLY", raising=False)
         else:
